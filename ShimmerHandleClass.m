@@ -68,6 +68,13 @@ classdef ShimmerHandleClass < handle
             isConnected = thisShimmer.isConnected;
         end
 
+        %Check if the command was acknowledged by the device
+        function received = commandReceived(thisShimmer)
+            data = read(thisShimmer.bluetoothConn, 1);
+
+            received = (data == 255);
+        end
+
         %Start streaming
         function startedStreaming = startStreaming(thisShimmer)
             startedStreaming = false;
@@ -75,9 +82,9 @@ classdef ShimmerHandleClass < handle
             if (thisShimmer.isConnected && ~thisShimmer.isStreaming)
                 flush(thisShimmer.bluetoothConn);
                 write(thisShimmer.bluetoothConn, thisShimmer.commandIdentifiers.START_STREAMING_COMMAND);
-
-                thisShimmer.isStreaming = true;
-                startedStreaming = true;
+                
+                startedStreaming = commandReceived(thisShimmer);
+                thisShimmer.isStreaming = startedStreaming;
             end
         end
 
@@ -111,8 +118,8 @@ classdef ShimmerHandleClass < handle
         end
 
         %Write the enabled sensors to the shimmer
-        function isWritten = writeEnabledSensors(thisShimmer, enabledSensors)
-            isWritten = false;
+        function areEnabled = writeEnabledSensors(thisShimmer, enabledSensors)
+            areEnabled = false;
 
             stopStreaming(thisShimmer);
 
@@ -128,7 +135,7 @@ classdef ShimmerHandleClass < handle
                 write(thisShimmer.bluetoothConn, char(enabledSensorsHighByte));          % Write the enabled sensors higher byte value to the Shimmer
                 write(thisShimmer.bluetoothConn, char(enabledSensorsHigherByte));        % Write the enabled sensors higher byte value to the Shimmer
 
-                isWritten = true;
+                areEnabled = commandReceived(thisShimmer);
             end
         end
 
