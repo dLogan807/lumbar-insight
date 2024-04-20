@@ -11,17 +11,35 @@ else
     disp("Failed to connect to " + shimmer1.name);
 end
 
-shimmer1.disableAllSensors;
+if (shimmer1.disableAllSensors)
+    disp(shimmer1.name + " sensors disabled");
+end
 
-shimmer1.setEnabledSensors(SensorMacros.GYRO,1,SensorMacros.MAG,1,SensorMacros.ACCEL,1);
+read(shimmer1.bluetoothConn,1)
 
-shimmer1.startStreaming;
+if (shimmer1.setEnabledSensors(SensorMacros.ACCEL,1))
+    disp("Enabled specified sensors on " + shimmer1.name);
+end
 
-waitfor(3);
+read(shimmer1.bluetoothConn,1)
 
-shimmer1.stopStreaming;
+% pause(10);
+% 
+% if (shimmer1.startStreaming)
+%     disp(shimmer1.name + " started streaming");
+% end
+% 
+% read(shimmer1.bluetoothConn,200)
+% pause(10);
+% 
+% if (shimmer1.stopStreaming)
+%     disp(shimmer1.name + " stopped streaming");
+%     flush(shimmer1.bluetoothConn, "input");
+% end
 
-
+% pause(10);
+% 
+% read(shimmer1.bluetoothConn,2)
 
 % shimmer1 = bluetooth("Shimmer3-5852")
 % shimmer2 = bluetooth("Shimmer3-5847")

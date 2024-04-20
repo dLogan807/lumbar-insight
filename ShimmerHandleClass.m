@@ -1,6 +1,5 @@
 % Code modified from the official Instrumentation Driver.
 % Shimmer. (2022). Shimmer Matlab Instrumentation Driver. https://github.com/ShimmerEngineering/Shimmer-MATLAB-ID
-
 % No Shimmer 2/2r support.
 % Only supports 9DOF daughter board and assumes latest Shimmer3 firmware.
 % Reduced functionality due to time constraints and project goals.
@@ -43,7 +42,6 @@ classdef ShimmerHandleClass < handle
         name (1,:) {string};
         bluetoothConn bluetooth;
         isConnected {logical} = false;
-        EnabledSensors;
         isStreaming {logical} = false;
     end
     
@@ -71,50 +69,56 @@ classdef ShimmerHandleClass < handle
         end
 
         %Start streaming
-        function isStreaming = startStreaming(thisShimmer)
-            if (~thisShimmer.isStreaming)
+        function startedStreaming = startStreaming(thisShimmer)
+            startedStreaming = false;
+
+            if (thisShimmer.isConnected && ~thisShimmer.isStreaming)
+                flush(thisShimmer.bluetoothConn);
                 write(thisShimmer.bluetoothConn, thisShimmer.commandIdentifiers.START_STREAMING_COMMAND);
+
+                thisShimmer.isStreaming = true;
+                startedStreaming = true;
             end
-            
-            thisShimmer.isStreaming = true;
-            isStreaming = true;
         end
 
         %Stop streaming
-        function isStreaming = stopStreaming(thisShimmer)
-            if (thisShimmer.isStreaming)
+        function stoppedStreaming = stopStreaming(thisShimmer)
+            stoppedStreaming = false;
+
+            if (thisShimmer.isConnected && thisShimmer.isStreaming)
+                flush(thisShimmer.bluetoothConn);
                 write(thisShimmer.bluetoothConn, thisShimmer.commandIdentifiers.STOP_STREAMING_COMMAND);
+   
+                thisShimmer.isStreaming = false;
+                stoppedStreaming = true;
             end
-            
-            thisShimmer.isStreaming = false;
-            isStreaming = false;
         end
 
         %Disable all sensors
         function sensorsDisabled = disableAllSensors(thisShimmer)
             enabledSensors = 0;
 
-            sensorsDisabled = writeenabledsensors(thisShimmer, uint32(enabledSensors));
+            sensorsDisabled = writeEnabledSensors(thisShimmer, uint32(enabledSensors));
         end
 
         %Set specifc enabled sensors
-        %Enable the gyroscope, magnetometer and accelerometer.
+        %Example: Enable the gyroscope, magnetometer and accelerometer.
         %shimmer.setenabledsensors(SensorMacros.GYRO,1,SensorMacros.MAG,1,SensorMacros.ACCEL,1);   
         function sensorsSet = setEnabledSensors(thisShimmer, varargin)
-            enabledSensors = determineenabledsensorsbytes(thisShimmer, varargin);
+            enabledSensors = determineEnabledSensorsBytes(thisShimmer, varargin);
 
-            sensorsSet = writeenabledsensors(thisShimmer, uint32(enabledSensors));  
+            sensorsSet = writeEnabledSensors(thisShimmer, uint32(enabledSensors));  
         end
 
         %Write the enabled sensors to the shimmer
-        function isWritten = writeEnabledSensors(thisShimmer)
+        function isWritten = writeEnabledSensors(thisShimmer, enabledSensors)
             isWritten = false;
 
-            if (thisShimmer.isStreaming)
-                stopStreaming;
-            end
+            stopStreaming(thisShimmer);
 
             if (thisShimmer.isConnected)
+                flush(thisShimmer.bluetoothConn);
+
                 enabledSensorsLowByte = bitand(enabledSensors,255);                     % Extract the lower byte
                 enabledSensorsHighByte = bitand(bitshift(enabledSensors,-8),255);       % Extract the higher byte
                 enabledSensorsHigherByte = bitand(bitshift(enabledSensors,-16),255);    % Extract the higher byte
@@ -130,8 +134,8 @@ classdef ShimmerHandleClass < handle
 
         % Determines which sensors should be enabled/disabled based on
         % the input settingsCellArray.
-        function enabledSensors = determineenabledsensorsbytes(thisShimmer, settingsCellArray)
-            enabledSensors = uint32(thisShimmer.EnabledSensors); 
+        function enabledSensors = determineEnabledSensorsBytes(thisShimmer, settingsCellArray)
+            enabledSensors = uint32(0); 
             
             iSensor = 1;
             while iSensor < (length(settingsCellArray))
@@ -231,7 +235,7 @@ classdef ShimmerHandleClass < handle
                     
             enabledSensors = disableunavailablesensors(thisShimmer, enabledSensors);    % Update enabledSensors value to disable unavailable sensors based on daughter board settings
             
-        end %function determineenabledsensorsbytes     
+        end   
     
 
         function enabledSensors = disableunavailablesensors(thisShimmer, enabledSensors)
@@ -291,8 +295,7 @@ classdef ShimmerHandleClass < handle
                     enabledSensors = bitset(uint32(enabledSensors), thisShimmer.SENSOR_EXG1_16BIT, 0);      % disable SENSOR_EXG1_16BIT
                     enabledSensors = bitset(uint32(enabledSensors), thisShimmer.SENSOR_EXG2_16BIT, 0);      % disable SENSOR_EXG2_16BIT
                     enabledSensors = bitset(uint32(enabledSensors), thisShimmer.SENSOR_GSR, 0);             % disable SENSOR_GSR
-            end                  
-            
-        end % function disableunavailablesensors
+            end                   
+        end
     end
 end
