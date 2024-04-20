@@ -1,13 +1,25 @@
-clear
+clear;
+clc;
 
-shimmer1 = ShimmerClass("Shimmer3-5852")
+SensorMacros = SetEnabledSensorsMacrosClass;
+
+shimmer1 = ShimmerHandleClass("Shimmer3-5852");
 
 if (shimmer1.connect)
-    disp("Successfully connected to " + shimmer1.shimmerName)
+    disp("Successfully connected to " + shimmer1.name);
 else
-    disp("Failed to connect to " + shimmer1.shimmerName)
+    disp("Failed to connect to " + shimmer1.name);
 end
 
+shimmer1.disableAllSensors;
+
+shimmer1.setEnabledSensors(SensorMacros.GYRO,1,SensorMacros.MAG,1,SensorMacros.ACCEL,1);
+
+shimmer1.startStreaming;
+
+waitfor(3);
+
+shimmer1.stopStreaming;
 
 
 
