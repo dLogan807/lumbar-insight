@@ -1,7 +1,6 @@
 % Code modified from the official Instrumentation Driver.
 % Shimmer. (2022). Shimmer Matlab Instrumentation Driver. https://github.com/ShimmerEngineering/Shimmer-MATLAB-ID
-% No Shimmer 2/2r support.
-% Only supports 9DOF daughter board and assumes latest Shimmer3 firmware.
+% No Shimmer 2/2r support. Only supports 9DOF daughter board and assumes latest Shimmer3 firmware.
 % Reduced functionality due to time constraints and project goals.
 
 classdef ShimmerHandleClass < handle
@@ -11,7 +10,9 @@ classdef ShimmerHandleClass < handle
         %See the BtStream for Shimmer Firmware User Manual for more
         commandIdentifiers = struct("INQUIRY_COMMAND",0x01,"SET_SENSORS_COMMAND",0x08, "START_STREAMING_COMMAND", 0x07, "STOP_STREAMING_COMMAND", 0x20);
 
-        % Shimmer3:
+        ACK_RESPONSE              = 255; %Shimmer acknowledged response       
+        DATA_PACKET_START_BYTE    = 0;   %Start of each streamed packet
+
         SENSOR_A_ACCEL            = 8;   % 0x000080
         SENSOR_GYRO               = 7;   % 0x000040
         SENSOR_MAG                = 6;   % 0x000020
@@ -36,6 +37,9 @@ classdef ShimmerHandleClass < handle
         SENSOR_BMP180_TEMPERATURE = 18;  % 0x020000
 
         InternalBoard = "9DOF";
+        nBytesDataPacket = 22;           %MUST BE CHANGED MANUALLY
+
+        DEFAULT_TIMEOUT = 8;             % Default timeout for Wait for Acknowledgement response
     end
 
     properties
@@ -43,6 +47,9 @@ classdef ShimmerHandleClass < handle
         bluetoothConn bluetooth;
         isConnected {logical} = false;
         isStreaming {logical} = false;
+
+        LastQuaternion = [0.5, 0.5, 0.5, 0.5];              % Last estimated quaternion value, used to incrementally update quaternion.
+        SerialDataOverflow = [];                            % Feedback buffer used by the framepackets method
     end
     
     methods
@@ -68,12 +75,40 @@ classdef ShimmerHandleClass < handle
             isConnected = thisShimmer.isConnected;
         end
 
-        %Check if the command was acknowledged by the device
-        function received = commandReceived(thisShimmer)
-            data = read(thisShimmer.bluetoothConn, 1);
-
-            received = (data == 255);
-        end
+        function isAcknowledged = waitForAck(thisShimmer, timeout)
+            % Reads serial data buffer until either an acknowledgement is
+            % received or time out from input timeout is exceeded.
+            serialData = [];
+            timeCount = 0;
+            waitPeriod = 0.1;                                              % Period in seconds the while loop waits between iterations
+            
+            elapsedTime = 0;                                               % Reset to 0
+            tic;                                                           % Start timer
+            
+            while (isempty(serialData) && (elapsedTime < timeout))         % Keep reading serial port data until new data arrives OR elapsedTime exceeds timeout
+                [serialData] = read(thisShimmer.bluetoothConn, 1); % Read a single byte of serial data from the com port
+                pause(waitPeriod);                                         % Wait 0.1 of a second
+                timeCount = timeCount + waitPeriod;                        % Timeout is used to exit while loop after 5 seconds
+                
+                elapsedTime = elapsedTime + toc;                           % Stop timer and add to elapsed time
+                tic;                                                       % Start timer
+                
+            end
+            
+            elapsedTime = elapsedTime + toc;                               % Stop timer
+            
+            if (not(isempty(serialData)))                                  % TRUE if a byte value was received
+                if serialData(1) == thisShimmer.ACK_RESPONSE               % TRUE if the byte value was the acknowledge command
+                    isAcknowledged = true;
+                else
+                    isAcknowledged = false;
+                end
+            else
+                isAcknowledged = false;
+                fprintf(strcat('Warning: waitforack - Timed-out on wait for acknowledgement byte on Shimmer COM',thisShimmer.name,'.\n'));
+            end
+            
+        end %function waitforack
 
         %Start streaming
         function startedStreaming = startStreaming(thisShimmer)
@@ -83,7 +118,7 @@ classdef ShimmerHandleClass < handle
                 flush(thisShimmer.bluetoothConn);
                 write(thisShimmer.bluetoothConn, thisShimmer.commandIdentifiers.START_STREAMING_COMMAND);
                 
-                startedStreaming = commandReceived(thisShimmer);
+                startedStreaming = waitForAck(thisShimmer, thisShimmer.DEFAULT_TIMEOUT);
                 thisShimmer.isStreaming = startedStreaming;
             end
         end
@@ -135,7 +170,7 @@ classdef ShimmerHandleClass < handle
                 write(thisShimmer.bluetoothConn, char(enabledSensorsHighByte));          % Write the enabled sensors higher byte value to the Shimmer
                 write(thisShimmer.bluetoothConn, char(enabledSensorsHigherByte));        % Write the enabled sensors higher byte value to the Shimmer
 
-                areEnabled = commandReceived(thisShimmer);
+                areEnabled = waitForAck(thisShimmer, thisShimmer.DEFAULT_TIMEOUT);
             end
         end
 
@@ -240,13 +275,11 @@ classdef ShimmerHandleClass < handle
                 iSensor = iSensor + 2;
             end
                     
-            enabledSensors = disableunavailablesensors(thisShimmer, enabledSensors);    % Update enabledSensors value to disable unavailable sensors based on daughter board settings
-            
+            enabledSensors = disableunavailablesensors(thisShimmer, enabledSensors);    % Update enabledSensors value to disable unavailable sensors based on daughter board settings    
         end   
     
-
+        % Disables conflicting sensors based on input enabledSensors.
         function enabledSensors = disableunavailablesensors(thisShimmer, enabledSensors)
-            % Disables conflicting sensors based on input enabledSensors.
             internalBoard = char(thisShimmer.InternalBoard);
                         
             switch internalBoard
@@ -304,5 +337,6 @@ classdef ShimmerHandleClass < handle
                     enabledSensors = bitset(uint32(enabledSensors), thisShimmer.SENSOR_GSR, 0);             % disable SENSOR_GSR
             end                   
         end
+
     end
 end
