@@ -17,7 +17,12 @@ classdef ShimmerHandleClass < handle
 
         ACK_RESPONSE              = 255; %Shimmer acknowledged response       
         DATA_PACKET_START_BYTE    = 0;   %Start of each streamed packet
+        STATUS_RESPONSE           = char(hex2dec('71'));
+        INSTREAM_CMD_RESPONSE     = char(hex2dec('8A'));
+        VBATT_RESPONSE            = char(hex2dec('94')); 
 
+
+        %Sensors
         SENSOR_A_ACCEL            = 8;   % 0x000080
         SENSOR_GYRO               = 7;   % 0x000040
         SENSOR_MAG                = 6;   % 0x000020
@@ -42,7 +47,6 @@ classdef ShimmerHandleClass < handle
         SENSOR_BMP180_TEMPERATURE = 18;  % 0x020000
 
         InternalBoard = "9DOF";
-        nBytesDataPacket = 22;           %MUST BE CHANGED MANUALLY
 
         DEFAULT_TIMEOUT = 8;             % Default timeout for Wait for Acknowledgement response
     end
@@ -56,7 +60,28 @@ classdef ShimmerHandleClass < handle
         LastQuaternion = [0.5, 0.5, 0.5, 0.5];              % Last estimated quaternion value, used to incrementally update quaternion.
         SerialDataOverflow = [];                            % Feedback buffer used by the framepackets method
 
+        SignalNameArray;                                    % Cell array contain the names of the enabled sensor signals in string format
+        SignalDataTypeArray;                                % Cell array contain the names of the sensor signal datatypes in string format
+        nBytesDataPacket;                                   % Unsigned integer value containing the size of a data packet for the Shimmer in its current setting
+
         SamplingRate = 'Nan';                               % Numerical value defining the sampling rate of the Shimmer
+        EnabledSensors;
+
+        % Enable PC Timestamps
+        EnableTimestampUnix = 1;
+        LastSampleSystemTimeStamp = 0;
+
+        Orientation3D = 1;                                  % Enable/disable 3D orientation, i.e. get quaternions in getdata
+
+        GyroInUseCalibration = 0;                           % Enable/disable gyro in-use calibration
+        GyroBufferSize = 100;                               % Buffer size (samples)
+        GyroBuffer;                                         % Buffer for gyro in-use calibration
+        GyroMotionThreshold = 1.2;                          % Threshold for detecting motion
+
+        GetADCFlag = 0;                                     % Flag for getdata/getadcdata
+
+        LatestBatteryVoltageReading = 'Nan'; 
+        GsrRange='Nan';                                     % Numerical value defining the gsr range of the Shimmer
     end
     
     methods
@@ -282,7 +307,8 @@ classdef ShimmerHandleClass < handle
                 iSensor = iSensor + 2;
             end
                     
-            enabledSensors = disableunavailablesensors(thisShimmer, enabledSensors);    % Update enabledSensors value to disable unavailable sensors based on daughter board settings    
+            enabledSensors = disableunavailablesensors(thisShimmer, enabledSensors);    % Update enabledSensors value to disable unavailable sensors based on daughter board settings
+            thisShimmer.EnabledSensors = enabledSensors;
         end   
     
         % Disables conflicting sensors based on input enabledSensors.
@@ -345,7 +371,7 @@ classdef ShimmerHandleClass < handle
             end                   
         end
 
-        function quaternionData = updatequaternion(thisShimmer, accelCalibratedData, gyroCalibratedData, magCalibratedData)
+        function quaternionData = updateQuaternion(thisShimmer, accelCalibratedData, gyroCalibratedData, magCalibratedData)
             % Updates quaternion data based on accelerometer, gyroscope and
             % magnetometer data inputs: accelCalibratedData,
             % gyroCalibratedData and magCalibratedData.
@@ -459,5 +485,397 @@ classdef ShimmerHandleClass < handle
             end
             
         end %function updatequaternion
+
+        function [parsedData,systemTime] = capturedata(thisShimmer)
+            % Reads data from the serial buffer, frames and parses these data.
+            parsedData=[];
+            systemTime = 0;
+            
+            if (thisShimmer.isStreaming)                        % TRUE if the Shimmer is in a Streaming state
+                
+                serialData = [];
+                
+                [serialData] = readcell(thisShimmer.bluetoothConn, inf);  % Read all available serial data from the com port
+                
+                if (not(isempty(serialData)))
+                    
+                     if (thisShimmer.EnableTimestampUnix)  
+                         systemTime = clock;
+                     end
+                   
+                    framedData = framedata(thisShimmer, serialData);
+                    parsedData = parsedata(thisShimmer, framedData);
+         
+                end
+            else
+                fprintf(strcat('Warning: capturedata - Cannot capture data as COM ',thisShimmer.name,' Shimmer is not Streaming'));
+            end
+            
+        end %function captureData
+
+        function [sensorData,signalName,signalFormat,signalUnit] = getdata(thisShimmer,varargin)
+            %GETDATA - Get sensor data from the data buffer and calibrates
+            %them depending on user instructions
+            %
+            %   SENSORDATA = GETDATA returns a 2D array of sensor data from
+            %   the data buffer and the corresponding signal names
+            %
+            %   SYNOPSIS: [sensorData,signalName,signalFormat,signalUnit] = thisShimmer.getdata(dataMode)
+            %
+            %   INPUT: dataMode - Value defining the DATAMODE where
+            %                     DATAMODE = 'a' retrieves data in both calibrated
+            %                     and uncalibrated format DATAMODE = 'u'
+            %                     retrieves data in uncalibrated format
+            %                     DATAMODE = 'c' retrieves data in
+            %                     calibrated format.
+            %
+            %                     Valid values for DATAMODE are 'a', 'c'
+            %                     and 'u'.
+            %
+            %   OUTPUT: sensorData - [m x n] array of sensor data
+            %                              read from the data buffer, where
+            %                              m = number of data samples and n
+            %                              = number of data signals. Output
+            %                              will depend on the data mode.
+            % 
+            %           signalName - a 1 dimensional cell array of the
+            %                        signal names. The index of each signal
+            %                        name corresponds to the index of the
+            %                        sensor data. 
+            %
+            %           signalFormat - a 1 dimensional cell array of the
+            %                        signal names. The index of each signal
+            %                        format corresponds to the index of the
+            %                        sensor data. 
+            %
+            %           signalUnit - a 1 dimensional cell array of the
+            %                        signal units. The index of each signal
+            %                        unit corresponds to the index of the
+            %                        sensor data. Signal units end with a
+            %                        '*' when default calibration
+            %                        parameters are used.
+            %
+            %
+            %   EXAMPLE:  [newData,signalNameArray,signalFormatArray,signalUnitArray] = shimmer1.getdata('c');
+            %
+            %   See also setenabledsensors getenabledsignalnames
+            %   getsignalname getsignalindex getpercentageofpacketsreceived
+            
+            sensorData=double([]);
+            signalName=[];
+            signalFormat=[];
+            signalUnit=[];
+            
+            if (nargin > 2)                                                % getdata requires only one argument, dataMode = a, u, or c.
+                disp('Warning: getdata - Requires only one argument: dataMode = ''a'', ''u'', or ''c''.');
+                disp('Warning: getdata - Getdata has changed since MATLAB ID v2.3;');
+                disp('deprecatedgetdata() facilitates backwards compatibility');
+            elseif ~(strcmp(varargin{1},'c') || strcmp(varargin{1},'u') || strcmp(varargin{1},'a'))
+                disp('Warning: getdata - Valid arguments for getdata = ''a'', ''u'', or ''c''.');
+            else
+                dataMode = varargin{1};
+                [parsedData,systemTime] = capturedata(thisShimmer);
+                parsedData = double(parsedData);
+                
+                if (~isempty(parsedData))
+                                    
+                    numSignals = length(thisShimmer.SignalNameArray);      % get number of signals from signalNameArray
+                                                      
+                    s = 1;
+                    while s <= numSignals                                 % check signalNameArray for enabled signals
+                        if strcmp(thisShimmer.SignalNameArray(s),'Timestamp')
+                            [tempData,tempSignalName,tempSignalFormat,tempSignalUnit]=gettimestampdata(thisShimmer,dataMode,parsedData); % Time Stamp
+                            s = s+1;
+
+                            if (thisShimmer.EnableTimestampUnix && strcmp(dataMode,'c'))
+                                thisShimmer.LastSampleSystemTimeStamp = thisShimmer.convertMatlabTimeToUnixTimeMilliseconds(systemTime);
+                                nSamp = size(tempData,1);
+                                timeStampUnixData = zeros(nSamp,1);
+                                timeStampUnixData(nSamp) = thisShimmer.LastSampleSystemTimeStamp;
+                                for iUnix = 1:nSamp-1
+                                    timeStampUnixData(iUnix,1)=NaN;
+                                end
+                                timeStampUnixSignalName = 'Time Stamp Unix';
+                                timeStampUnixDataSignalFormat = 'CAL';
+                                timeStampUnixSignalUnit = 'milliseconds'; 
+                                tempData = [tempData timeStampUnixData];
+                                tempSignalName = [tempSignalName timeStampUnixSignalName];
+                                tempSignalFormat = [tempSignalFormat timeStampUnixDataSignalFormat];
+                                tempSignalUnit = [tempSignalUnit timeStampUnixSignalUnit];
+                            end
+                        elseif strcmp(thisShimmer.SignalNameArray(s),'Low Noise Accelerometer X')
+                            [tempData,tempSignalName,tempSignalFormat,tempSignalUnit]=getlownoiseacceldata(thisShimmer,dataMode,parsedData); % Shimmer3 only
+                            s = s+3;            % skip Y and Z
+                        elseif strcmp(thisShimmer.SignalNameArray(s),'Battery Voltage') % Shimmer3 battery voltage
+                            [tempData,tempSignalName,tempSignalFormat,tempSignalUnit]=getbattvoltdata(thisShimmer,dataMode,parsedData); %takes average of batt volt data and send a command to change LED if it is reaching low power
+                            s = s+1;
+                        elseif strcmp(thisShimmer.SignalNameArray(s),'Wide Range Accelerometer X')
+                            [tempData,tempSignalName,tempSignalFormat,tempSignalUnit]=getwiderangeacceldata(thisShimmer,dataMode,parsedData); % Shimmer3 only
+                            s = s+3;            % skip Y and Z
+                        elseif strcmp(thisShimmer.SignalNameArray(s),'Accelerometer X')
+                            [tempData,tempSignalName,tempSignalFormat,tempSignalUnit]=getacceldata(thisShimmer,dataMode,parsedData);
+                            s = s+3;            % skip Y and Z
+                        elseif strcmp(thisShimmer.SignalNameArray(s),'Gyroscope X')
+                            [tempData,tempSignalName,tempSignalFormat,tempSignalUnit]=getgyrodata(thisShimmer,dataMode,parsedData);
+                            if(thisShimmer.GyroInUseCalibration)
+                                if(dataMode == 'u')
+                                    thisShimmer.GyroBuffer = [thisShimmer.GyroBuffer; tempData];
+                                else
+                                    [uncalibratedGyroData,~,~,~] = getgyrodata(thisShimmer,'u',parsedData);
+                                    thisShimmer.GyroBuffer = [thisShimmer.GyroBuffer; uncalibratedGyroData];
+                                end
+                                bufferOverflow = size(thisShimmer.GyroBuffer,1) - thisShimmer.GyroBufferSize;
+                                if(bufferOverflow > 0)
+                                    thisShimmer.GyroBuffer = thisShimmer.GyroBuffer((bufferOverflow+1):end,:);
+                                end
+                                if(nomotiondetect(thisShimmer))
+                                    estimategyrooffset(thisShimmer); 
+                                end
+                            end
+                            s = s+3;            % skip Y and Z
+                        elseif strcmp(thisShimmer.SignalNameArray(s),'Magnetometer X')
+                            [tempData,tempSignalName,tempSignalFormat,tempSignalUnit]=getmagdata(thisShimmer,dataMode,parsedData);
+                            s = s+3;            % skip Y and Z
+                        elseif strcmp(thisShimmer.SignalNameArray(s),'GSR Raw')   % GSR
+                            if(ischar(thisShimmer.GsrRange))
+                                disp('Warning: getdata - GSR range undefined, see setgsrrange().');
+                            else
+                                [tempData,tempSignalName,tempSignalFormat,tempSignalUnit]=getgsrdata(thisShimmer,dataMode,parsedData);
+                                s = s+1;
+                            end
+                        elseif (strcmp(thisShimmer.SignalNameArray(s),'External ADC A7') || strcmp(thisShimmer.SignalNameArray(s),'External ADC A6') ||...  % Shimmer3 ADCs
+                                strcmp(thisShimmer.SignalNameArray(s),'External ADC A15') || strcmp(thisShimmer.SignalNameArray(s),'Internal ADC A1') ||...
+                                strcmp(thisShimmer.SignalNameArray(s),'Internal ADC A12') || strcmp(thisShimmer.SignalNameArray(s),'Internal ADC A13') ||...
+                                strcmp(thisShimmer.SignalNameArray(s),'Internal ADC A14'))
+                             
+                            [tempData,tempSignalName,tempSignalFormat,tempSignalUnit]=getadcdata(thisShimmer,dataMode,parsedData);
+                            thisShimmer.GetADCFlag = 1; % Set getadcdata flag so that getadcdata is only called once.
+                            s = s + 1;
+                        elseif (strcmp(thisShimmer.SignalNameArray(s),'Pressure') || strcmp(thisShimmer.SignalNameArray(s),'Temperature')) % Shimmer3 BMP180/BMP280 pressure and temperature)
+                            [tempData,tempSignalName,tempSignalFormat,tempSignalUnit]=getpressuredata(thisShimmer,dataMode,parsedData);
+                            s = s+2;
+                        elseif (strcmp(thisShimmer.SignalNameArray(s),'EXG1 STA') || strcmp(thisShimmer.SignalNameArray(s),'EXG2 STA')) % Shimmer3 EXG
+                            [tempData,tempSignalName,tempSignalFormat,tempSignalUnit]=getexgdata(thisShimmer,dataMode,parsedData);
+                            if (size(tempData,2) == 2)
+                                s = s+size(tempData,2)+1;  % EXG1 or EXG2 enabled.
+                            else
+                                s = s+size(tempData,2)+2;  % EXG1 and EXG2 enabled.
+                            end
+                        elseif strcmp(thisShimmer.SignalNameArray(s),'Bridge Amplifier High') % Shimmer3 Bridge Amplifier
+                            [tempData,tempSignalName,tempSignalFormat,tempSignalUnit]=getbridgeamplifierdata(thisShimmer,dataMode,parsedData);
+                            s = s+2;
+                        elseif strcmp(thisShimmer.SignalNameArray(s),'Strain Gauge High') % Shimmer2r Strain Gauge
+                            [tempData,tempSignalName,tempSignalFormat,tempSignalUnit]=getstraingaugedata(thisShimmer,dataMode,parsedData);
+                            s = s+2;
+                        end
+                        sensorData=[sensorData tempData];
+                        signalName=[signalName tempSignalName];
+                        signalFormat=[signalFormat tempSignalFormat];
+                        signalUnit=[signalUnit tempSignalUnit];
+                    end
+                    if (thisShimmer.Orientation3D && bitand(thisShimmer.EnabledSensors, hex2dec('E0'))>0 && strcmp(dataMode,'c')) % Get Quaternion data if Orientation3D setting and sensors Accel, Gyro and Mag are enabled.
+                        [accelData,~,~,~]=getacceldata(thisShimmer,'c',parsedData);
+                        [gyroData,~,~,~]=getgyrodata(thisShimmer,'c',parsedData);
+                        [magData,~,~,~]=getmagdata(thisShimmer,'c',parsedData);
+                        [quaternionData,tempSignalName,tempSignalFormat,tempSignalUnit]=getquaterniondata(thisShimmer,'c',accelData,gyroData,magData);
+                        
+                        sensorData=[sensorData quaternionData];
+                        signalName=[signalName tempSignalName];
+                        signalFormat=[signalFormat tempSignalFormat];
+                        signalUnit=[signalUnit tempSignalUnit];
+                    end
+                end
+            end
+            thisShimmer.GetADCFlag = 0; % Reset getadcdata flag.
+        end % function getdata
+        
+        function unixTimeMilliseconds = convertMatlabTimeToUnixTimeMilliseconds(matlabTime)
+            %CONVERTMATLABTIMETOUNIXTIMEMILLISECONDS - converts a MATLAB  
+            % date vector or date string to Unix Time in milliseconds.
+            %   
+            %   UNIXTIMEMILLISECONDS           = CONVERTMATLABTIMETOUNIXTIMEMILLISECONDS(MATLABTIME)
+            %                                     converts either a MATLAB date vector 
+            %                                     or date string to Unix Time in milliseconds.
+            %
+            %   SYNOPSIS: unixTimeMilliseconds = thisShimmer.convertMatlabTimeToUnixTimeMilliseconds(matlabTime)
+            %
+            %   INPUT:    matlabTime           - MATLAB date vector or date string
+            %
+            %   OUTPUT:   unixTimeMilliseconds - Unix time in milliseconds
+            %
+            %   See also datenum
+            
+            unixTimeMilliseconds = 24*3600*1000 * (datenum(matlabTime)-datenum('01-Jan-1970')) - (1*3600*1000); 
+        end
+
+        function framedData = framedata(thisShimmer, serialData)
+            serialData = cat(1,thisShimmer.SerialDataOverflow,serialData);                              % append serial data from previous function call to new serial data
+            framedData = [];
+            iDataRow = 1;
+            skip = 0;
+            indexFirstDataPacket = find(serialData == thisShimmer.DATA_PACKET_START_BYTE,1);            % find first data packet start byte
+            indexFirstAckResponse = find(serialData == thisShimmer.ACK_RESPONSE,1);                     % find first ack response byte
+            
+            if (isempty(indexFirstDataPacket) && isempty(indexFirstAckResponse))                        % check whether data packet start byte or ack response is found first in serial data
+                thisShimmer.SerialDataOverflow = serialData;                                            % use serial data in next function call in case no data packet start byte or ack response is found
+                framedData = [];
+                skip = 1;
+            elseif (isempty(indexFirstAckResponse))
+                currentIndex = indexFirstDataPacket;                                                    % start at first data packet start byte
+                ackFirst = 0;
+            elseif (isempty(indexFirstDataPacket) || indexFirstDataPacket > indexFirstAckResponse)
+                currentIndex = indexFirstAckResponse;                                                   % start at first ack response byte
+                ackFirst = 1;
+            else
+                currentIndex = indexFirstDataPacket;                                                    % start at first data packet start byte
+                ackFirst = 0;
+            end
+            
+            if ~skip
+                if ~(ackFirst)                                                                          % data packet start byte is found before ack response is found
+                    exitLoop = 0;
+                    endOfPacket = 0;
+                    while (currentIndex <= length(serialData) && ~exitLoop)                             % loop through serialData
+                        if (length(serialData(currentIndex:end)) >= (thisShimmer.nBytesDataPacket))                                                          % check if there are enough bytes for a full packet
+                            if (length(serialData(currentIndex:end)) == (thisShimmer.nBytesDataPacket))                                                      % check if there are exactly enough bytes for one packet - it is the last packet
+                                framedData(iDataRow,1:thisShimmer.nBytesDataPacket) = serialData(currentIndex:currentIndex-1+thisShimmer.nBytesDataPacket);  % add current packet to framedData
+                                currentIndex = length(serialData);
+                                endOfPacket = 1;
+                            elseif (serialData(currentIndex+thisShimmer.nBytesDataPacket)==thisShimmer.ACK_RESPONSE)                                         % next byte after nBytesDataPacket bytes is 0xFF
+                                framedData(iDataRow,1:thisShimmer.nBytesDataPacket) = serialData(currentIndex:currentIndex-1+thisShimmer.nBytesDataPacket);  % add current packet to framedData
+                                thisShimmer.SerialDataOverflow = serialData(currentIndex+thisShimmer.nBytesDataPacket:end);                                  % use serial data in next function call
+                                exitLoop = 1;                                                                                                                % exit while loop
+                            elseif (serialData(currentIndex+thisShimmer.nBytesDataPacket)==thisShimmer.DATA_PACKET_START_BYTE)                               % next byte after nBytesDataPacket bytes is 0x00
+                                framedData(iDataRow,1:thisShimmer.nBytesDataPacket) = serialData(currentIndex:currentIndex-1+thisShimmer.nBytesDataPacket);  % add current packet to framedData
+                                currentIndex = currentIndex+thisShimmer.nBytesDataPacket;                                                                    % update index to next data packet start byte
+                                iDataRow = iDataRow + 1;
+                            else                                                                        % error, discard first byte and pass rest to overflow - not last packet and first byte after nBytesDataPacket is not 0x00 or 0xFF
+                                thisShimmer.SerialDataOverflow = serialData(currentIndex+1:end);        % use serial data - apart from first byte - in next function call
+                                exitLoop = 1;                                                           % exit while loop
+                            end
+                        else                                                                            % not enough bytes for a full packet
+                            if (endOfPacket)
+                                thisShimmer.SerialDataOverflow = [];                                    % all serial data is used in current function call
+                            else
+                                thisShimmer.SerialDataOverflow = serialData(currentIndex:end);          % use serial data in next function call
+                            end
+                            exitLoop = 1;                                                               % exit while loop
+                        end
+                    end
+                else                                                                                    % ack response byte is found before data packet start byte is found
+                    if (currentIndex == length(serialData))
+                        thisShimmer.SerialDataOverflow = serialData(currentIndex:end);                  % use serial data in next function call
+                    elseif (serialData(currentIndex+1) == thisShimmer.ACK_RESPONSE)                     % check if next byte is also acknowledgement byte
+                        thisShimmer.SerialDataOverflow = serialData(currentIndex+1:end);                % discard acknowledgement byte and pass rest to overflow for next function call
+                    elseif (serialData(currentIndex+1) == thisShimmer.DATA_PACKET_START_BYTE)           % check if next byte is data start byte
+                        thisShimmer.SerialDataOverflow = serialData(currentIndex+1:end);                % discard acknowledgement byte and pass rest to overflow for next function call
+                    elseif (serialData(currentIndex+1) ==  thisShimmer.INSTREAM_CMD_RESPONSE)
+                        if (currentIndex <= length(serialData(currentIndex:end))-3)                     % check if enough bytes for a response
+                            if (serialData(currentIndex+2) ==  thisShimmer.STATUS_RESPONSE)
+                                thisShimmer.SerialDataOverflow = serialData(currentIndex+4:end);        % pass rest of bytes to overflow
+                            elseif (serialData(currentIndex+2) ==  thisShimmer.VBATT_RESPONSE)
+                                
+                                if (currentIndex <= length(serialData(currentIndex:end))-3-2)      % check if enough bytes for full response
+                                    battAdcValue = uint32(uint16(serialData(currentIndex+3+1))*256 + uint16(serialData(currentIndex+3)));                % battery ADC value
+                                    batteryVoltage = calibrateu12ADCValue(thisShimmer,battAdcValue,0,3.0,1.0)*1.988; % calibrate 12-bit ADC value with offset = 0; vRef=3.0; gain=1.0
+                                    fprintf(['Battery Voltage: ' num2str(batteryVoltage) '[mV]' '\n']);
+                                    thisShimmer.LatestBatteryVoltageReading = batteryVoltage;
+                                    thisShimmer.SerialDataOverflow = serialData(currentIndex+5+1:end);        % pass rest of bytes to overflow
+                                else                                                                    % not enough bytes to get the full directory name
+                                    thisShimmer.SerialDataOverflow = serialData(currentIndex:end);      % discard acknowledgement byte and pass rest to overflow for next function call
+                                end
+                                
+                            else                                                                        % (0xFF, 0x8A, ~0x71 && ~0x88)
+                                thisShimmer.SerialDataOverflow = serialData(currentIndex+1:end);        % discard acknowledgement byte and pass rest to overflow for next function call
+                            end
+                        else                                                                            % not enough bytes for full response
+                            thisShimmer.SerialDataOverflow = serialData(currentIndex:end);              % discard acknowledgement byte and pass rest to overflow for next function call
+                        end
+                    else                                                                                % is not last byte, 0xFF, 0x00, 0x8A - assume error occurred - discard first byte and pass rest to overflow for next function call
+                        thisShimmer.SerialDataOverflow = serialData(currentIndex+1:end);                % discard acknowledgement byte and pass rest to overflow for next function call
+                    end
+                end
+            end
+        end % function framedata
+                
+        function parsedData = parsedata(thisShimmer, framedData)
+            % Parses framed data from input framedData.
+            if ~isempty(framedData)                                       % TRUE if framedData is not empty
+                
+                iColFramedData=2;                                         % Start at 2nd column, 1st colum is data packet identifier
+                
+                for iColParsedData=1:length(thisShimmer.SignalDataTypeArray)
+                    
+                    dataType=char(thisShimmer.SignalDataTypeArray(iColParsedData));
+                    
+                    switch dataType
+                        case('u24')
+                            lsbArray(:,1) = uint32(framedData(:,iColFramedData + 0));                % Extract the least significant byte and convert to unsigned 32bit
+                            msbArray(:,1) = uint32(256*uint32(framedData(:,iColFramedData + 1)));    % Extract the most significant byte and convert to unsigned 32bit
+                            xmsbArray(:,1)= uint32(65536*uint32(framedData(:,iColFramedData + 2)));  % Extract the most significant byte and convert to unsigned 32bit
+                            parsedData(:,iColParsedData) = int32(xmsbArray+uint32(msbArray) + uint32(lsbArray));  % Convert to signed 32bit integer to enable creation of array of all data
+                            iColFramedData = iColFramedData + 3;                                     % Increment column offset by 3 bytes for next column of sensor data                           
+                        case('u8')
+                            lsbArray(:,1) = uint8(framedData(:,iColFramedData));                     % Extract the column of bytes of interest
+                            parsedData(:,iColParsedData) = int32(lsbArray);                          % Convert to signed 32bit integer to enable creation of array of all data
+                            iColFramedData = iColFramedData + 1;                                     % Increment column offset by 1 byte for next column of sensor data
+                        case('i8')
+                            lsbArray(:,1) = int8(framedData(:,iColFramedData));                      % Extract the column of bytes of interest
+                            parsedData(:,iColParsedData) = int32(lsbArray);                          % Convert to signed 32bit integer to enable creation of array of all data
+                            iColFramedData = iColFramedData + 1;                                     % Increment column offset by 1 byte for next column of sensor data
+                        case('u12')
+                            lsbArray(:,1) = uint16(framedData(:,iColFramedData));                    % Extract the least significant byte and convert to unsigned 16bit
+                            msbArray(:,1) = uint16(bitand(15,framedData(:,iColFramedData + 1)));     % Extract the most significant byte, set 4 MSBs to 0 and convert to unsigned 16bit
+                            parsedData(:,iColParsedData) = int32(256*msbArray + lsbArray);           % Convert to signed 32bit integer to enable creation of array of all data
+                            iColFramedData = iColFramedData + 2;                                     % Increment column offset by 2 bytes for next column of sensor data
+                        case('u16')
+                            lsbArray(:,1) = uint16(framedData(:,iColFramedData));                    % Extract the least significant byte and convert to unsigned 16bit
+                            msbArray(:,1) = uint16(framedData(:,iColFramedData + 1));                % Extract the most significant byte and convert to unsigned 16bit
+                            parsedData(:,iColParsedData) = int32(256*msbArray + lsbArray);           % Convert to signed 32bit integer to enable creation of array of all data
+                            iColFramedData = iColFramedData + 2;                                     % Increment column offset by 2 bytes for next column of sensor data
+                        case('u16*')
+                            lsbArray(:,1) = uint16(framedData(:,iColFramedData + 1));                % Extract the least significant byte and convert to unsigned 16bit
+                            msbArray(:,1) = uint16(framedData(:,iColFramedData + 0));                % Extract the most significant byte and convert to unsigned 16bit
+                            parsedData(:,iColParsedData) = int32(256*msbArray + lsbArray);           % Convert to signed 32bit integer to enable creation of array of all data
+                            iColFramedData = iColFramedData + 2;      
+                        case('i16')
+                            lsbArray(:,1) = uint16(framedData(:,iColFramedData));                    % Extract the least significant byte and convert to unsigned 16bit
+                            msbArray(:,1) = uint16(framedData(:,iColFramedData + 1));                % Extract the most significant byte and convert to unsigned 16bit
+                            parsedData(:,iColParsedData) = int32(256*msbArray + lsbArray);           % Convert to signed 32bit integer to enable creation of array of all data
+                            iColFramedData = iColFramedData + 2;                                     % Increment column offset by 2 bytes for next column of sensor data
+                            parsedData(:,iColParsedData) = calculatetwoscomplement(thisShimmer,cast(parsedData(:,iColParsedData),'uint16'),16);
+                        case('i16*')
+                            lsbArray(:,1) = uint16(framedData(:,iColFramedData+1));                  % Extract the least significant byte and convert to unsigned 16bit
+                            msbArray(:,1) = uint16(framedData(:,iColFramedData));                    % Extract the most significant byte and convert to unsigned 16bit
+                            parsedData(:,iColParsedData) = int32(256*msbArray + lsbArray);           % Convert to signed 32bit integer to enable creation of array of all data
+                            iColFramedData = iColFramedData + 2;                                     % Increment column offset by 2 bytes for next column of sensor data
+                            parsedData(:,iColParsedData) = calculatetwoscomplement(thisShimmer,cast(parsedData(:,iColParsedData),'uint16'),16);
+                        case('i16>') % int16 to 12 bits
+                            lsbArray(:,1) = uint16(framedData(:,iColFramedData));                    % Extract the least significant byte and convert to unsigned 16bit
+                            msbArray(:,1) = uint16(framedData(:,iColFramedData + 1));                % Extract the most significant byte and convert to unsigned 16bit
+                            parsedData(:,iColParsedData) = int32(256*msbArray + lsbArray);           % Convert to signed 32bit integer to enable creation of array of all data
+                            iColFramedData = iColFramedData + 2;                                     % Increment column offset by 2 bytes for next column of sensor data
+                            parsedData(:,iColParsedData) = calculatetwoscomplement(thisShimmer,cast(parsedData(:,iColParsedData),'uint16'),16);
+                            parsedData(:,iColParsedData) = parsedData(:,iColParsedData)/16;
+                        case('u24*') %bytes reverse order
+                            lsbArray(:,1) = uint32(framedData(:,iColFramedData + 2));                % Extract the least significant byte and convert to unsigned 32bit
+                            msbArray(:,1) = uint32(256*uint32(framedData(:,iColFramedData + 1)));    % Extract the most significant byte and convert to unsigned 32bit
+                            xmsbArray(:,1)= uint32(65536*uint32(framedData(:,iColFramedData + 0)));  % Extract the most significant byte and convert to unsigned 32bit
+                            parsedData(:,iColParsedData) = int32(xmsbArray+uint32(msbArray) + uint32(lsbArray));
+                            iColFramedData = iColFramedData + 3;
+                        case('i24*') 
+                            lsbArray(:,1) = uint32(framedData(:,iColFramedData + 2));                % Extract the least significant byte and convert to unsigned 32bit
+                            msbArray(:,1) = uint32(256*uint32(framedData(:,iColFramedData + 1)));    % Extract the most significant byte and convert to unsigned 32bit
+                            xmsbArray(:,1)= uint32(65536*uint32(framedData(:,iColFramedData + 0)));  % Extract the most significant byte and convert to unsigned 32bit
+                            parsedData(:,iColParsedData) = uint32(xmsbArray+uint32(msbArray) + uint32(lsbArray));  % Convert to signed 32bit integer to enable creation of array of all data
+                            parsedData(:,iColParsedData) = calculatetwoscomplement(thisShimmer,cast(parsedData(:,iColParsedData),'uint32'),24);
+                            iColFramedData = iColFramedData + 3;                                     % Increment column offset by 2 bytes for next column of sensor data
+                    end
+                end
+                
+            else
+                parsedData = [];                                                                     % Return empty array
+            end
+        end % function parsedata
     end
 end
