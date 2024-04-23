@@ -94,7 +94,7 @@ classdef ShimmerHandleClass < handle
 
         Orientation3D = 1;                                  % Enable/disable 3D orientation, i.e. get quaternions in getdata
 
-        GyroInUseCalibration = 0;                           % Enable/disable gyro in-use calibration
+        GyroInUseCalibration = 1;                           % Enable/disable gyro in-use calibration
         GyroBufferSize = 100;                               % Buffer size (samples)
         GyroBuffer;                                         % Buffer for gyro in-use calibration
         GyroMotionThreshold = 1.2;                          % Threshold for detecting motion
@@ -1305,6 +1305,23 @@ classdef ShimmerHandleClass < handle
                 fprintf(strcat('Warning: getgyrodata - Cannot get data as COM ',thisShimmer.name,' Shimmer is not Streaming'));
             end
         end
+
+        function noMotion = nomotiondetect(thisShimmer)
+            % Detects if Shimmer is not moving.
+            stdGyroBuffer = std(thisShimmer.GyroBuffer);
+            if(max(stdGyroBuffer) <= thisShimmer.GyroMotionThreshold)
+                noMotion = true;
+            else
+                noMotion = false;
+            end
+        end % function nomotiondetect
+
+        function [] = estimategyrooffset(thisShimmer)
+            % Estimates Gyroscope offset.
+            meanGyroBuffer = mean(thisShimmer.GyroBuffer,1);
+            
+            thisShimmer.GyroCalParametersOV = meanGyroBuffer';
+        end % function estimategyrooffset
 
         function [parsedData,systemTime] = capturedata(thisShimmer)
             % Reads data from the serial buffer, frames and parses these data.

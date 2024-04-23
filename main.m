@@ -3,11 +3,15 @@ clear;
 SensorMacros = SetEnabledSensorsMacrosClass;
 
 shimmer1 = ShimmerHandleClass("Shimmer3-5852");
+shimmer2 = ShimmerHandleClass("Shimmer3-7188");
 
 shimmer1.connect;
-shimmer1.stopStreaming;
+shimmer2.connect;
 
-orientation3Dexample(shimmer1, 20, 'testdata.dat');
+shimmer1.stopStreaming;
+shimmer2.stopStreaming;
+
+orientation3Dexample(shimmer2, 30, 'testdata.dat');
 
 % if (shimmer1.disableAllSensors)
 %     disp(shimmer1.name + " sensors disabled");
