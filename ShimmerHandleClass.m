@@ -8,19 +8,20 @@ classdef ShimmerHandleClass < handle
     
     properties (Constant = true)
         %Commands
-        %See the BtStream for Shimmer Firmware User Manual for more
-
         INQUIRY_COMMAND           = 0x01;
         SET_SENSORS_COMMAND       = 0x08;
         START_STREAMING_COMMAND   = 0x07;
         STOP_STREAMING_COMMAND    = 0x20;
+        GET_ACCEL_RANGE_COMMAND = char(11);                                % Get accelerometer range command sent to the shimmer in order to receive the accelerometer range response
 
+        %Responses
         ACK_RESPONSE              = 255; %Shimmer acknowledged response       
         DATA_PACKET_START_BYTE    = 0;   %Start of each streamed packet
         STATUS_RESPONSE           = char(hex2dec('71'));
         INSTREAM_CMD_RESPONSE     = char(hex2dec('8A'));
-        VBATT_RESPONSE            = char(hex2dec('94')); 
-
+        VBATT_RESPONSE            = char(hex2dec('94'));
+        INQUIRY_RESPONSE          = 0x02;
+        ACCEL_RANGE_RESPONSE      = newline;                               % First byte value received from the shimmer in the accel range response, it is followed by the byte value defining the setting
 
         %Sensors
         SENSOR_A_ACCEL            = 8;   % 0x000080
@@ -64,11 +65,28 @@ classdef ShimmerHandleClass < handle
         SignalDataTypeArray;                                % Cell array contain the names of the sensor signal datatypes in string format
         nBytesDataPacket;                                   % Unsigned integer value containing the size of a data packet for the Shimmer in its current setting
 
+        BufferSize = 1;                                     % Not currently used
+
         SamplingRate = 'Nan';                               % Numerical value defining the sampling rate of the Shimmer
+        ConfigByte0;                                        % The current value of the config byte0 setting on the Shimmer
+        ConfigByte1;                                        % The current value of the config byte1 setting on the Shimmer3
+        ConfigByte2;                                        % The current value of the config byte2 setting on the Shimmer3
+        ConfigByte3;                                        % The current value of the config byte3 setting on the Shimmer3
+
+        AccelRange='Nan';                                   % Numerical value defining the accelerometer range of the Shimmer
+        AccelWideRangeDataRate='Nan';
+        AccelWideRangeHRMode = 'Nan';                       % High Resolution mode LSM303DLHC/LSM303AHTR
+        AccelWideRangeLPMode = 'Nan';                       % Low Power mode LSM303DLHC/LSM303AHTR
+        MagRange='Nan';                                                    % Numerical value defining the mag range of the Shimmer
+        GyroRange='Nan';                                                   % Numerical value defining the gyro range of the Shimmer
+        MagRate='Nan';                                                     % Numerical value defining the mag rate of the Shimmer
+        InternalExpPower='Nan';                                            % Numerical value defining the internal exp power for the Shimmer3
+        GyroRate='Nan';
+        PressureResolution='Nan';
         EnabledSensors;
 
         % Enable PC Timestamps
-        EnableTimestampUnix = 1;
+        EnableTimestampUnix = 0;
         LastSampleSystemTimeStamp = 0;
 
         Orientation3D = 1;                                  % Enable/disable 3D orientation, i.e. get quaternions in getdata
@@ -82,6 +100,71 @@ classdef ShimmerHandleClass < handle
 
         LatestBatteryVoltageReading = 'Nan'; 
         GsrRange='Nan';                                     % Numerical value defining the gsr range of the Shimmer
+
+        % ACCEL Calibration
+        DefaultAccelCalibrationParameters=true;
+        DefaultDAccelCalibrationParameters=true;
+        AccelCalParametersOV=[2048;2048;2048];                             
+        AccelCalParametersSM=[101 0 0; 0 101 0; 0 0 101];
+        AccelCalParametersAM=[-1 0 0; 0 -1 0; 0 0 1];   
+        % Needed to store calibration values of Digital Accel
+        DAccelCalParametersOV=[0;0;0];                           
+        DAccelCalParametersSM=[1631 0 0; 0 1631 0; 0 0 1631]; 
+        DAccelCalParametersAM=[-1 0 0; 0 1 0; 0 0 -1];   
+
+        % Accel Calibration Default Values for Shimmer3
+        AccelLowNoiseCalParametersSM2gShimmer3=[83 0 0; 0 83 0; 0 0 83];           % Default Calibration Parameters for Accelerometer (Sensitivity Matrix (2g))  - KXRB5-2042
+        AccelLowNoiseCalParametersSM2gShimmer3_2=[92 0 0; 0 92 0; 0 0 92];         % Default Calibration Parameters for Accelerometer (Sensitivity Matrix (2g))  - KXTC9-2050
+        AccelWideRangeCalParametersSM2gShimmer3=[1631 0 0; 0 1631 0; 0 0 1631];    % Default Calibration Parameters for Accelerometer (Sensitivity Matrix (2g))  - LSM303DLHC
+        AccelWideRangeCalParametersSM4gShimmer3=[815 0 0; 0 815 0; 0 0 815];       % Default Calibration Parameters for Accelerometer (Sensitivity Matrix (4g))  - LSM303DLHC
+        AccelWideRangeCalParametersSM8gShimmer3=[408 0 0; 0 408 0; 0 0 408];       % Default Calibration Parameters for Accelerometer (Sensitivity Matrix (8g))  - LSM303DLHC
+        AccelWideRangeCalParametersSM16gShimmer3=[135 0 0; 0 135 0; 0 0 135];      % Default Calibration Parameters for Accelerometer (Sensitivity Matrix (16g)) - LSM303DLHC
+        AccelWideRangeCalParametersSM2gShimmer3_2=[1671 0 0; 0 1671 0; 0 0 1671];  % Default Calibration Parameters for Accelerometer (Sensitivity Matrix (2g))  - LSM303AHTR
+        AccelWideRangeCalParametersSM4gShimmer3_2=[836 0 0; 0 836 0; 0 0 836];     % Default Calibration Parameters for Accelerometer (Sensitivity Matrix (4g))  - LSM303AHTR
+        AccelWideRangeCalParametersSM8gShimmer3_2=[418 0 0; 0 418 0; 0 0 418];     % Default Calibration Parameters for Accelerometer (Sensitivity Matrix (8g))  - LSM303AHTR
+        AccelWideRangeCalParametersSM16gShimmer3_2=[209 0 0; 0 209 0; 0 0 209];    % Default Calibration Parameters for Accelerometer (Sensitivity Matrix (16g)) - LSM303AHTR
+        AccelLowNoiseCalParametersOVShimmer3=[2047;2047;2047];                     % KXRB5-2042
+        AccelLowNoiseCalParametersOVShimmer3_2=[2253;2253;2253];                   % KXTC9-2050
+        AccelWideRangeCalParametersOVShimmer3=[0;0;0];                             % LSM303DLHC/LSM303AHTR
+        AccelLowNoiseCalParametersAMShimmer3=[0 -1 0; -1 0 0; 0 0 -1];             % KXRB5-2042/KXTC9-2050
+        AccelWideRangeCalParametersAMShimmer3=[-1 0 0; 0 1 0; 0 0 -1];             % LSM303DLHC
+        AccelWideRangeCalParametersAMShimmer3_2=[0 -1 0; 1 0 0; 0 0 -1];           % LSM303AHTR
+        
+        
+        % GYRO Calibration
+        DefaultGyroCalibrationParameters=true;
+        GyroCalParametersOV=[0;0;0];                              
+        GyroCalParametersSM=[2.73 0 0; 0 2.73 0; 0 0 2.73];                
+        GyroCalParametersAM=[0 -1 0; -1 0 0; 0 0 -1];                      
+        % Gyro Calibration Default Values for Shimmer3
+        GyroCalParametersOVShimmer3=[0;0;0];                               % Default Calibration Parameters for Gyroscope (Offset Vector)
+        GyroCalParametersSM2000dpsShimmer3=[16.4 0 0; 0 16.4 0; 0 0 16.4]; % Default Calibration Parameters for Gyroscope (Sensitivity Matrix)
+        GyroCalParametersSM1000dpsShimmer3=[32.8 0 0; 0 32.8 0; 0 0 32.8]; % Default Calibration Parameters for Gyroscope (Sensitivity Matrix)
+        GyroCalParametersSM500dpsShimmer3=[65.5 0 0; 0 65.5 0; 0 0 65.5];  % Default Calibration Parameters for Gyroscope (Sensitivity Matrix)
+        GyroCalParametersSM250dpsShimmer3=[131 0 0; 0 131 0; 0 0 131];     % Default Calibration Parameters for Gyroscope (Sensitivity Matrix)
+        GyroCalParametersAMShimmer3=[0 -1 0; -1 0 0; 0 0 -1];              % Default Calibration Parameters for Gyroscope (Alignment Matrix)
+        
+        %MAG Calibration
+        DefaultMagneCalibrationParameters=true;
+        MagneCalParametersOV=[0;0;0];                                      
+        MagneCalParametersSM=[580 0 0;0 580 0;0 0 580];                    
+        MagneCalParametersAM=[1 0 0; 0 1 0; 0 0 -1];                       
+        % Mag Calibration Default Values for Shimmer3
+        MagneCalParametersOVShimmer3=[0;0;0];                              % Default Calibration Parameters for Magnetometer (Offset Vector)      - LSM303DLHC/LSM303AHTR
+        MagneCalParametersSM1_3gaussShimmer3=[1100 0 0;0 1100 0;0 0 980];  % Default Calibration Parameters for Magnetometer (Sensitivity Matrix) - LSM303DLHC
+        MagneCalParametersSM1_9gaussShimmer3=[855 0 0;0 855 0;0 0 760];    % Default Calibration Parameters for Magnetometer (Sensitivity Matrix) - LSM303DLHC
+        MagneCalParametersSM2_5gaussShimmer3=[670 0 0;0 670 0;0 0 600];    % Default Calibration Parameters for Magnetometer (Sensitivity Matrix) - LSM303DLHC
+        MagneCalParametersSM4_0gaussShimmer3=[450 0 0;0 450 0;0 0 400];    % Default Calibration Parameters for Magnetometer (Sensitivity Matrix) - LSM303DLHC
+        MagneCalParametersSM4_7gaussShimmer3=[400 0 0;0 400 0;0 0 355];    % Default Calibration Parameters for Magnetometer (Sensitivity Matrix) - LSM303DLHC
+        MagneCalParametersSM5_6gaussShimmer3=[330 0 0;0 330 0;0 0 295];    % Default Calibration Parameters for Magnetometer (Sensitivity Matrix) - LSM303DLHC
+        MagneCalParametersSM8_1gaussShimmer3=[230 0 0;0 230 0;0 0 205];    % Default Calibration Parameters for Magnetometer (Sensitivity Matrix) - LSM303DLHC
+        MagneCalParametersSM49_2gaussShimmer3=[667 0 0;0 667 0;0 0 667];   % Default Calibration Parameters for Magnetometer (Sensitivity Matrix) - LSM303DLHC
+
+        MagneCalParametersAMShimmer3=[-1 0 0; 0 1 0; 0 0 -1];              % Default Calibration Parameters for Magnetometer (Alignment Matrix)   - LSM303DLHC
+        MagneCalParametersAMShimmer3_2=[0 -1 0; 1 0 0; 0 0 -1];            % Default Calibration Parameters for Magnetometer (Alignment Matrix)   - LSM303AHTR
+
+        nClockOverflows = 0;                                               % count number of clock overflows for time stamp calibration
+        LastUncalibratedLoopTimeStamp = 0;                                 % Last received uncalibrated looped time stamp data
     end
     
     methods
@@ -97,7 +180,6 @@ classdef ShimmerHandleClass < handle
         %Connect to the Shimmer
         function isConnected = connect(thisShimmer)
             thisShimmer.isConnected = false;
-            
             try
                 thisShimmer.bluetoothConn = bluetooth(thisShimmer.name);
                 thisShimmer.isConnected = true;
@@ -106,6 +188,26 @@ classdef ShimmerHandleClass < handle
 
             isConnected = thisShimmer.isConnected;
         end
+
+        function isRead = readenabledsensors(thisShimmer)
+            % Calls the inquiry function and updates the EnabledSensors property.
+            if (thisShimmer.isConnected)
+                
+                flush(thisShimmer.bluetoothConn, "input");                          % As a precaution always clear the read data buffer before a write
+                isRead = inquiry(thisShimmer);                             % Send an inquiry command to the Shimmer
+                                                
+                if (~isRead)
+                    thisShimmer.EnabledSensors = 'Nan';                    % Set the EnabledSensors to 'Nan' to indicate unknown
+                    fprintf(strcat('Warning: readenabledsensors - inquiry command response expected but not returned for Shimmer COM',thisShimmer.name,'.\n'));
+                    isRead = false;
+                end
+                
+            else
+                isRead = false;
+                fprintf(strcat('Warning: readenabledsensors - Cannot get enabled sensors for COM ',thisShimmer.name,' as Shimmer is not connected.\n'));
+            end
+            
+        end % function readenabledsensors
 
         function isAcknowledged = waitForAck(thisShimmer, timeout)
             % Reads serial data buffer until either an acknowledgement is
@@ -182,6 +284,10 @@ classdef ShimmerHandleClass < handle
             enabledSensors = determineEnabledSensorsBytes(thisShimmer, varargin);
 
             sensorsSet = writeEnabledSensors(thisShimmer, uint32(enabledSensors));  
+
+            if (sensorsSet)
+                readenabledsensors(thisShimmer);    % Following a succesful write, call the readenabledsensors function which updates the enabledSensors property with the current Shimmer enabled sensors setting                    
+            end
         end
 
         %Write the enabled sensors to the shimmer
@@ -371,6 +477,187 @@ classdef ShimmerHandleClass < handle
             end                   
         end
 
+        function isRead = readaccelrange(thisShimmer)
+            % Sends the GET_ACCEL_RANGE_COMMAND to Shimmer - in Connected state 
+            % Receives the accel range and updates the AccelRange property.
+            if (thisShimmer.isConnected)
+                
+                clearreaddatabuffer(thisShimmer);                                          % As a precaution always clear the read data buffer before a write
+                writetocomport(thisShimmer, thisShimmer.GET_ACCEL_RANGE_COMMAND);          % Send the Set Accel Range Command to the Shimmer
+                
+                isAcknowledged = waitforack(thisShimmer, thisShimmer.DEFAULT_TIMEOUT);     % Wait for Acknowledgment from Shimmer
+                
+                if (isAcknowledged == true)
+                    [shimmerResponse] = read(thisShimmer.bluetoothConn, 2);        % Read the 2 byte response from the realterm buffer
+                    
+                    if ~isempty(shimmerResponse)
+                        
+                        if (shimmerResponse(1) == thisShimmer.ACCEL_RANGE_RESPONSE)
+                            thisShimmer.AccelRange = shimmerResponse(2);
+                            isRead = true;
+                        else
+                            thisShimmer.AccelRange = 'Nan';                % Set the AccelRange to 'Nan' to indicate unknown
+                            fprintf(strcat('Warning: readaccelrange - Get accel range command response expected but not returned for Shimmer COM',thisShimmer.name,'.\n'));
+                            isRead = false;
+                        end
+                    else
+                        thisShimmer.AccelRange = 'Nan';                % Set the AccelRange to 'Nan' to indicate unknown
+                        fprintf(strcat('Warning: readaccelrange - Get accel range command response expected but not returned for Shimmer COM',thisShimmer.name,'.\n'));
+                        isRead = false;
+                    end
+                else
+                    thisShimmer.AccelRange = 'Nan';                        % Set the AccelRange to 'Nan' to indicate unknown
+                    fprintf(strcat('Warning: readaccelrange - Get accel range command response expected but not returned for Shimmer COM',thisShimmer.name,'.\n'));
+                    isRead = false;
+                end
+                
+            else
+                isRead = false;
+                fprintf(strcat('Warning: readaccelrange - Cannot get accel range for COM ',thisShimmer.name,' as Shimmer is not connected.\n'));
+            end
+            
+        end % function readaccelrange
+
+        function isSet = setaccelrange(thisShimmer, accelRange)
+            %SETACCELRANGE - Set the accelerometer range of the Shimmer
+            %
+            %SETACCELRANGE(ACCELRANGE) sets the accelerometer range of the
+            %   Shimmer to the value of the input ACCELRANGE.
+            %   The function will return a 1 if the operation was successful
+            %   otherwise it will return a 0.
+            %
+            %   SYNOPSIS: isSet = thisShimmer.setaccelrange(accelRange)
+            %
+            %   INPUT: accelRange - Numeric value defining the desired
+            %                       accelerometer range.
+            %                       Valid range setting values for the Shimmer
+            %                       2 are 0 (+/- 1.5g), 1 (+/- 2g), 2 (+/- 4g)
+            %                       and 3 (+/- 6g).
+            %                       Valid range setting values for the Shimmer
+            %                       2r are 0 (+/- 1.5g) and 3 (+/- 6g).
+            %                       Valid range setting values for the
+            %                       Shimmer3 with LSM303DLHC are 0 (+/- 2g),
+            %                       1 (+/- 4g), 2 (+/- 8g) and 3 (+/- 16g).
+            %                       Valid range setting values for the
+            %                       Shimmer3 with LSM303AHTR are 0 (+/- 2g),
+            %                       1 (+/- 16g), 2 (+/- 4g) and 3 (+/- 8g).
+            %
+            %   OUTPUT: isSet - Boolean value which indicates if the operation was
+            %                   successful or not (1=TRUE, 0=FALSE).
+            %
+            %   EXAMPLE: isSet = shimmer1.setaccelrange(0);
+            %
+            %   See also getaccelrange
+            
+            if (strcmp(thisShimmer.State,'Connected'))                     % Shimmer must be in a Connected state
+                
+                isWritten = writeaccelrange(thisShimmer,accelRange);       % Write accelerometer range to the Shimmer
+                
+                if (isWritten)
+                    isRead = readaccelrange(thisShimmer);                  % Following a succesful write, call the readaccelrange function which updates the accelRange property with the current Shimmer accel range setting
+                    
+                    if (isRead)
+                        isSet = (accelRange == thisShimmer.AccelRange);    % isSet will be equal to 1 the current Accel range setting is equal to the requested setting
+                        disp('Please ensure you are using the correct calibration parameters. Note that the Shimmer only stores one set (one range per sensor) of calibration parameters.');
+                        if (thisShimmer.ShimmerVersion < thisShimmer.SHIMMER_3)
+                            if (thisShimmer.DefaultAccelCalibrationParameters == true)
+                                thisShimmer.AccelCalParametersOV = thisShimmer.AccelCalParametersOVShimmer2;
+                                thisShimmer.AccelCalParametersAM = thisShimmer.AccelCalParametersAMShimmer2;
+                                %   check accel range, valid range setting values for the Shimmer
+                                %   2 are 0 (+/- 1.5g), 1 (+/- 2g), 2 (+/- 4g)and 3 (+/- 6g)
+                                if thisShimmer.getaccelrange==0
+                                    thisShimmer.AccelCalParametersSM = thisShimmer.AccelCalParametersSM1p5gShimmer2;
+                                end
+                                
+                                if thisShimmer.getaccelrange==1
+                                    thisShimmer.AccelCalParametersSM = thisShimmer.AccelCalParametersSM2gShimmer2;
+                                end
+                                
+                                if thisShimmer.getaccelrange==2
+                                    thisShimmer.AccelCalParametersSM = thisShimmer.AccelCalParametersSM4gShimmer2;
+                                end
+                                
+                                if thisShimmer.getaccelrange==3
+                                    thisShimmer.AccelCalParametersSM = thisShimmer.AccelCalParametersSM6gShimmer2;
+                                end
+                            end
+                        else
+                            thisShimmer.readconfigbytes;                   % update config bytes class properties
+                            thisShimmer.DAccelCalParametersOV = thisShimmer.AccelWideRangeCalParametersOVShimmer3;
+                            if thisShimmer.HardwareCompatibilityCode < 2
+                                thisShimmer.DAccelCalParametersAM = thisShimmer.AccelWideRangeCalParametersAMShimmer3;
+                                if (thisShimmer.getaccelrange==0 && thisShimmer.DefaultAccelCalibrationParameters == true)
+                                    thisShimmer.DAccelCalParametersSM = thisShimmer.AccelWideRangeCalParametersSM2gShimmer3;
+                                end
+                                if (thisShimmer.getaccelrange==1 && thisShimmer.DefaultDAccelCalibrationParameters == true)
+                                    thisShimmer.DAccelCalParametersSM = thisShimmer.AccelWideRangeCalParametersSM4gShimmer3;
+                                end
+                                if (thisShimmer.getaccelrange==2 && thisShimmer.DefaultDAccelCalibrationParameters == true)
+                                    thisShimmer.DAccelCalParametersSM = thisShimmer.AccelWideRangeCalParametersSM8gShimmer3;
+                                end
+                                if (thisShimmer.getaccelrange==3 && thisShimmer.DefaultDAccelCalibrationParameters == true)
+                                    thisShimmer.DAccelCalParametersSM = thisShimmer.AccelWideRangeCalParametersSM16gShimmer3;
+                                end
+                            elseif thisShimmer.HardwareCompatibilityCode >= 2
+                                thisShimmer.DAccelCalParametersAM = thisShimmer.AccelWideRangeCalParametersAMShimmer3_2;
+                                if (thisShimmer.getaccelrange==0 && thisShimmer.DefaultAccelCalibrationParameters == true)
+                                    thisShimmer.DAccelCalParametersSM = thisShimmer.AccelWideRangeCalParametersSM2gShimmer3_2;
+                                end
+                                if (thisShimmer.getaccelrange==1 && thisShimmer.DefaultDAccelCalibrationParameters == true)
+                                    thisShimmer.DAccelCalParametersSM = thisShimmer.AccelWideRangeCalParametersSM16gShimmer3_2;
+                                end
+                                if (thisShimmer.getaccelrange==2 && thisShimmer.DefaultDAccelCalibrationParameters == true)
+                                    thisShimmer.DAccelCalParametersSM = thisShimmer.AccelWideRangeCalParametersSM4gShimmer3_2;
+                                end
+                                if (thisShimmer.getaccelrange==3 && thisShimmer.DefaultDAccelCalibrationParameters == true)
+                                    thisShimmer.DAccelCalParametersSM = thisShimmer.AccelWideRangeCalParametersSM8gShimmer3_2;
+                                end
+                            end
+                        end
+                    else
+                        isSet = false;
+                    end
+                    
+                else
+                    
+                    isSet = false;
+                    
+                end
+                
+            else
+                fprintf(strcat('Warning: setaccelrange - Cannot set accel range for COM ',thisShimmer.ComPort,' as Shimmer is not connected.\n'));
+                isSet = false;
+            end
+        end % function setaccelrange
+
+        function accelRange = getaccelrange(thisShimmer)
+            %GETACCELRANGE - Get the accelerometer range of the Shimmer
+            %
+            %   ACCELRANGE = GETACCELRANGE returns the accelerometer
+            %   range setting of the Shimmer.
+            %
+            %   SYNOPSIS: accelRange = thisShimmer.getaccelrange()
+            %
+            %   OUTPUT: accelRange - Numeric value defining the accelerometer
+            %                        range.
+            %                        Valid range setting values for the Shimmer
+            %                        2 are 0 (+/- 1.5g), 1 (+/- 2g), 2 (+/- 4g)
+            %                        and 3 (+/- 6g).
+            %                        Valid range setting values for the Shimmer
+            %                        2r are 0 (+/- 1.5g) and 3 (+/- 6g).
+            %
+            %   EXAMPLE: accelRange = shimmer1.getaccelrange;
+            %
+            %   See also setaccelrange
+            
+            if (thisShimmer.isConnected)                     % Shimmer must be in a Connected state
+                accelRange = thisShimmer.AccelRange;
+            else
+                accelRange = 'Nan';
+                fprintf(strcat('Warning: getaccelrange - Cannot determine accelerometer range as COM ',thisShimmer.name,' Shimmer is not Connected.\n'));
+            end
+        end
+
         function quaternionData = updateQuaternion(thisShimmer, accelCalibratedData, gyroCalibratedData, magCalibratedData)
             % Updates quaternion data based on accelerometer, gyroscope and
             % magnetometer data inputs: accelCalibratedData,
@@ -486,6 +773,493 @@ classdef ShimmerHandleClass < handle
             
         end %function updatequaternion
 
+        function [quaternionData,signalName,signalFormat,signalUnit] = getQuaternionData(thisShimmer, dataMode, accelCalibratedData, gyroCalibratedData, magCalibratedData)
+            % Get quaternion data from calibrated accelerometer, gyroscope and magnetometer data.
+            if (thisShimmer.isStreaming)                     % Shimmer must be in a Streaming state
+                if strcmp(dataMode, 'c')
+                    
+                    quaternionData = thisShimmer.updateQuaternion(accelCalibratedData, gyroCalibratedData, magCalibratedData);
+                    disp(quaternionData);
+                    
+                    signalName{1}='Quaternion 0';
+                    signalName{2}='Quaternion 1';
+                    signalName{3}='Quaternion 2';
+                    signalName{4}='Quaternion 3';
+                    signalFormat{1}='CAL';
+                    signalFormat{2}='CAL';
+                    signalFormat{3}='CAL';
+                    signalFormat{4}='CAL';
+                    signalUnit{1}='normalised quaternion';
+                    signalUnit{2}='normalised quaternion';
+                    signalUnit{3}='normalised quaternion';
+                    signalUnit{4}='normalised quaternion';
+                else
+                    disp('Warning: getquaterniondata - Wrong data mode specified');
+                end
+            else
+                quaternionData = [];
+                fprintf(strcat('Warning: getquaterniondata - Cannot get data as COM ',thisShimmer.name,' Shimmer is not Streaming'));
+            end
+        end % function getquaterniondata
+
+        function [accelData,signalName,signalFormat,signalUnit] = getacceldata(thisShimmer, dataMode, parsedData)
+            % Get accelerometer data from input parsedData.
+            %
+            % This is for backward compatability should anyone have used
+            % 'Accelerometer X' as a signal name. For Shimmer3 the
+            % the signal 'Accelerometer X' is decided based on the selected accel range of
+            % the wide range accelerometer. 
+            if (thisShimmer.isStreaming)                     % Shimmer must be in a Streaming state
+                if (thisShimmer.getaccelrange ==0 && bitand(thisShimmer.EnabledSensors, hex2dec('80'))>0)
+                    iAccelXShimmer = thisShimmer.getsignalindex('Low Noise Accelerometer X');            % Determine the column index of the Accelerometer X-axis signal
+                    iAccelYShimmer = thisShimmer.getsignalindex('Low Noise Accelerometer Y');            % Determine the column index of the Accelerometer Y-axis signal
+                    iAccelZShimmer = thisShimmer.getsignalindex('Low Noise Accelerometer Z');            % Determine the column index of the Accelerometer Z-axis signal
+                elseif (bitand(thisShimmer.EnabledSensors, hex2dec('1000'))>0)
+                    iAccelXShimmer = thisShimmer.getsignalindex('Wide Range Accelerometer X');            % Determine the column index of the Accelerometer X-axis signal
+                    iAccelYShimmer = thisShimmer.getsignalindex('Wide Range Accelerometer Y');            % Determine the column index of the Accelerometer Y-axis signal
+                    iAccelZShimmer = thisShimmer.getsignalindex('Wide Range Accelerometer Z');            % Determine the column index of the Accelerometer Z-axis signal
+                elseif (bitand(thisShimmer.EnabledSensors, hex2dec('80'))>0)
+                    iAccelXShimmer = thisShimmer.getsignalindex('Low Noise Accelerometer X');            % Determine the column index of the Accelerometer X-axis signal
+                    iAccelYShimmer = thisShimmer.getsignalindex('Low Noise Accelerometer Y');            % Determine the column index of the Accelerometer Y-axis signal
+                    iAccelZShimmer = thisShimmer.getsignalindex('Low Noise Accelerometer Z');            % Determine the column index of the Accelerometer Z-axis signal
+                end
+                if strcmp(dataMode,'a')
+                    accelUncalibratedData=double(parsedData(:,[iAccelXShimmer iAccelYShimmer iAccelZShimmer]));
+                    if ((thisShimmer.getaccelrange ==0 && bitand(thisShimmer.EnabledSensors, hex2dec('80'))>0))
+                        accelCalibratedData = thisShimmer.calibrateinertialsensordata(accelUncalibratedData,thisShimmer.AccelCalParametersAM,thisShimmer.AccelCalParametersSM,thisShimmer.AccelCalParametersOV);
+                    elseif (bitand(thisShimmer.EnabledSensors, hex2dec('1000'))>0)
+                        accelCalibratedData = thisShimmer.calibrateinertialsensordata(accelUncalibratedData,thisShimmer.DAccelCalParametersAM,thisShimmer.DAccelCalParametersSM,thisShimmer.DAccelCalParametersOV);
+                    else
+                        accelCalibratedData = thisShimmer.calibrateinertialsensordata(accelUncalibratedData,thisShimmer.AccelCalParametersAM,thisShimmer.AccelCalParametersSM,thisShimmer.AccelCalParametersOV);
+                    end
+                    accelData=[accelUncalibratedData accelCalibratedData];
+                    signalName{1}='Accelerometer X';
+                    signalName{2}='Accelerometer Y';
+                    signalName{3}='Accelerometer Z';
+                    signalFormat{1}='RAW';
+                    signalFormat{2}='RAW';
+                    signalFormat{3}='RAW';
+                    signalUnit{1}='no units';
+                    signalUnit{2}='no units';
+                    signalUnit{3}='no units';
+                    if thisShimmer.DefaultAccelCalibrationParameters==true
+                        signalName{4}='Accelerometer X';
+                        signalName{5}='Accelerometer Y';
+                        signalName{6}='Accelerometer Z';
+                        signalFormat{4}='CAL';
+                        signalFormat{5}='CAL';
+                        signalFormat{6}='CAL';
+                        signalUnit{4}='m/(s^2) *';  % *indicates that default calibration parameters were used to calibrate the sensor data
+                        signalUnit{5}='m/(s^2) *';
+                        signalUnit{6}='m/(s^2) *';
+                    else
+                        signalName{4}='Accelerometer X';
+                        signalName{5}='Accelerometer Y';
+                        signalName{6}='Accelerometer Z';
+                        signalFormat{4}='CAL';
+                        signalFormat{5}='CAL';
+                        signalFormat{6}='CAL';
+                        signalUnit{4}='m/(s^2)';
+                        signalUnit{5}='m/(s^2)';
+                        signalUnit{6}='m/(s^2)';
+                    end
+                    
+                elseif strcmp(dataMode,'u')
+                    accelUncalibratedData=double(parsedData(:,[iAccelXShimmer iAccelYShimmer iAccelZShimmer]));
+                    accelData=accelUncalibratedData;
+                    signalName{1}='Accelerometer X';
+                    signalName{2}='Accelerometer Y';
+                    signalName{3}='Accelerometer Z';
+                    signalFormat{1}='RAW';
+                    signalFormat{2}='RAW';
+                    signalFormat{3}='RAW';
+                    signalUnit{1}='no units';
+                    signalUnit{2}='no units';
+                    signalUnit{3}='no units';
+                    
+                elseif strcmp(dataMode,'c')
+                    accelUncalibratedData=double(parsedData(:,[iAccelXShimmer iAccelYShimmer iAccelZShimmer]));
+                    if ((thisShimmer.getaccelrange ==0))
+                        accelCalibratedData = thisShimmer.calibrateinertialsensordata(accelUncalibratedData,thisShimmer.AccelCalParametersAM,thisShimmer.AccelCalParametersSM,thisShimmer.AccelCalParametersOV);
+                    elseif (thisShimmer.getaccelrange ~=0)
+                        accelCalibratedData = thisShimmer.calibrateinertialsensordata(accelUncalibratedData,thisShimmer.DAccelCalParametersAM,thisShimmer.DAccelCalParametersSM,thisShimmer.DAccelCalParametersOV);
+                    end
+                    accelData=accelCalibratedData;
+                    if thisShimmer.DefaultAccelCalibrationParameters==true
+                        signalName{1}='Accelerometer X';
+                        signalName{2}='Accelerometer Y';
+                        signalName{3}='Accelerometer Z';
+                        signalFormat{1}='CAL';
+                        signalFormat{2}='CAL';
+                        signalFormat{3}='CAL';
+                        signalUnit{1}='m/(s^2) *';  % *indicates that default calibration parameters were used to calibrate the sensor data
+                        signalUnit{2}='m/(s^2) *';
+                        signalUnit{3}='m/(s^2) *';
+                    else
+                        signalName{1}='Accelerometer X';
+                        signalName{2}='Accelerometer Y';
+                        signalName{3}='Accelerometer Z';
+                        signalFormat{1}='CAL';
+                        signalFormat{2}='CAL';
+                        signalFormat{3}='CAL';
+                        signalUnit{1}='m/(s^2)';
+                        signalUnit{2}='m/(s^2)';
+                        signalUnit{3}='m/(s^2)';
+                    end
+                else
+                    disp('Wrong data mode specified');
+                end
+            else
+                accelData = [];
+                fprintf(strcat('Warning: getacceldata - Cannot get data as COM ',thisShimmer.name,' Shimmer is not Streaming'));
+            end
+        end
+        
+        function [accelData,signalName,signalFormat,signalUnit] = getlownoiseacceldata(thisShimmer, dataMode, parsedData)
+             % Get low noise accelerometer data from input parsedData.
+            iAccelXShimmer = thisShimmer.getsignalindex('Low Noise Accelerometer X');            % Determine the column index of the Accelerometer X-axis signal
+            iAccelYShimmer = thisShimmer.getsignalindex('Low Noise Accelerometer Y');            % Determine the column index of the Accelerometer Y-axis signal
+            iAccelZShimmer = thisShimmer.getsignalindex('Low Noise Accelerometer Z');            % Determine the column index of the Accelerometer Z-axis signal
+            if strcmp(dataMode,'a')
+                accelUncalibratedData=double(parsedData(:,[iAccelXShimmer iAccelYShimmer iAccelZShimmer]));
+                accelCalibratedData = thisShimmer.calibrateinertialsensordata(accelUncalibratedData,thisShimmer.AccelCalParametersAM,thisShimmer.AccelCalParametersSM,thisShimmer.AccelCalParametersOV);
+                accelData=[accelUncalibratedData accelCalibratedData];
+                signalName{1}='Low Noise Accelerometer X';
+                signalName{2}='Low Noise Accelerometer Y';
+                signalName{3}='Low Noise Accelerometer Z';
+                signalFormat{1}='RAW';
+                signalFormat{2}='RAW';
+                signalFormat{3}='RAW';
+                signalUnit{1}='no units';
+                signalUnit{2}='no units';
+                signalUnit{3}='no units';
+                if thisShimmer.DefaultAccelCalibrationParameters==true
+                    signalName{4}='Low Noise Accelerometer X';
+                    signalName{5}='Low Noise Accelerometer Y';
+                    signalName{6}='Low Noise Accelerometer Z';
+                    signalFormat{4}='CAL';
+                    signalFormat{5}='CAL';
+                    signalFormat{6}='CAL';
+                    signalUnit{4}='m/(s^2) *';  % *indicates that default calibration parameters were used to calibrate the sensor data
+                    signalUnit{5}='m/(s^2) *';
+                    signalUnit{6}='m/(s^2) *';
+                else
+                    signalName{4}='Low Noise Accelerometer X';
+                    signalName{5}='Low Noise Accelerometer Y';
+                    signalName{6}='Low Noise Accelerometer Z';
+                    signalFormat{4}='CAL';
+                    signalFormat{5}='CAL';
+                    signalFormat{6}='CAL';
+                    signalUnit{4}='m/(s^2)';
+                    signalUnit{5}='m/(s^2)';
+                    signalUnit{6}='m/(s^2)';
+                end
+                
+            elseif strcmp(dataMode,'u')
+                accelUncalibratedData=double(parsedData(:,[iAccelXShimmer iAccelYShimmer iAccelZShimmer]));
+                accelData=accelUncalibratedData;
+                signalName{1}='Low Noise Accelerometer X';
+                signalName{2}='Low Noise Accelerometer Y';
+                signalName{3}='Low Noise Accelerometer Z';
+                signalFormat{1}='RAW';
+                signalFormat{2}='RAW';
+                signalFormat{3}='RAW';
+                signalUnit{1}='no units';
+                signalUnit{2}='no units';
+                signalUnit{3}='no units';
+                
+            elseif strcmp(dataMode,'c')
+                accelUncalibratedData=double(parsedData(:,[iAccelXShimmer iAccelYShimmer iAccelZShimmer]));
+                accelCalibratedData = thisShimmer.calibrateinertialsensordata(accelUncalibratedData,thisShimmer.AccelCalParametersAM,thisShimmer.AccelCalParametersSM,thisShimmer.AccelCalParametersOV);
+                accelData=accelCalibratedData;
+                if thisShimmer.DefaultAccelCalibrationParameters==true
+                    signalName{1}='Low Noise Accelerometer X';
+                    signalName{2}='Low Noise Accelerometer Y';
+                    signalName{3}='Low Noise Accelerometer Z';
+                    signalFormat{1}='CAL';
+                    signalFormat{2}='CAL';
+                    signalFormat{3}='CAL';
+                    signalUnit{1}='m/(s^2) *';  % *indicates that default calibration parameters were used to calibrate the sensor data
+                    signalUnit{2}='m/(s^2) *';
+                    signalUnit{3}='m/(s^2) *';
+                else
+                    signalName{1}='Low Noise Accelerometer X';
+                    signalName{2}='Low Noise Accelerometer Y';
+                    signalName{3}='Low Noise Accelerometer Z';
+                    signalFormat{1}='CAL';
+                    signalFormat{2}='CAL';
+                    signalFormat{3}='CAL';
+                    signalUnit{1}='m/(s^2)';
+                    signalUnit{2}='m/(s^2)';
+                    signalUnit{3}='m/(s^2)';
+                end
+            else
+                disp('Warning: getlownoiseacceldata - Wrong data mode specified');
+            end
+        end
+        
+        function [accelData,signalName,signalFormat,signalUnit] = getwiderangeacceldata(thisShimmer, dataMode, parsedData)
+            % Get wide range accelerometer data from input parsedData.
+            iAccelXShimmer = thisShimmer.getsignalindex('Wide Range Accelerometer X');            % Determine the column index of the Accelerometer X-axis signal
+            iAccelYShimmer = thisShimmer.getsignalindex('Wide Range Accelerometer Y');            % Determine the column index of the Accelerometer Y-axis signal
+            iAccelZShimmer = thisShimmer.getsignalindex('Wide Range Accelerometer Z');            % Determine the column index of the Accelerometer Z-axis signal
+            if strcmp(dataMode,'a')
+                accelUncalibratedData=double(parsedData(:,[iAccelXShimmer iAccelYShimmer iAccelZShimmer]));
+                accelCalibratedData = thisShimmer.calibrateinertialsensordata(accelUncalibratedData,thisShimmer.DAccelCalParametersAM,thisShimmer.DAccelCalParametersSM,thisShimmer.DAccelCalParametersOV);
+                accelData=[accelUncalibratedData accelCalibratedData];
+                signalName{1}='Wide Range Accelerometer X';
+                signalName{2}='Wide Range Accelerometer Y';
+                signalName{3}='Wide Range Accelerometer Z';
+                signalFormat{1}='RAW';
+                signalFormat{2}='RAW';
+                signalFormat{3}='RAW';
+                signalUnit{1}='no units';
+                signalUnit{2}='no units';
+                signalUnit{3}='no units';
+                if thisShimmer.DefaultDAccelCalibrationParameters==true
+                    signalName{4}='Wide Range Accelerometer X';
+                    signalName{5}='Wide Range Accelerometer Y';
+                    signalName{6}='Wide Range Accelerometer Z';
+                    signalFormat{4}='CAL';
+                    signalFormat{5}='CAL';
+                    signalFormat{6}='CAL';
+                    signalUnit{4}='m/(s^2) *';  % *indicates that default calibration parameters were used to calibrate the sensor data
+                    signalUnit{5}='m/(s^2) *';
+                    signalUnit{6}='m/(s^2) *';
+                else
+                    signalName{4}='Wide Range Accelerometer X';
+                    signalName{5}='Wide Range Accelerometer Y';
+                    signalName{6}='Wide Range Accelerometer Z';
+                    signalFormat{4}='CAL';
+                    signalFormat{5}='CAL';
+                    signalFormat{6}='CAL';
+                    signalUnit{4}='m/(s^2)';
+                    signalUnit{5}='m/(s^2)';
+                    signalUnit{6}='m/(s^2)';
+                end
+                
+            elseif strcmp(dataMode,'u')
+                accelUncalibratedData=double(parsedData(:,[iAccelXShimmer iAccelYShimmer iAccelZShimmer]));
+                accelData=accelUncalibratedData;
+                signalName{1}='Wide Range Accelerometer X';
+                signalName{2}='Wide Range Accelerometer Y';
+                signalName{3}='Wide Range Accelerometer Z';
+                signalFormat{1}='RAW';
+                signalFormat{2}='RAW';
+                signalFormat{3}='RAW';
+                signalUnit{1}='no units';
+                signalUnit{2}='no units';
+                signalUnit{3}='no units';
+                
+            elseif strcmp(dataMode,'c')
+                accelUncalibratedData=double(parsedData(:,[iAccelXShimmer iAccelYShimmer iAccelZShimmer]));
+                accelCalibratedData = thisShimmer.calibrateinertialsensordata(accelUncalibratedData,thisShimmer.DAccelCalParametersAM,thisShimmer.DAccelCalParametersSM,thisShimmer.DAccelCalParametersOV);
+                accelData=accelCalibratedData;
+                if thisShimmer.DefaultDAccelCalibrationParameters==true
+                    signalName{1}='Wide Range Accelerometer X';
+                    signalName{2}='Wide Range Accelerometer Y';
+                    signalName{3}='Wide Range Accelerometer Z';
+                    signalFormat{1}='CAL';
+                    signalFormat{2}='CAL';
+                    signalFormat{3}='CAL';
+                    signalUnit{1}='m/(s^2) *';  % *indicates that default calibration parameters were used to calibrate the sensor data
+                    signalUnit{2}='m/(s^2) *';
+                    signalUnit{3}='m/(s^2) *';
+                else
+                    signalName{1}='Wide Range Accelerometer X';
+                    signalName{2}='Wide Range Accelerometer Y';
+                    signalName{3}='Wide Range Accelerometer Z';
+                    signalFormat{1}='CAL';
+                    signalFormat{2}='CAL';
+                    signalFormat{3}='CAL';
+                    signalUnit{1}='m/(s^2)';
+                    signalUnit{2}='m/(s^2)';
+                    signalUnit{3}='m/(s^2)';
+                end
+            else
+                disp('Warning: getwiderangeacceldata - Wrong data mode specified');
+            end
+        end
+        
+        function [magData,signalName,signalFormat,signalUnit] = getmagdata(thisShimmer, dataMode, parsedData)
+             % Get magnetometer data from input parsedData.
+            if (thisShimmer.isStreaming)                     % Shimmer must be in a Streaming state
+                iMagXShimmer = thisShimmer.getsignalindex('Magnetometer X');            % Determine the column index of the Magnetometer X-axis signal
+                iMagYShimmer = thisShimmer.getsignalindex('Magnetometer Y');            % Determine the column index of the Magnetometer Y-axis signal
+                iMagZShimmer = thisShimmer.getsignalindex('Magnetometer Z');            % Determine the column index of the Magnetometer Z-axis signal
+                
+                if strcmp(dataMode,'a')
+                    magUncalibratedData=double(parsedData(:,[iMagXShimmer iMagYShimmer iMagZShimmer]));
+                    magCalibratedData = thisShimmer.calibrateinertialsensordata(magUncalibratedData,thisShimmer.MagneCalParametersAM,thisShimmer.MagneCalParametersSM,thisShimmer.MagneCalParametersOV);
+                    magData=[magUncalibratedData magCalibratedData];
+                    signalName{1}='Magnetometer X';
+                    signalName{2}='Magnetometer Y';
+                    signalName{3}='Magnetometer Z';
+                    signalFormat{1}='RAW';
+                    signalFormat{2}='RAW';
+                    signalFormat{3}='RAW';
+                    signalUnit{1}='no units';
+                    signalUnit{2}='no units';
+                    signalUnit{3}='no units';
+                    if thisShimmer.DefaultMagneCalibrationParameters==true
+                        signalName{4}='Magnetometer X';
+                        signalName{5}='Magnetometer Y';
+                        signalName{6}='Magnetometer Z';
+                        signalFormat{4}='CAL';
+                        signalFormat{5}='CAL';
+                        signalFormat{6}='CAL';
+                        signalUnit{4}='local flux *'; % *indicates that default calibration parameters were used to calibrate the sensor data
+                        signalUnit{5}='local flux *';
+                        signalUnit{6}='local flux *';
+                    else
+                        signalName{4}='Magnetometer X';
+                        signalName{5}='Magnetometer Y';
+                        signalName{6}='Magnetometer Z';
+                        signalFormat{4}='CAL';
+                        signalFormat{5}='CAL';
+                        signalFormat{6}='CAL';
+                        signalUnit{4}='local flux';
+                        signalUnit{5}='local flux';
+                        signalUnit{6}='local flux';
+                    end
+                    
+                elseif strcmp(dataMode,'u')
+                    magUncalibratedData=double(parsedData(:,[iMagXShimmer iMagYShimmer iMagZShimmer]));
+                    magData=magUncalibratedData;
+                    signalName{1}='Magnetometer X';
+                    signalName{2}='Magnetometer Y';
+                    signalName{3}='Magnetometer Z';
+                    signalFormat{1}='RAW';
+                    signalFormat{2}='RAW';
+                    signalFormat{3}='RAW';
+                    signalUnit{1}='no units';
+                    signalUnit{2}='no units';
+                    signalUnit{3}='no units';
+                    
+                elseif strcmp(dataMode,'c')
+                    if thisShimmer.DefaultMagneCalibrationParameters==true
+                        signalName{1}='Magnetometer X';
+                        signalName{2}='Magnetometer Y';
+                        signalName{3}='Magnetometer Z';
+                        signalFormat{1}='CAL';
+                        signalFormat{2}='CAL';
+                        signalFormat{3}='CAL';
+                        signalUnit{1}='local flux *'; % *indicates that default calibration parameters were used to calibrate the sensor data
+                        signalUnit{2}='local flux *';
+                        signalUnit{3}='local flux *';
+                    else
+                        signalName{1}='Magnetometer X';
+                        signalName{2}='Magnetometer Y';
+                        signalName{3}='Magnetometer Z';
+                        signalFormat{1}='CAL';
+                        signalFormat{2}='CAL';
+                        signalFormat{3}='CAL';
+                        signalUnit{1}='local flux';
+                        signalUnit{2}='local flux';
+                        signalUnit{3}='local flux';
+                    end
+                    
+                    magUncalibratedData=double(parsedData(:,[iMagXShimmer iMagYShimmer iMagZShimmer]));
+                    magCalibratedData = thisShimmer.calibrateinertialsensordata(magUncalibratedData,thisShimmer.MagneCalParametersAM,thisShimmer.MagneCalParametersSM,thisShimmer.MagneCalParametersOV);
+                    magData=magCalibratedData;
+                    
+                else
+                    disp('Warning: getmagdata - Wrong data mode specified');
+                end
+            else
+                magData = [];
+                fprintf(strcat('Warning: getmagdata - Cannot get data as COM ',thisShimmer.name,' Shimmer is not Streaming'));
+            end
+        end
+                        
+        function [gyroData, signalName, signalFormat, signalUnit] = getgyrodata(thisShimmer, dataMode, parsedData)
+             % Get gyroscope data from input parsedData.
+            if (thisShimmer.isStreaming)                     % Shimmer must be in a Streaming state
+                iGyroXShimmer = thisShimmer.getsignalindex('Gyroscope X');            % Determine the column index of the Gyroscope X-axis signal
+                iGyroYShimmer = thisShimmer.getsignalindex('Gyroscope Y');            % Determine the column index of the Gyroscope Y-axis signal
+                iGyroZShimmer = thisShimmer.getsignalindex('Gyroscope Z');            % Determine the column index of the Gyroscope Z-axis signal
+                
+                if strcmp(dataMode,'a')
+                    gyroUncalibratedData=double(parsedData(:,[iGyroXShimmer iGyroYShimmer iGyroZShimmer]));
+                    gyroCalibratedData = thisShimmer.calibrateinertialsensordata(gyroUncalibratedData,thisShimmer.GyroCalParametersAM,thisShimmer.GyroCalParametersSM,thisShimmer.GyroCalParametersOV);
+                    gyroData=[gyroUncalibratedData gyroCalibratedData];
+                    signalName{1}='Gyroscope X';
+                    signalName{2}='Gyroscope Y';
+                    signalName{3}='Gyroscope Z';
+                    signalFormat{1}='RAW';
+                    signalFormat{2}='RAW';
+                    signalFormat{3}='RAW';
+                    signalUnit{1}='no units';
+                    signalUnit{2}='no units';
+                    signalUnit{3}='no units';
+                    if thisShimmer.DefaultGyroCalibrationParameters==true
+                        signalName{4}='Gyroscope X';
+                        signalName{5}='Gyroscope Y';
+                        signalName{6}='Gyroscope Z';
+                        signalFormat{4}='CAL';
+                        signalFormat{5}='CAL';
+                        signalFormat{6}='CAL';
+                        signalUnit{4}='degrees/s *'; % *indicates that default calibration parameters were used to calibrate the sensor data
+                        signalUnit{5}='degrees/s *';
+                        signalUnit{6}='degrees/s *';
+                    else
+                        signalName{4}='Gyroscope X';
+                        signalName{5}='Gyroscope Y';
+                        signalName{6}='Gyroscope Z';
+                        signalFormat{4}='CAL';
+                        signalFormat{5}='CAL';
+                        signalFormat{6}='CAL';
+                        signalUnit{4}='degrees/s'; % *indicates that default calibration parameters were used to calibrate the sensor data
+                        signalUnit{5}='degrees/s';
+                        signalUnit{6}='degrees/s';
+                    end
+                elseif strcmp(dataMode,'u')
+                    gyroUncalibratedData=double(parsedData(:,[iGyroXShimmer iGyroYShimmer iGyroZShimmer]));
+                    gyroData=gyroUncalibratedData;
+                    signalName{1}='Gyroscope X';
+                    signalName{2}='Gyroscope Y';
+                    signalName{3}='Gyroscope Z';
+                    signalFormat{1}='RAW';
+                    signalFormat{2}='RAW';
+                    signalFormat{3}='RAW';
+                    signalUnit{1}='no units';
+                    signalUnit{2}='no units';
+                    signalUnit{3}='no units';
+                    
+                elseif strcmp(dataMode,'c')
+                    gyroUncalibratedData=double(parsedData(:,[iGyroXShimmer iGyroYShimmer iGyroZShimmer]));
+                    gyroCalibratedData = thisShimmer.calibrateinertialsensordata(gyroUncalibratedData,thisShimmer.GyroCalParametersAM,thisShimmer.GyroCalParametersSM,thisShimmer.GyroCalParametersOV);
+                    gyroData=gyroCalibratedData;
+                    if thisShimmer.DefaultGyroCalibrationParameters==true
+                        signalName{1}='Gyroscope X';
+                        signalName{2}='Gyroscope Y';
+                        signalName{3}='Gyroscope Z';
+                        signalFormat{1}='CAL';
+                        signalFormat{2}='CAL';
+                        signalFormat{3}='CAL';
+                        signalUnit{1}='degrees/s *'; % *indicates that default calibration parameters were used to calibrate the sensor data
+                        signalUnit{2}='degrees/s *';
+                        signalUnit{3}='degrees/s *';
+                    else
+                        signalName{1}='Gyroscope X';
+                        signalName{2}='Gyroscope Y';
+                        signalName{3}='Gyroscope Z';
+                        signalFormat{1}='CAL';
+                        signalFormat{2}='CAL';
+                        signalFormat{3}='CAL';
+                        signalUnit{1}='degrees/s'; % *indicates that default calibration parameters were used to calibrate the sensor data
+                        signalUnit{2}='degrees/s';
+                        signalUnit{3}='degrees/s';
+                    end
+                else
+                    disp('Warning: getgyrodata - Wrong data mode specified');
+                end
+            else
+                gyroData = [];
+                fprintf(strcat('Warning: getgyrodata - Cannot get data as COM ',thisShimmer.name,' Shimmer is not Streaming'));
+            end
+        end
+
         function [parsedData,systemTime] = capturedata(thisShimmer)
             % Reads data from the serial buffer, frames and parses these data.
             parsedData=[];
@@ -494,9 +1268,22 @@ classdef ShimmerHandleClass < handle
             if (thisShimmer.isStreaming)                        % TRUE if the Shimmer is in a Streaming state
                 
                 serialData = [];
+
+                numBytes = thisShimmer.bluetoothConn.NumBytesAvailable;
+                if (numBytes == 0)
+                    numBytes = 1;
+                end
                 
-                [serialData] = readcell(thisShimmer.bluetoothConn, inf);  % Read all available serial data from the com port
-                
+                serialData = read(thisShimmer.bluetoothConn, numBytes);  % Read all available serial data from the com port
+                flush(thisShimmer.bluetoothConn, "input");
+
+                swappedData = zeros(numBytes,1);
+                for dataSample = 1:1:numBytes
+                    swappedData(dataSample,1) = serialData(1,dataSample);
+                end
+
+                serialData = swappedData;
+
                 if (not(isempty(serialData)))
                     
                      if (thisShimmer.EnableTimestampUnix)  
@@ -664,9 +1451,6 @@ classdef ShimmerHandleClass < handle
                         elseif strcmp(thisShimmer.SignalNameArray(s),'Bridge Amplifier High') % Shimmer3 Bridge Amplifier
                             [tempData,tempSignalName,tempSignalFormat,tempSignalUnit]=getbridgeamplifierdata(thisShimmer,dataMode,parsedData);
                             s = s+2;
-                        elseif strcmp(thisShimmer.SignalNameArray(s),'Strain Gauge High') % Shimmer2r Strain Gauge
-                            [tempData,tempSignalName,tempSignalFormat,tempSignalUnit]=getstraingaugedata(thisShimmer,dataMode,parsedData);
-                            s = s+2;
                         end
                         sensorData=[sensorData tempData];
                         signalName=[signalName tempSignalName];
@@ -677,7 +1461,7 @@ classdef ShimmerHandleClass < handle
                         [accelData,~,~,~]=getacceldata(thisShimmer,'c',parsedData);
                         [gyroData,~,~,~]=getgyrodata(thisShimmer,'c',parsedData);
                         [magData,~,~,~]=getmagdata(thisShimmer,'c',parsedData);
-                        [quaternionData,tempSignalName,tempSignalFormat,tempSignalUnit]=getquaterniondata(thisShimmer,'c',accelData,gyroData,magData);
+                        [quaternionData,tempSignalName,tempSignalFormat,tempSignalUnit]=getQuaternionData(thisShimmer,'c',accelData,gyroData,magData);
                         
                         sensorData=[sensorData quaternionData];
                         signalName=[signalName tempSignalName];
@@ -877,5 +1661,435 @@ classdef ShimmerHandleClass < handle
                 parsedData = [];                                                                     % Return empty array
             end
         end % function parsedata
+
+        function iSignal = getsignalindex(thisShimmer,signalName)
+            %GETSIGNALINDEX - Get the index of a sensor signal
+            %
+            %   SIGNALINDEX = GETSIGNALINDEX(SIGNALNAME) returns the index of
+            %   the sensor signal corresponding to the name SIGNALNAME.
+            %
+            %   SYNOPSIS: iSignal = thisShimmer.getsignalindex(signalName)
+            %
+            %   INPUT: signalName - String value that defines the name of the
+            %                       data signal of interest.
+            %                       Valid values are 'Accelerometer X',
+            %                       'Accelerometer Y', 'Accelerometer Z',
+            %                       'Gyroscope X', 'Gyroscope Y', 'Gyroscope Z',
+            %                       'Magnetometer X', 'Magnetometer Y',
+            %                       'Magnetometer Z', 'ECG RA-LL', 'ECG LA-LL',
+            %                       'GSR Raw', 'GSR Res', 'EMG', 'ExpBoard A0',
+            %                       'ExpBoard A7', 'Strain Gauge High',
+            %                       'Strain Gauge Low' and 'Heart Rate'.
+            %
+            %   OUTPUT: signalName - Signed non-zero integer value that defines
+            %                        the index of the data signal of interest.
+            %
+            %   EXAMPLE: iSignal = shimmer1.getsignalindex('Accelerometer X');
+            %
+            %   See also setenabledsensors getenabledsignalnames getsignalname
+            
+            iSignal = find(strcmp(thisShimmer.SignalNameArray,signalName));% Determine the column index of the signal defined in signalName
+        end
+
+        function CalibratedData = calibrateinertialsensordata(thisShimmer,UncalibratedData,R,K,B)
+            % Calibration of inertial sensor data - calibrates input UncalibratedData with parameters:
+            % R,K,B.
+            %
+            % Based on the theory outlined by Ferraris F, Grimaldi U, and Parvis M.
+            % in "Procedure for effortless in-field calibration of three-axis rate gyros and accelerometers" Sens. Mater. 1995; 7: 311-30.
+            % For a multiple samples of 3 axis data......
+            %C = [R^(-1)] .[K^(-1)] .([U]-[B])
+            
+            %where.....
+            %[C] -> [3 x n] Calibrated Data Matrix
+            %[U] -> [3 x n] Uncalibrated Data Matrix
+            %[B] ->  [3 x n] Offset Vector Matrix
+            %[R] -> [3x3] Alignment Matrix
+            %[K] -> [3x3] Sensitivity Matrix
+            %n = Number of Samples
+            CalibratedData=((R^-1)*(K^-1)*(UncalibratedData'-B*ones(1,length(UncalibratedData(:,1)))))';
+        end
+
+        function isRead = inquiry(thisShimmer)
+            % Sends the INQUIRY_COMMAND to Shimmer - in Connected state 
+            % Receives Inquire Response and call the function
+            % parseinquiryresponse with the just received Inquire Response 
+            % as input argument.
+            if (thisShimmer.isConnected)
+                flush(thisShimmer.bluetoothConn, "input");                                         % As a precaution always clear the read data buffer before a write
+                write(thisShimmer.bluetoothConn, thisShimmer.INQUIRY_COMMAND);                 % Send the Inquiry Command to the Shimmer
+                
+                isAcknowledged = waitForAck(thisShimmer, thisShimmer.DEFAULT_TIMEOUT);    % Wait for Acknowledgment from Shimmer
+                
+                if (isAcknowledged == true)
+                    [shimmerResponse] = read(thisShimmer.bluetoothConn, thisShimmer.bluetoothConn.NumBytesAvailable);     % Read Inquiry Command response from the bluetooth buffer
+                    
+                    if ~isempty(shimmerResponse)
+                        
+                        if (shimmerResponse(1) == thisShimmer.INQUIRY_RESPONSE)
+                            parseinquiryresponse(thisShimmer, shimmerResponse);
+                            isRead = true;
+                        else
+                            fprintf(strcat('Warning: inquiry - Inquiry command response expected but not returned for Shimmer COM',thisShimmer.name,'.\n'));
+                            isRead = false;
+                        end
+                    else
+                        fprintf(strcat('Warning: inquiry - Inquiry command response expected but not returned for Shimmer COM',thisShimmer.name,'.\n'));
+                        isRead = false;
+                    end
+                    
+                else
+                    fprintf(strcat('Warning: inquiry - Inquiry command response expected but not returned for Shimmer COM',thisShimmer.name,'.\n'));
+                    isRead = false;
+                end
+            else
+                isRead = false;
+                fprintf(strcat('Warning: inquiry - Cannot get inquiry reponse for COM ',thisShimmer.name,' as Shimmer is not connected.\n'));
+            end
+        end % function inquiry
+
+        function parseinquiryresponse(thisShimmer, inquiryResponse)
+            % Parses the Inquiry Response inquiryResponse and updates
+            % properties accordingly.
+            thisShimmer.SamplingRate = 32768.0 /double(int32(256*uint16(inquiryResponse(3)))+int32(inquiryResponse(2)));
+            nChannels = inquiryResponse(8);
+            thisShimmer.BufferSize = inquiryResponse(9);                                        % Buffer size is currently not used
+            nIterations = 0;
+            while(length(inquiryResponse) < 9+nChannels && nIterations < 4)
+                [tempResponse] = read(thisShimmer.bluetoothConn, thisShimmer.bluetoothConn.NumBytesAvailable);     % Read Inquiry Command response from the bluetooth buffer
+                inquiryResponse = [inquiryResponse; tempResponse];
+                nIterations = nIterations + 1;
+            end
+            signalIDArray = inquiryResponse(10:9+nChannels);
+            thisShimmer.ConfigByte0 = double(inquiryResponse(4));                               % ConfigByte0
+            thisShimmer.ConfigByte1 = double(inquiryResponse(5));                               % ConfigByte1
+            thisShimmer.ConfigByte2 = double(inquiryResponse(6));                               % ConfigByte2
+            thisShimmer.ConfigByte3 = double(inquiryResponse(7));                               % ConfigByte3              
+            thisShimmer.AccelWideRangeHRMode = bitand(thisShimmer.ConfigByte0,1);               % High Resolution mode LSM303DLHC/LSM303AHTR
+            thisShimmer.AccelWideRangeLPMode = bitand(bitshift(thisShimmer.ConfigByte0,-1),1);  % Low Power mode LSM303DLHC/LSM303AHTR
+            thisShimmer.AccelRange = bitand(bitshift(thisShimmer.ConfigByte0,-2),3); 
+            thisShimmer.AccelWideRangeDataRate = bitand(bitshift(thisShimmer.ConfigByte0,-4),15);   
+            thisShimmer.GyroRate = bitand(thisShimmer.ConfigByte1,255);                         % MPU9150 sampling rate 
+            thisShimmer.GyroRange = bitand(thisShimmer.ConfigByte2,3);
+            thisShimmer.MagRate =  bitand(bitshift(thisShimmer.ConfigByte2,-2),7);
+            thisShimmer.MagRange = bitand(bitshift(thisShimmer.ConfigByte2,-5),7); 
+            thisShimmer.InternalExpPower = bitand(thisShimmer.ConfigByte3,1);
+            thisShimmer.GsrRange = bitand(bitshift(thisShimmer.ConfigByte3,-1),7);
+            thisShimmer.PressureResolution = bitand(bitshift(thisShimmer.ConfigByte3,-4),3);
+            interpretdatapacketformat(thisShimmer,signalIDArray);  
+            
+        end % parseinquiryresponse
+
+        function interpretdatapacketformat(thisShimmer,signalIDArray)
+            % Is called by the function parseinquiryresponse and interprets
+            % the data packet format based on the input signalIDArray.
+            enabledSensors = 0;                                            % Enabled/Disabled Sensors bitmap
+            nBytesDataPacket = 1;                                          % Initially Number of Bytes in Data Packet = 1 (Packet Type byte)
+
+            % Get Data Packet Format values for Timestamp
+            signalNameArray(1) = cellstr('Timestamp');                     % Cell array containing the names of the signal in each data channel
+            
+            % Timestamp value is of type unsigned 16bit
+            nBytesDataPacket = nBytesDataPacket+3;                 % Three byte timestamp has been introduced with FirmwareCompatibilityCode == 6
+            signalDataTypeArray(1) = cellstr('u24');               % Cell array containing the data type of the signal in each data channel
+                
+            % Get Data Packet Format values for other enabled data signals
+            for i = 1:length(signalIDArray)
+                
+                hexSignalID=dec2hex(signalIDArray(i));                     % Extract signalID(i) in hex formnat
+                
+                switch hexSignalID
+                    case ('0')
+                        signalNameArray(i+1) = cellstr('Low Noise Accelerometer X');
+                        signalDataTypeArray(i+1) = cellstr('u12');
+                        nBytesDataPacket=nBytesDataPacket+2;
+                        enabledSensors = bitor(enabledSensors,hex2dec('80'));
+                    case ('1')
+                        signalNameArray(i+1) = cellstr('Low Noise Accelerometer Y');
+                        signalDataTypeArray(i+1) = cellstr('u12');
+                        nBytesDataPacket=nBytesDataPacket+2;
+                        enabledSensors = bitor(enabledSensors,hex2dec('80'));
+                    case ('2')
+                        signalNameArray(i+1) = cellstr('Low Noise Accelerometer Z');
+                        signalDataTypeArray(i+1) = cellstr('u12');
+                        nBytesDataPacket=nBytesDataPacket+2;
+                        enabledSensors = bitor(enabledSensors,hex2dec('80'));
+                    case ('3')
+                        signalNameArray(i+1) = cellstr('Battery Voltage');
+                        signalDataTypeArray(i+1) = cellstr('u12');
+                        nBytesDataPacket=nBytesDataPacket+2;
+                        enabledSensors = bitor(enabledSensors,hex2dec('2000'));
+                    case ('4')
+                        signalNameArray(i+1) = cellstr('Wide Range Accelerometer X');
+                        signalDataTypeArray(i+1) = cellstr('i16');
+                        nBytesDataPacket=nBytesDataPacket+2;
+                        enabledSensors = bitor(enabledSensors,hex2dec('1000'));
+                    case ('5')
+                        signalNameArray(i+1) = cellstr('Wide Range Accelerometer Y');
+                        signalDataTypeArray(i+1) = cellstr('i16');
+                        nBytesDataPacket=nBytesDataPacket+2;
+                        enabledSensors = bitor(enabledSensors,hex2dec('1000'));
+                    case ('6')
+                        signalNameArray(i+1) = cellstr('Wide Range Accelerometer Z');
+                        signalDataTypeArray(i+1) = cellstr('i16');
+                        nBytesDataPacket=nBytesDataPacket+2;
+                        enabledSensors = bitor(enabledSensors,hex2dec('1000'));
+                    case ('7')
+                        signalNameArray(i+1) = cellstr('Magnetometer X');
+                        signalDataTypeArray(i+1) = cellstr('i16');
+                        nBytesDataPacket=nBytesDataPacket+2;
+                        enabledSensors = bitor(enabledSensors,hex2dec('20'));
+                    case ('8')
+                        signalNameArray(i+1) = cellstr('Magnetometer Y');
+                        signalDataTypeArray(i+1) = cellstr('i16');
+                        nBytesDataPacket=nBytesDataPacket+2;
+                        enabledSensors = bitor(enabledSensors,hex2dec('20'));
+                    case ('9')
+                        signalNameArray(i+1) = cellstr('Magnetometer Z');
+                        signalDataTypeArray(i+1) = cellstr('i16');
+                        nBytesDataPacket=nBytesDataPacket+2;
+                        enabledSensors = bitor(enabledSensors,hex2dec('20'));
+                    case ('A')
+                        signalNameArray(i+1) = cellstr('Gyroscope X');
+                        signalDataTypeArray(i+1) = cellstr('i16*');
+                        nBytesDataPacket=nBytesDataPacket+2;
+                        enabledSensors = bitor(enabledSensors,hex2dec('40'));
+                    case ('B')
+                        signalNameArray(i+1) = cellstr('Gyroscope Y');
+                        signalDataTypeArray(i+1) = cellstr('i16*');
+                        nBytesDataPacket=nBytesDataPacket+2;
+                        enabledSensors = bitor(enabledSensors,hex2dec('40'));
+                    case ('C')
+                        signalNameArray(i+1) = cellstr('Gyroscope Z');
+                        signalDataTypeArray(i+1) = cellstr('i16*');
+                        nBytesDataPacket=nBytesDataPacket+2;
+                        enabledSensors = bitor(enabledSensors,hex2dec('40'));
+                    case ('D')
+                        signalNameArray(i+1) = cellstr('External ADC A7');
+                        signalDataTypeArray(i+1) = cellstr('u12');
+                        nBytesDataPacket=nBytesDataPacket+2;
+                        enabledSensors = bitor(enabledSensors,hex2dec('2'));
+                    case ('E')
+                        signalNameArray(i+1) = cellstr('External ADC A6');
+                        signalDataTypeArray(i+1) = cellstr('u12');
+                        nBytesDataPacket=nBytesDataPacket+2;
+                        enabledSensors = bitor(enabledSensors,hex2dec('1'));
+                    case ('F')
+                        signalNameArray(i+1) = cellstr('External ADC A15');
+                        signalDataTypeArray(i+1) = cellstr('u12');
+                        nBytesDataPacket=nBytesDataPacket+2;
+                        enabledSensors = bitor(enabledSensors,hex2dec('800'));
+                    case ('10')
+                        signalNameArray(i+1) = cellstr('Internal ADC A1');
+                        signalDataTypeArray(i+1) = cellstr('u12');
+                        nBytesDataPacket=nBytesDataPacket+2;
+                        enabledSensors = bitor(enabledSensors,hex2dec('400'));
+                    case ('11')
+                        signalNameArray(i+1) = cellstr('Internal ADC A12');
+                        signalDataTypeArray(i+1) = cellstr('u12');
+                        nBytesDataPacket=nBytesDataPacket+2;
+                        enabledSensors = bitor(enabledSensors,hex2dec('200'));
+                    case ('12')
+                        signalNameArray(i+1) = cellstr('Internal ADC A13');
+                        signalDataTypeArray(i+1) = cellstr('u12');
+                        nBytesDataPacket=nBytesDataPacket+2;
+                        enabledSensors = bitor(enabledSensors,hex2dec('100'));
+                    case ('13')
+                        signalNameArray(i+1) = cellstr('Internal ADC A14');
+                        signalDataTypeArray(i+1) = cellstr('u12');
+                        nBytesDataPacket=nBytesDataPacket+2;
+                        enabledSensors = bitor(enabledSensors,hex2dec('800000'));
+                    case ('14')
+                        signalNameArray(i+1) = cellstr('Alternative Accelerometer X');
+                        signalDataTypeArray(i+1) = cellstr('i16');
+                        nBytesDataPacket=nBytesDataPacket+2;
+                        enabledSensors = bitor(enabledSensors,hex2dec('400000'));
+                    case ('15')
+                        signalNameArray(i+1) = cellstr('Alternative Accelerometer Y');
+                        signalDataTypeArray(i+1) = cellstr('i16');
+                        nBytesDataPacket=nBytesDataPacket+2;
+                        enabledSensors = bitor(enabledSensors,hex2dec('400000'));
+                    case ('16')
+                        signalNameArray(i+1) = cellstr('Alternative Accelerometer Z');
+                        signalDataTypeArray(i+1) = cellstr('i16');
+                        nBytesDataPacket=nBytesDataPacket+2;
+                        enabledSensors = bitor(enabledSensors,hex2dec('400000'));
+                    case ('17')
+                        signalNameArray(i+1) = cellstr('Alternative Magnetometer X');
+                        signalDataTypeArray(i+1) = cellstr('i16');
+                        nBytesDataPacket=nBytesDataPacket+2;
+                        enabledSensors = bitor(enabledSensors,hex2dec('200000'));
+                    case ('18')
+                        signalNameArray(i+1) = cellstr('Alternative Magnetometer Y');
+                        signalDataTypeArray(i+1) = cellstr('i16');
+                        nBytesDataPacket=nBytesDataPacket+2;
+                        enabledSensors = bitor(enabledSensors,hex2dec('200000'));
+                    case ('19')
+                        signalNameArray(i+1) = cellstr('Alternative Magnetometer Z');
+                        signalDataTypeArray(i+1) = cellstr('i16');
+                        nBytesDataPacket=nBytesDataPacket+2;
+                        enabledSensors = bitor(enabledSensors,hex2dec('200000'));
+                    case ('1A')
+                        signalNameArray(i+1) = cellstr('Temperature');
+                        signalDataTypeArray(i+1) = cellstr('u16*');
+                        nBytesDataPacket=nBytesDataPacket+2;
+                        enabledSensors = bitor(enabledSensors,hex2dec('40000'));
+                    case ('1B')
+                        signalNameArray(i+1) = cellstr('Pressure');
+                        signalDataTypeArray(i+1) = cellstr('u24*');
+                        nBytesDataPacket=nBytesDataPacket+3;
+                        enabledSensors = bitor(enabledSensors,hex2dec('40000'));
+                    case ('1C')
+                        signalNameArray(i+1) = cellstr('GSR Raw');
+                        signalDataTypeArray(i+1) = cellstr('u16');
+                        nBytesDataPacket=nBytesDataPacket+2;
+                        enabledSensors = bitor(enabledSensors,hex2dec('04'));
+                    case ('1D')
+                        signalNameArray(i+1) = cellstr('EXG1 STA');
+                        signalDataTypeArray(i+1) = cellstr('u8');
+                        nBytesDataPacket=nBytesDataPacket+1;
+                    case ('1E')
+                        signalNameArray(i+1) = cellstr('EXG1 CH1');
+                        signalDataTypeArray(i+1) = cellstr('i24*');
+                        nBytesDataPacket=nBytesDataPacket+3;
+                        enabledSensors = bitor(enabledSensors,hex2dec('10'));
+                    case ('1F')
+                        signalNameArray(i+1) = cellstr('EXG1 CH2');
+                        signalDataTypeArray(i+1) = cellstr('i24*');
+                        nBytesDataPacket=nBytesDataPacket+3;
+                        enabledSensors = bitor(enabledSensors,hex2dec('10'));
+                    case ('20')
+                        signalNameArray(i+1) = cellstr('EXG2 STA');
+                        signalDataTypeArray(i+1) = cellstr('u8');
+                        nBytesDataPacket=nBytesDataPacket+1;
+                    case ('21')
+                        signalNameArray(i+1) = cellstr('EXG2 CH1'); 
+                        signalDataTypeArray(i+1) = cellstr('i24*');
+                        nBytesDataPacket=nBytesDataPacket+3;
+                        enabledSensors = bitor(enabledSensors,hex2dec('08'));
+                    case ('22')
+                        signalNameArray(i+1) = cellstr('EXG2 CH2');
+                        signalDataTypeArray(i+1) = cellstr('i24*');
+                        nBytesDataPacket=nBytesDataPacket+3;
+                        enabledSensors = bitor(enabledSensors,hex2dec('08'));
+                    case ('23')
+                        signalNameArray(i+1) = cellstr('EXG1 CH1 16BIT');
+                        signalDataTypeArray(i+1) = cellstr('i16*');
+                        nBytesDataPacket=nBytesDataPacket+2;
+                        enabledSensors = bitor(enabledSensors,hex2dec('100000'));
+                    case ('24')
+                        signalNameArray(i+1) = cellstr('EXG1 CH2 16BIT');
+                        signalDataTypeArray(i+1) = cellstr('i16*');
+                        nBytesDataPacket=nBytesDataPacket+2;
+                        enabledSensors = bitor(enabledSensors,hex2dec('100000'));
+                    case ('25')
+                        signalNameArray(i+1) = cellstr('EXG2 CH1 16BIT');
+                        signalDataTypeArray(i+1) = cellstr('i16*');
+                        nBytesDataPacket=nBytesDataPacket+2;
+                        enabledSensors = bitor(enabledSensors,hex2dec('080000'));
+                    case ('26')
+                        signalNameArray(i+1) = cellstr('EXG2 CH2 16BIT');
+                        signalDataTypeArray(i+1) = cellstr('i16*');
+                        nBytesDataPacket=nBytesDataPacket+2;
+                        enabledSensors = bitor(enabledSensors,hex2dec('080000'));
+                    case ('27')
+                        signalNameArray(i+1) = cellstr('Bridge Amplifier High');
+                        signalDataTypeArray(i+1) = cellstr('u12');
+                        nBytesDataPacket=nBytesDataPacket+2;
+                        enabledSensors = bitor(enabledSensors,hex2dec('8000'));
+                    case ('28')
+                        signalNameArray(i+1) = cellstr('Bridge Amplifier Low');
+                        signalDataTypeArray(i+1) = cellstr('u12');
+                        nBytesDataPacket=nBytesDataPacket+2;
+                        enabledSensors = bitor(enabledSensors,hex2dec('8000'));
+                    otherwise
+                        signalNameArray(i+1) = cellstr(hexSignalID);       % Default values for unrecognised data signal
+                        signalDataTypeArray(i+1) = cellstr('u12');
+                        nBytesDataPacket=nBytesDataPacket+2;
+                end
+            end
+            
+            thisShimmer.SignalNameArray = signalNameArray;
+            thisShimmer.SignalDataTypeArray = signalDataTypeArray;
+            thisShimmer.nBytesDataPacket = nBytesDataPacket;
+            thisShimmer.EnabledSensors = enabledSensors;
+            
+        end  % function interpretdatapacketformat
+
+        function newData = calculatetwoscomplement(thisShimmer,signedData,bitLength)
+            % Calculates the two's complement of input signedData.
+            newData=double(signedData);
+            for i=1:numel(signedData)
+                     if (bitLength==24)
+                        if (signedData(i)>=bitshift(1,bitLength-1))
+                            newData(i)=-(double( bitxor(signedData(i),(bitshift(1,bitLength)-1)))+1);
+                        end
+                     elseif (bitLength==16)
+                        if (signedData(i)>=bitshift(1,bitLength-1))
+                            newData(i)=-(double(bitcmp(uint16(signedData(i))))+1);
+                        end
+                    elseif (bitLength==8)
+                      if (signedData(i)>=bitshift(1,bitLength-1))
+                            newData(i)=-(double(bitcmp(uint8(signedData(i))))+1);
+                      end
+                    else
+                        disp('Warning: calculatetwoscomplement - BitLength not supported for twocomplement method');
+                    end
+            end
+            
+        end %function calculatetwoscomplement
+
+        function [timeStampData, signalName,signalFormat,signalUnit]=gettimestampdata(thisShimmer,dataMode,parsedData)
+            % Gets Time Stamp data from input parsedData.
+            if (thisShimmer.isStreaming)                     % Shimmer must be in a Streaming state
+                
+                if strcmp(dataMode,'a')
+                    uncalibratedTimeStampData = parsedData(:,1);
+                    calibratedTimeStampData=thisShimmer.calibratetimestampdata(uncalibratedTimeStampData);
+                    timeStampData=[uncalibratedTimeStampData calibratedTimeStampData];
+                    signalName{1}='Time Stamp';
+                    signalFormat{1}='RAW';
+                    signalUnit{1}='no units';
+                    signalName{2}='Time Stamp';
+                    signalFormat{2}='CAL';
+                    signalUnit{2}='milliseconds';
+                elseif strcmp(dataMode,'u')
+                    uncalibratedTimeStampData = parsedData(:,1);
+                    timeStampData=uncalibratedTimeStampData;
+                    signalName{1}='Time Stamp';
+                    signalFormat{1}='RAW';
+                    signalUnit{1}='no units';
+                elseif strcmp(dataMode,'c')
+                    uncalibratedTimeStampData = parsedData(:,1);
+                    calibratedTimeStampData=thisShimmer.calibratetimestampdata(uncalibratedTimeStampData);
+                    timeStampData=calibratedTimeStampData;
+                    signalName{1}='Time Stamp';
+                    signalFormat{1}='CAL';
+                    signalUnit{1}='milliseconds';
+                else
+                    disp('Warning: gettimestampdata - Wrong data mode specified');
+                end
+            else
+                timeStampData = [];
+                fprintf(strcat('Warning: gettimestampdata - Cannot get data as COM ',thisShimmer.name,' Shimmer is not Streaming'));
+            end
+        end
+
+        function timeStampCalibratedData = calibratetimestampdata(thisShimmer,uncalibratedTimeStampData)
+            % Calibration of Time Stamp data - calibrates input uncalibratedTimeStampData.
+            contUncalibratedTimeStampData = [thisShimmer.LastUncalibratedLoopTimeStamp; uncalibratedTimeStampData + thisShimmer.nClockOverflows * 16777216]; % shift in LastUncalibratedLoopTimeStamp  and add clock overflow offsets of previous iterations
+                
+            for i=1:length(contUncalibratedTimeStampData)-1
+                if (contUncalibratedTimeStampData(i+1) < contUncalibratedTimeStampData(i))
+                    contUncalibratedTimeStampData(i+1:end) = contUncalibratedTimeStampData(i+1:end)+16777216; % add offset for each clock overflow within current iteration
+                    thisShimmer.nClockOverflows = thisShimmer.nClockOverflows + 1;
+                end
+            end
+            
+            timeStampCalibratedData=contUncalibratedTimeStampData(2:end)/32768*1000; % omit last timestamp of previous iteration and convert to ms: C=(U/32768*1000) C=calibrated U=uncalibrated
+            
+            thisShimmer.LastUncalibratedLoopTimeStamp=contUncalibratedTimeStampData(end);
+            
+        end %function calibratetimestampdata
     end
 end
