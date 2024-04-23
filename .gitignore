@@ -5,6 +5,9 @@
 *.slx.r*
 *.mdl.r*
 
+# Generated data files
+*.dat
+
 # Derived content-obscured files
 *.p
 

@@ -12,16 +12,19 @@ classdef ShimmerHandleClass < handle
         SET_SENSORS_COMMAND       = 0x08;
         START_STREAMING_COMMAND   = 0x07;
         STOP_STREAMING_COMMAND    = 0x20;
-        GET_ACCEL_RANGE_COMMAND = char(11);                                % Get accelerometer range command sent to the shimmer in order to receive the accelerometer range response
+        GET_ACCEL_RANGE_COMMAND   = char(11);                              % Get accelerometer range command sent to the shimmer in order to receive the accelerometer range response
+        GET_CONFIG_BYTE0_COMMAND  = char(16);                              % Get config byte0 command sent to the shimmer in order to receive the config byte0 response (Get config bytes byte0, byte1, byte2, byte3 For Shimmer3.) 
+        SET_ACCEL_RANGE_COMMAND   = char(9);                               % First byte sent to the shimmer when implementing a set accelerometer range operation, it is followed by the byte value defining the setting
 
         %Responses
-        ACK_RESPONSE              = 255; %Shimmer acknowledged response       
-        DATA_PACKET_START_BYTE    = 0;   %Start of each streamed packet
+        ACK_RESPONSE              = 255;                                   %Shimmer acknowledged response       
+        DATA_PACKET_START_BYTE    = 0;                                     %Start of each streamed packet
         STATUS_RESPONSE           = char(hex2dec('71'));
         INSTREAM_CMD_RESPONSE     = char(hex2dec('8A'));
         VBATT_RESPONSE            = char(hex2dec('94'));
         INQUIRY_RESPONSE          = 0x02;
         ACCEL_RANGE_RESPONSE      = newline;                               % First byte value received from the shimmer in the accel range response, it is followed by the byte value defining the setting
+        CONFIG_BYTE0_RESPONSE     = char(15);                              % First byte value received from the shimmer in the config byte0 response, it is followed by the byte value defining the setting
 
         %Sensors
         SENSOR_A_ACCEL            = 8;   % 0x000080
@@ -239,10 +242,10 @@ classdef ShimmerHandleClass < handle
                 end
             else
                 isAcknowledged = false;
-                fprintf(strcat('Warning: waitforack - Timed-out on wait for acknowledgement byte on Shimmer COM',thisShimmer.name,'.\n'));
+                fprintf(strcat('Warning: waitForAck - Timed-out on wait for acknowledgement byte on Shimmer COM',thisShimmer.name,'.\n'));
             end
             
-        end %function waitforack
+        end %function waitForAck
 
         %Start streaming
         function startedStreaming = startStreaming(thisShimmer)
@@ -482,13 +485,13 @@ classdef ShimmerHandleClass < handle
             % Receives the accel range and updates the AccelRange property.
             if (thisShimmer.isConnected)
                 
-                clearreaddatabuffer(thisShimmer);                                          % As a precaution always clear the read data buffer before a write
-                writetocomport(thisShimmer, thisShimmer.GET_ACCEL_RANGE_COMMAND);          % Send the Set Accel Range Command to the Shimmer
+                flush(thisShimmer.bluetoothConn, "input");                                          % As a precaution always clear the read data buffer before a write
+                write(thisShimmer.bluetoothConn, thisShimmer.GET_ACCEL_RANGE_COMMAND);          % Send the Set Accel Range Command to the Shimmer
                 
-                isAcknowledged = waitforack(thisShimmer, thisShimmer.DEFAULT_TIMEOUT);     % Wait for Acknowledgment from Shimmer
+                isAcknowledged = waitForAck(thisShimmer, thisShimmer.DEFAULT_TIMEOUT);     % Wait for Acknowledgment from Shimmer
                 
                 if (isAcknowledged == true)
-                    [shimmerResponse] = read(thisShimmer.bluetoothConn, 2);        % Read the 2 byte response from the realterm buffer
+                    [shimmerResponse] = read(thisShimmer.bluetoothConn, 2);        % Read the 2 byte response from the bluetooth buffer
                     
                     if ~isempty(shimmerResponse)
                         
@@ -549,7 +552,7 @@ classdef ShimmerHandleClass < handle
             %
             %   See also getaccelrange
             
-            if (strcmp(thisShimmer.State,'Connected'))                     % Shimmer must be in a Connected state
+            if (thisShimmer.isConnected)                     % Shimmer must be in a Connected state
                 
                 isWritten = writeaccelrange(thisShimmer,accelRange);       % Write accelerometer range to the Shimmer
                 
@@ -559,76 +562,119 @@ classdef ShimmerHandleClass < handle
                     if (isRead)
                         isSet = (accelRange == thisShimmer.AccelRange);    % isSet will be equal to 1 the current Accel range setting is equal to the requested setting
                         disp('Please ensure you are using the correct calibration parameters. Note that the Shimmer only stores one set (one range per sensor) of calibration parameters.');
-                        if (thisShimmer.ShimmerVersion < thisShimmer.SHIMMER_3)
-                            if (thisShimmer.DefaultAccelCalibrationParameters == true)
-                                thisShimmer.AccelCalParametersOV = thisShimmer.AccelCalParametersOVShimmer2;
-                                thisShimmer.AccelCalParametersAM = thisShimmer.AccelCalParametersAMShimmer2;
-                                %   check accel range, valid range setting values for the Shimmer
-                                %   2 are 0 (+/- 1.5g), 1 (+/- 2g), 2 (+/- 4g)and 3 (+/- 6g)
-                                if thisShimmer.getaccelrange==0
-                                    thisShimmer.AccelCalParametersSM = thisShimmer.AccelCalParametersSM1p5gShimmer2;
-                                end
-                                
-                                if thisShimmer.getaccelrange==1
-                                    thisShimmer.AccelCalParametersSM = thisShimmer.AccelCalParametersSM2gShimmer2;
-                                end
-                                
-                                if thisShimmer.getaccelrange==2
-                                    thisShimmer.AccelCalParametersSM = thisShimmer.AccelCalParametersSM4gShimmer2;
-                                end
-                                
-                                if thisShimmer.getaccelrange==3
-                                    thisShimmer.AccelCalParametersSM = thisShimmer.AccelCalParametersSM6gShimmer2;
-                                end
-                            end
-                        else
-                            thisShimmer.readconfigbytes;                   % update config bytes class properties
-                            thisShimmer.DAccelCalParametersOV = thisShimmer.AccelWideRangeCalParametersOVShimmer3;
-                            if thisShimmer.HardwareCompatibilityCode < 2
-                                thisShimmer.DAccelCalParametersAM = thisShimmer.AccelWideRangeCalParametersAMShimmer3;
-                                if (thisShimmer.getaccelrange==0 && thisShimmer.DefaultAccelCalibrationParameters == true)
-                                    thisShimmer.DAccelCalParametersSM = thisShimmer.AccelWideRangeCalParametersSM2gShimmer3;
-                                end
-                                if (thisShimmer.getaccelrange==1 && thisShimmer.DefaultDAccelCalibrationParameters == true)
-                                    thisShimmer.DAccelCalParametersSM = thisShimmer.AccelWideRangeCalParametersSM4gShimmer3;
-                                end
-                                if (thisShimmer.getaccelrange==2 && thisShimmer.DefaultDAccelCalibrationParameters == true)
-                                    thisShimmer.DAccelCalParametersSM = thisShimmer.AccelWideRangeCalParametersSM8gShimmer3;
-                                end
-                                if (thisShimmer.getaccelrange==3 && thisShimmer.DefaultDAccelCalibrationParameters == true)
-                                    thisShimmer.DAccelCalParametersSM = thisShimmer.AccelWideRangeCalParametersSM16gShimmer3;
-                                end
-                            elseif thisShimmer.HardwareCompatibilityCode >= 2
-                                thisShimmer.DAccelCalParametersAM = thisShimmer.AccelWideRangeCalParametersAMShimmer3_2;
-                                if (thisShimmer.getaccelrange==0 && thisShimmer.DefaultAccelCalibrationParameters == true)
-                                    thisShimmer.DAccelCalParametersSM = thisShimmer.AccelWideRangeCalParametersSM2gShimmer3_2;
-                                end
-                                if (thisShimmer.getaccelrange==1 && thisShimmer.DefaultDAccelCalibrationParameters == true)
-                                    thisShimmer.DAccelCalParametersSM = thisShimmer.AccelWideRangeCalParametersSM16gShimmer3_2;
-                                end
-                                if (thisShimmer.getaccelrange==2 && thisShimmer.DefaultDAccelCalibrationParameters == true)
-                                    thisShimmer.DAccelCalParametersSM = thisShimmer.AccelWideRangeCalParametersSM4gShimmer3_2;
-                                end
-                                if (thisShimmer.getaccelrange==3 && thisShimmer.DefaultDAccelCalibrationParameters == true)
-                                    thisShimmer.DAccelCalParametersSM = thisShimmer.AccelWideRangeCalParametersSM8gShimmer3_2;
-                                end
-                            end
+                        thisShimmer.readconfigbytes;                   % update config bytes class properties
+                        thisShimmer.DAccelCalParametersOV = thisShimmer.AccelWideRangeCalParametersOVShimmer3;
+                        thisShimmer.DAccelCalParametersAM = thisShimmer.AccelWideRangeCalParametersAMShimmer3_2;
+                        if (thisShimmer.getaccelrange==0 && thisShimmer.DefaultAccelCalibrationParameters == true)
+                            thisShimmer.DAccelCalParametersSM = thisShimmer.AccelWideRangeCalParametersSM2gShimmer3_2;
+                        end
+                        if (thisShimmer.getaccelrange==1 && thisShimmer.DefaultDAccelCalibrationParameters == true)
+                            thisShimmer.DAccelCalParametersSM = thisShimmer.AccelWideRangeCalParametersSM16gShimmer3_2;
+                        end
+                        if (thisShimmer.getaccelrange==2 && thisShimmer.DefaultDAccelCalibrationParameters == true)
+                            thisShimmer.DAccelCalParametersSM = thisShimmer.AccelWideRangeCalParametersSM4gShimmer3_2;
+                        end
+                        if (thisShimmer.getaccelrange==3 && thisShimmer.DefaultDAccelCalibrationParameters == true)
+                            thisShimmer.DAccelCalParametersSM = thisShimmer.AccelWideRangeCalParametersSM8gShimmer3_2;
                         end
                     else
                         isSet = false;
                     end
                     
                 else
-                    
                     isSet = false;
-                    
                 end
                 
             else
-                fprintf(strcat('Warning: setaccelrange - Cannot set accel range for COM ',thisShimmer.ComPort,' as Shimmer is not connected.\n'));
+                fprintf(strcat('Warning: setaccelrange - Cannot set accel range for COM ',thisShimmer.name,' as Shimmer is not connected.\n'));
                 isSet = false;
             end
         end % function setaccelrange
+
+        function isWritten = writeaccelrange(thisShimmer,accelRange)
+            % Writes accelerometer range to Shimmer - in Connected state
+            % This function is for Shimmer2, Shimmer2r and Shimmer3. For
+            % Shimmer3 this function writes the range for the
+            % LSM303DLHC/LSM303AHTR accelerometer.
+            if (thisShimmer.isConnected)
+                if ((accelRange == 0) || (accelRange == 1)|| (accelRange == 2)|| (accelRange == 3))
+                    validSetting = true;
+                else 
+                    validSetting = false;
+                end
+                
+                if (validSetting == true)
+                    
+                    flush(thisShimmer.bluetoothConn, "input");                                  % As a precaution always clear the read data buffer before a write
+                    write(thisShimmer.bluetoothConn, thisShimmer.SET_ACCEL_RANGE_COMMAND);      % Send the Set accel range Command to the Shimmer
+                    waitForAck(thisShimmer, thisShimmer.DEFAULT_TIMEOUT);
+                    
+                    write(thisShimmer.bluetoothConn, char(accelRange));                         % Write the accel range char value to the Shimmer
+                    isWritten = waitForAck(thisShimmer, thisShimmer.DEFAULT_TIMEOUT);           % Wait for Acknowledgment from Shimmer
+                    
+                    if (~isWritten)
+                        fprintf(strcat('Warning: writeaccelrange - Set accel range response expected but not returned for Shimmer COM',thisShimmer.name,'.\n'));
+                    end
+                else
+                    isWritten = false;
+                    fprintf(strcat('Warning: writeaccelrange - Attempt to set accel range failed due to a request to set the range to an \n'));
+                    fprintf(strcat('invalid setting for Shimmer COM',thisShimmer.name,'.\n'));
+                    fprintf('Valid range setting values for the Shimmer 3 are 0 (+/- 2g), 1 (+/- 4g), 2 (+/- 8g) and 3 (+/- 16g).\n');
+                end
+                
+            else
+                isWritten = false;
+                fprintf(strcat('Warning: writeaccelrange - Cannot set accel range for COM ',thisShimmer.name,' as Shimmer is not connected.\n'));
+            end
+            
+        end % function writeaccelrange
+
+        function isRead = readconfigbytes(thisShimmer)     
+            % Sends the GET_CONFIG_BYTE0_COMMAND to Shimmer3 - in Connected state 
+            % Receives Config Byte 0, Config Byte 1, Config Byte 2 and Config Byte 3
+            % and updates the corresponding properties.
+            if (thisShimmer.isConnected)
+                flush(thisShimmer.bluetoothConn, "input");                                           % As a precaution always clear the read data buffer before a write                
+                write(thisShimmer.bluetoothConn, thisShimmer.GET_CONFIG_BYTE0_COMMAND);          % Send GET_CONFIG_BYTE0_COMMAND to Shimmer3 to get config bytes byte0, byte1, byte2, byte3.              
+                isAcknowledged = waitForAck(thisShimmer, thisShimmer.DEFAULT_TIMEOUT);      % Wait for Acknowledgment from Shimmer                
+                if (isAcknowledged == true)
+                    [shimmerResponse] = read(thisShimmer.bluetoothConn, 5);     % Read the 5 byte response from the bluetooth buffer  
+                    if ~isempty(shimmerResponse)
+                        if (shimmerResponse(1) == thisShimmer.CONFIG_BYTE0_RESPONSE)
+                            thisShimmer.ConfigByte0 = shimmerResponse(2);
+                            thisShimmer.ConfigByte1 = shimmerResponse(3);
+                            thisShimmer.ConfigByte2 = shimmerResponse(4);
+                            thisShimmer.ConfigByte3 = shimmerResponse(5);
+                            isRead = true;
+                        else
+                            thisShimmer.ConfigByte0 = 'Nan';                                % Set the ConfigByte0 to 'Nan' to indicate unknown
+                            thisShimmer.ConfigByte1 = 'Nan';                                % Set the ConfigByte1 to 'Nan' to indicate unknown
+                            thisShimmer.ConfigByte2 = 'Nan';                                % Set the ConfigByte2 to 'Nan' to indicate unknown
+                            thisShimmer.ConfigByte3 = 'Nan';                                % Set the ConfigByte3 to 'Nan' to indicate unknown
+                            fprintf(strcat('Warning: readconfigbytes - Get config byte0 command response expected but not returned for Shimmer COM',thisShimmer.name,'.\n'));
+                            isRead = false;
+                        end
+                    else
+                        thisShimmer.ConfigByte0 = 'Nan';                                    % Set the ConfigByte0 to 'Nan' to indicate unknown
+                        thisShimmer.ConfigByte1 = 'Nan';                                    % Set the ConfigByte1 to 'Nan' to indicate unknown
+                        thisShimmer.ConfigByte2 = 'Nan';                                    % Set the ConfigByte2 to 'Nan' to indicate unknown
+                        thisShimmer.ConfigByte3 = 'Nan';                                    % Set the ConfigByte3 to 'Nan' to indicate unknown
+                        fprintf(strcat('Warning: readconfigbytes - Get config byte0 command response expected but not returned for Shimmer COM',thisShimmer.name,'.\n'));
+                        isRead = false;
+                    end
+                else
+                    thisShimmer.ConfigByte0 = 'Nan';                                        % Set the ConfigByte0 to 'Nan' to indicate unknown                        
+                    thisShimmer.ConfigByte1 = 'Nan';                                        % Set the ConfigByte1 to 'Nan' to indicate unknown
+                    thisShimmer.ConfigByte2 = 'Nan';                                        % Set the ConfigByte2 to 'Nan' to indicate unknown
+                    thisShimmer.ConfigByte3 = 'Nan';                                        % Set the ConfigByte3 to 'Nan' to indicate unknown
+                    fprintf(strcat('Warning: readconfigbytes - Get config byte0 command response expected but not returned for Shimmer COM',thisShimmer.name,'.\n'));
+                    isRead = false;
+                end
+            else
+                isRead = false;
+                fprintf(strcat('Warning: readconfigbytes - Cannot get config byte0 for COM ',thisShimmer.name,' as Shimmer is not connected.\n'));
+            end
+        end % function readconfigbytes
 
         function accelRange = getaccelrange(thisShimmer)
             %GETACCELRANGE - Get the accelerometer range of the Shimmer
@@ -1277,6 +1323,7 @@ classdef ShimmerHandleClass < handle
                 serialData = read(thisShimmer.bluetoothConn, numBytes);  % Read all available serial data from the com port
                 flush(thisShimmer.bluetoothConn, "input");
 
+                %Change columns to rows
                 swappedData = zeros(numBytes,1);
                 for dataSample = 1:1:numBytes
                     swappedData(dataSample,1) = serialData(1,dataSample);

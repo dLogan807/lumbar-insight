@@ -48,7 +48,7 @@ if (shimmer.isConnected)                                                       %
     shimmer.disableAllSensors;                                             % disable all sensors
     shimmer.setEnabledSensors(SensorMacros.GYRO,1,SensorMacros.MAG,1,...   % Enable the gyroscope, magnetometer and accelerometer.
     SensorMacros.ACCEL,1);                                                  
-    %shimmer.setaccelrange(0);                                              % Set the accelerometer range to 0 (+/- 1.5g for Shimmer2/2r, +/- 2.0g for Shimmer3)
+    shimmer.setaccelrange(0);                                              % Set the accelerometer range to 0 (+/- 1.5g for Shimmer2/2r, +/- 2.0g for Shimmer3)
     %shimmer.setorientation3D(1);                                           % Enable orientation3D
     %shimmer.setgyroinusecalibration(1);                                    % Enable gyro in-use calibration
     
