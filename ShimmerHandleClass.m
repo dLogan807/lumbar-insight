@@ -431,7 +431,7 @@ classdef ShimmerHandleClass < handle
                         end
                         
                         % set Gyro data rate as close as possible to Shimmer sampling rate; but never lower
-                        if (thisShimmer.ShimmerVersion == thisShimmer.SHIMMER_3 && thisShimmer.SamplingRate <= 32768)
+                        if (thisShimmer.SamplingRate <= 32768)
                             gyroRate = min(255, floor(8000/thisShimmer.SamplingRate - 1));                      % gyro rate to send to Shimmer -> programmable from 4..8000Hz)
                             if (gyroRate>=0)
                                 thisShimmer.setgyrorate(gyroRate);
@@ -444,70 +444,19 @@ classdef ShimmerHandleClass < handle
                         end
                                                 
                         % set Mag data rate as close as possible to Shimmer sampling rate; but never lower
-                        if (thisShimmer.ShimmerVersion < thisShimmer.SHIMMER_3)
-                            if (thisShimmer.SamplingRate <= 0.5)
-                                thisShimmer.setmagrate(0);                     % set data rate to 0.50Hz for Mag
-                                disp('setsamplingrate - Mag Rate is set to 0.50Hz');
-                            elseif (thisShimmer.SamplingRate <= 1)
-                                thisShimmer.setmagrate(1);                     % set data rate to 1.00Hz for Mag
-                                disp('setsamplingrate - Mag Rate is set to 1.00Hz');
-                            elseif (thisShimmer.SamplingRate <= 2)
-                                thisShimmer.setmagrate(2);                     % set data rate to 2.00Hz for Mag
-                                disp('setsamplingrate - Mag Rate is set to 2.00Hz');
-                            elseif (thisShimmer.SamplingRate <= 5)
-                                thisShimmer.setmagrate(3);                     % set data rate to 5.00Hz for Mag
-                                disp('setsamplingrate - Mag Rate is set to 5.00Hz');
-                            elseif (thisShimmer.SamplingRate <= 10)
-                                thisShimmer.setmagrate(4);                     % set data rate to 10.00Hz for Mag
-                                disp('setsamplingrate - Mag Rate is set to 10.00Hz');
-                            elseif (thisShimmer.SamplingRate <= 20)
-                                thisShimmer.setmagrate(5);                     % set data rate to 20.00Hz for Mag
-                                disp('setsamplingrate - Mag Rate is set to 20.00Hz');
-                            else
-                                thisShimmer.setmagrate(6);                     % set data rate to 50.00Hz for Mag
-                                disp('setsamplingrate - Mag Rate is set to 50.00Hz');
-                            end
-                        elseif (thisShimmer.ShimmerVersion == thisShimmer.SHIMMER_3 && thisShimmer.HardwareCompatibilityCode < 2)
-                            if (thisShimmer.SamplingRate <= 0.75)
-                                thisShimmer.setmagrate(0);                     % set data rate to 0.75Hz for Mag
-                                disp('setsamplingrate - Mag Rate is set to 0.75Hz');
-                            elseif (thisShimmer.SamplingRate <= 1.50)
-                                thisShimmer.setmagrate(1);                     % set data rate to 1.50Hz for Mag
-                                disp('setsamplingrate - Mag Rate is set to 1.50Hz');
-                            elseif (thisShimmer.SamplingRate <= 3)
-                                thisShimmer.setmagrate(2);                     % set data rate to 3.00Hz for Mag
-                                disp('setsamplingrate - Mag Rate is set to 3.00Hz');
-                            elseif (thisShimmer.SamplingRate <= 7.5)
-                                thisShimmer.setmagrate(3);                     % set data rate to 7.50Hz for Mag
-                                disp('setsamplingrate - Mag Rate is set to 7.50Hz');
-                            elseif (thisShimmer.SamplingRate <= 15)
-                                thisShimmer.setmagrate(4);                     % set data rate to 15.00Hz for Mag
-                                disp('setsamplingrate - Mag Rate is set to 15.00Hz');
-                            elseif (thisShimmer.SamplingRate <= 30)
-                                thisShimmer.setmagrate(5);                     % set data rate to 30.00Hz for Mag
-                                disp('setsamplingrate - Mag Rate is set to 30.00Hz');
-                            elseif (thisShimmer.SamplingRate <= 75)
-                                thisShimmer.setmagrate(6);                     % set data rate to 75.00Hz for Mag
-                                disp('setsamplingrate - Mag Rate is set to 75.00Hz');
-                            elseif (thisShimmer.SamplingRate <= 32768)
-                                thisShimmer.setmagrate(7);                     % set data rate to 220.00Hz for Mag
-                                disp('setsamplingrate - Mag Rate is set to 220.00Hz');
-                            end
-                        elseif (thisShimmer.ShimmerVersion == thisShimmer.SHIMMER_3 && thisShimmer.HardwareCompatibilityCode >= 2)
-                            if (thisShimmer.SamplingRate <= 10.0)
-                                thisShimmer.setmagrate(0);                     % set data rate to 10.0Hz for Mag
-                                disp('setsamplingrate - Mag Rate is set to 10.0Hz');
-                            elseif (thisShimmer.SamplingRate <= 20.0)
-                                thisShimmer.setmagrate(1);                     % set data rate to 20.0Hz for Mag
-                                disp('setsamplingrate - Mag Rate is set to 20.0Hz');
-                            elseif (thisShimmer.SamplingRate <= 50.0)
-                                thisShimmer.setmagrate(2);                     % set data rate to 50.0Hz for Mag
-                                disp('setsamplingrate - Mag Rate is set to 50.0Hz');
-                            elseif (thisShimmer.SamplingRate <= 32768)
-                                thisShimmer.setmagrate(3);                     % set data rate to 100.0Hz for Mag
-                                disp('setsamplingrate - Mag Rate is set to 100.0Hz');
-                            end
-                        end  
+                        if (thisShimmer.SamplingRate <= 10.0)
+                            thisShimmer.setmagrate(0);                     % set data rate to 10.0Hz for Mag
+                            disp('setsamplingrate - Mag Rate is set to 10.0Hz');
+                        elseif (thisShimmer.SamplingRate <= 20.0)
+                            thisShimmer.setmagrate(1);                     % set data rate to 20.0Hz for Mag
+                            disp('setsamplingrate - Mag Rate is set to 20.0Hz');
+                        elseif (thisShimmer.SamplingRate <= 50.0)
+                            thisShimmer.setmagrate(2);                     % set data rate to 50.0Hz for Mag
+                            disp('setsamplingrate - Mag Rate is set to 50.0Hz');
+                        elseif (thisShimmer.SamplingRate <= 32768)
+                            thisShimmer.setmagrate(3);                     % set data rate to 100.0Hz for Mag
+                            disp('setsamplingrate - Mag Rate is set to 100.0Hz');
+                        end
                     else
                         samplingRate = 'Nan';                              % Following a successful write but failed read, set the return value (samplingRate) to 'Nan' signifying unknown
                     end
