@@ -6,7 +6,7 @@
 classdef ShimmerHandleClass < handle
     %Class to interface with a Shimmer3 device over bluetooth
     
-    properties (Constant = true)
+    properties (Constant = true, Access = private)
         %Commands
         INQUIRY_COMMAND           = 0x01;
         SET_SENSORS_COMMAND       = 0x08;
@@ -55,7 +55,7 @@ classdef ShimmerHandleClass < handle
         DEFAULT_TIMEOUT = 8;             % Default timeout for Wait for Acknowledgement response
     end
 
-    properties (Access = protected)
+    properties (Access = private)
         % Calibration properties
         % ACCEL Calibration
         DefaultAccelCalibrationParameters=true;
@@ -175,8 +175,8 @@ classdef ShimmerHandleClass < handle
         isConnected {logical} = false;
         isStreaming {logical} = false;
     end
-    
-    methods
+
+    methods (Access = public)
         %Constructor
         function thisShimmer = ShimmerHandleClass(name)
             arguments 
@@ -201,6 +201,124 @@ classdef ShimmerHandleClass < handle
             isConnected = thisShimmer.isConnected;
         end
 
+                %Start streaming
+        function startedStreaming = startStreaming(thisShimmer)
+            startedStreaming = false;
+
+            if (thisShimmer.isConnected && ~thisShimmer.isStreaming)
+                flush(thisShimmer.bluetoothConn);
+                write(thisShimmer.bluetoothConn, thisShimmer.START_STREAMING_COMMAND);
+                
+                startedStreaming = waitForAck(thisShimmer, thisShimmer.DEFAULT_TIMEOUT);
+                thisShimmer.isStreaming = startedStreaming;
+            end
+        end
+
+        %Stop streaming
+        function stoppedStreaming = stopStreaming(thisShimmer)
+            stoppedStreaming = false;
+
+            if (thisShimmer.isConnected && thisShimmer.isStreaming)
+                flush(thisShimmer.bluetoothConn);
+                write(thisShimmer.bluetoothConn, thisShimmer.STOP_STREAMING_COMMAND);
+   
+                thisShimmer.isStreaming = false;
+                stoppedStreaming = true;
+            end
+        end
+
+        %Disable all sensors
+        function sensorsDisabled = disableAllSensors(thisShimmer)
+            enabledSensors = 0;
+
+            sensorsDisabled = writeEnabledSensors(thisShimmer, uint32(enabledSensors));
+        end
+
+        %Set specifc enabled sensors
+        %Example: Enable the gyroscope, magnetometer and accelerometer.
+        %shimmer.setenabledsensors(SensorMacros.GYRO,1,SensorMacros.MAG,1,SensorMacros.ACCEL,1);   
+        function sensorsSet = setEnabledSensors(thisShimmer, varargin)
+            enabledSensors = determineEnabledSensorsBytes(thisShimmer, varargin);
+
+            sensorsSet = writeEnabledSensors(thisShimmer, uint32(enabledSensors));  
+
+            if (sensorsSet)
+                readenabledsensors(thisShimmer);    % Following a succesful write, call the readenabledsensors function which updates the enabledSensors property with the current Shimmer enabled sensors setting                    
+            end
+        end
+
+        function isSet = setaccelrange(thisShimmer, accelRange)
+            %SETACCELRANGE - Set the accelerometer range of the Shimmer
+            %
+            %SETACCELRANGE(ACCELRANGE) sets the accelerometer range of the
+            %   Shimmer to the value of the input ACCELRANGE.
+            %   The function will return a 1 if the operation was successful
+            %   otherwise it will return a 0.
+            %
+            %   SYNOPSIS: isSet = thisShimmer.setaccelrange(accelRange)
+            %
+            %   INPUT: accelRange - Numeric value defining the desired
+            %                       accelerometer range.
+            %                       Valid range setting values for the Shimmer
+            %                       2 are 0 (+/- 1.5g), 1 (+/- 2g), 2 (+/- 4g)
+            %                       and 3 (+/- 6g).
+            %                       Valid range setting values for the Shimmer
+            %                       2r are 0 (+/- 1.5g) and 3 (+/- 6g).
+            %                       Valid range setting values for the
+            %                       Shimmer3 with LSM303DLHC are 0 (+/- 2g),
+            %                       1 (+/- 4g), 2 (+/- 8g) and 3 (+/- 16g).
+            %                       Valid range setting values for the
+            %                       Shimmer3 with LSM303AHTR are 0 (+/- 2g),
+            %                       1 (+/- 16g), 2 (+/- 4g) and 3 (+/- 8g).
+            %
+            %   OUTPUT: isSet - Boolean value which indicates if the operation was
+            %                   successful or not (1=TRUE, 0=FALSE).
+            %
+            %   EXAMPLE: isSet = shimmer1.setaccelrange(0);
+            %
+            %   See also getaccelrange
+            
+            if (thisShimmer.isConnected)                     % Shimmer must be in a Connected state
+                
+                isWritten = writeaccelrange(thisShimmer,accelRange);       % Write accelerometer range to the Shimmer
+                
+                if (isWritten)
+                    isRead = readaccelrange(thisShimmer);                  % Following a succesful write, call the readaccelrange function which updates the accelRange property with the current Shimmer accel range setting
+                    
+                    if (isRead)
+                        isSet = (accelRange == thisShimmer.AccelRange);    % isSet will be equal to 1 the current Accel range setting is equal to the requested setting
+                        disp('Please ensure you are using the correct calibration parameters. Note that the Shimmer only stores one set (one range per sensor) of calibration parameters.');
+                        thisShimmer.readconfigbytes;                   % update config bytes class properties
+                        thisShimmer.DAccelCalParametersOV = thisShimmer.AccelWideRangeCalParametersOVShimmer3;
+                        thisShimmer.DAccelCalParametersAM = thisShimmer.AccelWideRangeCalParametersAMShimmer3_2;
+                        if (thisShimmer.getaccelrange==0 && thisShimmer.DefaultAccelCalibrationParameters == true)
+                            thisShimmer.DAccelCalParametersSM = thisShimmer.AccelWideRangeCalParametersSM2gShimmer3_2;
+                        end
+                        if (thisShimmer.getaccelrange==1 && thisShimmer.DefaultDAccelCalibrationParameters == true)
+                            thisShimmer.DAccelCalParametersSM = thisShimmer.AccelWideRangeCalParametersSM16gShimmer3_2;
+                        end
+                        if (thisShimmer.getaccelrange==2 && thisShimmer.DefaultDAccelCalibrationParameters == true)
+                            thisShimmer.DAccelCalParametersSM = thisShimmer.AccelWideRangeCalParametersSM4gShimmer3_2;
+                        end
+                        if (thisShimmer.getaccelrange==3 && thisShimmer.DefaultDAccelCalibrationParameters == true)
+                            thisShimmer.DAccelCalParametersSM = thisShimmer.AccelWideRangeCalParametersSM8gShimmer3_2;
+                        end
+                    else
+                        isSet = false;
+                    end
+                    
+                else
+                    isSet = false;
+                end
+                
+            else
+                fprintf(strcat('Warning: setaccelrange - Cannot set accel range for COM ',thisShimmer.name,' as Shimmer is not connected.\n'));
+                isSet = false;
+            end
+        end % function setaccelrange
+    end
+    
+    methods (Access = private)
         function isRead = readenabledsensors(thisShimmer)
             % Calls the inquiry function and updates the EnabledSensors property.
             if (thisShimmer.isConnected)
@@ -255,52 +373,6 @@ classdef ShimmerHandleClass < handle
             end
             
         end %function waitForAck
-
-        %Start streaming
-        function startedStreaming = startStreaming(thisShimmer)
-            startedStreaming = false;
-
-            if (thisShimmer.isConnected && ~thisShimmer.isStreaming)
-                flush(thisShimmer.bluetoothConn);
-                write(thisShimmer.bluetoothConn, thisShimmer.START_STREAMING_COMMAND);
-                
-                startedStreaming = waitForAck(thisShimmer, thisShimmer.DEFAULT_TIMEOUT);
-                thisShimmer.isStreaming = startedStreaming;
-            end
-        end
-
-        %Stop streaming
-        function stoppedStreaming = stopStreaming(thisShimmer)
-            stoppedStreaming = false;
-
-            if (thisShimmer.isConnected && thisShimmer.isStreaming)
-                flush(thisShimmer.bluetoothConn);
-                write(thisShimmer.bluetoothConn, thisShimmer.STOP_STREAMING_COMMAND);
-   
-                thisShimmer.isStreaming = false;
-                stoppedStreaming = true;
-            end
-        end
-
-        %Disable all sensors
-        function sensorsDisabled = disableAllSensors(thisShimmer)
-            enabledSensors = 0;
-
-            sensorsDisabled = writeEnabledSensors(thisShimmer, uint32(enabledSensors));
-        end
-
-        %Set specifc enabled sensors
-        %Example: Enable the gyroscope, magnetometer and accelerometer.
-        %shimmer.setenabledsensors(SensorMacros.GYRO,1,SensorMacros.MAG,1,SensorMacros.ACCEL,1);   
-        function sensorsSet = setEnabledSensors(thisShimmer, varargin)
-            enabledSensors = determineEnabledSensorsBytes(thisShimmer, varargin);
-
-            sensorsSet = writeEnabledSensors(thisShimmer, uint32(enabledSensors));  
-
-            if (sensorsSet)
-                readenabledsensors(thisShimmer);    % Following a succesful write, call the readenabledsensors function which updates the enabledSensors property with the current Shimmer enabled sensors setting                    
-            end
-        end
 
         %Write the enabled sensors to the shimmer
         function areEnabled = writeEnabledSensors(thisShimmer, enabledSensors)
@@ -529,76 +601,6 @@ classdef ShimmerHandleClass < handle
             end
             
         end % function readaccelrange
-
-        function isSet = setaccelrange(thisShimmer, accelRange)
-            %SETACCELRANGE - Set the accelerometer range of the Shimmer
-            %
-            %SETACCELRANGE(ACCELRANGE) sets the accelerometer range of the
-            %   Shimmer to the value of the input ACCELRANGE.
-            %   The function will return a 1 if the operation was successful
-            %   otherwise it will return a 0.
-            %
-            %   SYNOPSIS: isSet = thisShimmer.setaccelrange(accelRange)
-            %
-            %   INPUT: accelRange - Numeric value defining the desired
-            %                       accelerometer range.
-            %                       Valid range setting values for the Shimmer
-            %                       2 are 0 (+/- 1.5g), 1 (+/- 2g), 2 (+/- 4g)
-            %                       and 3 (+/- 6g).
-            %                       Valid range setting values for the Shimmer
-            %                       2r are 0 (+/- 1.5g) and 3 (+/- 6g).
-            %                       Valid range setting values for the
-            %                       Shimmer3 with LSM303DLHC are 0 (+/- 2g),
-            %                       1 (+/- 4g), 2 (+/- 8g) and 3 (+/- 16g).
-            %                       Valid range setting values for the
-            %                       Shimmer3 with LSM303AHTR are 0 (+/- 2g),
-            %                       1 (+/- 16g), 2 (+/- 4g) and 3 (+/- 8g).
-            %
-            %   OUTPUT: isSet - Boolean value which indicates if the operation was
-            %                   successful or not (1=TRUE, 0=FALSE).
-            %
-            %   EXAMPLE: isSet = shimmer1.setaccelrange(0);
-            %
-            %   See also getaccelrange
-            
-            if (thisShimmer.isConnected)                     % Shimmer must be in a Connected state
-                
-                isWritten = writeaccelrange(thisShimmer,accelRange);       % Write accelerometer range to the Shimmer
-                
-                if (isWritten)
-                    isRead = readaccelrange(thisShimmer);                  % Following a succesful write, call the readaccelrange function which updates the accelRange property with the current Shimmer accel range setting
-                    
-                    if (isRead)
-                        isSet = (accelRange == thisShimmer.AccelRange);    % isSet will be equal to 1 the current Accel range setting is equal to the requested setting
-                        disp('Please ensure you are using the correct calibration parameters. Note that the Shimmer only stores one set (one range per sensor) of calibration parameters.');
-                        thisShimmer.readconfigbytes;                   % update config bytes class properties
-                        thisShimmer.DAccelCalParametersOV = thisShimmer.AccelWideRangeCalParametersOVShimmer3;
-                        thisShimmer.DAccelCalParametersAM = thisShimmer.AccelWideRangeCalParametersAMShimmer3_2;
-                        if (thisShimmer.getaccelrange==0 && thisShimmer.DefaultAccelCalibrationParameters == true)
-                            thisShimmer.DAccelCalParametersSM = thisShimmer.AccelWideRangeCalParametersSM2gShimmer3_2;
-                        end
-                        if (thisShimmer.getaccelrange==1 && thisShimmer.DefaultDAccelCalibrationParameters == true)
-                            thisShimmer.DAccelCalParametersSM = thisShimmer.AccelWideRangeCalParametersSM16gShimmer3_2;
-                        end
-                        if (thisShimmer.getaccelrange==2 && thisShimmer.DefaultDAccelCalibrationParameters == true)
-                            thisShimmer.DAccelCalParametersSM = thisShimmer.AccelWideRangeCalParametersSM4gShimmer3_2;
-                        end
-                        if (thisShimmer.getaccelrange==3 && thisShimmer.DefaultDAccelCalibrationParameters == true)
-                            thisShimmer.DAccelCalParametersSM = thisShimmer.AccelWideRangeCalParametersSM8gShimmer3_2;
-                        end
-                    else
-                        isSet = false;
-                    end
-                    
-                else
-                    isSet = false;
-                end
-                
-            else
-                fprintf(strcat('Warning: setaccelrange - Cannot set accel range for COM ',thisShimmer.name,' as Shimmer is not connected.\n'));
-                isSet = false;
-            end
-        end % function setaccelrange
 
         function isWritten = writeaccelrange(thisShimmer,accelRange)
             % Writes accelerometer range to Shimmer - in Connected state
