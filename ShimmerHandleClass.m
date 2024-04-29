@@ -55,55 +55,8 @@ classdef ShimmerHandleClass < handle
         DEFAULT_TIMEOUT = 8;             % Default timeout for Wait for Acknowledgement response
     end
 
-    properties
-        name (1,:) {string};
-        bluetoothConn bluetooth;
-        isConnected {logical} = false;
-        isStreaming {logical} = false;
-
-        LastQuaternion = [0.5, 0.5, 0.5, 0.5];              % Last estimated quaternion value, used to incrementally update quaternion.
-        SerialDataOverflow = [];                            % Feedback buffer used by the framepackets method
-
-        SignalNameArray;                                    % Cell array contain the names of the enabled sensor signals in string format
-        SignalDataTypeArray;                                % Cell array contain the names of the sensor signal datatypes in string format
-        nBytesDataPacket;                                   % Unsigned integer value containing the size of a data packet for the Shimmer in its current setting
-
-        BufferSize = 1;                                     % Not currently used
-
-        SamplingRate = 'Nan';                               % Numerical value defining the sampling rate of the Shimmer
-        ConfigByte0;                                        % The current value of the config byte0 setting on the Shimmer
-        ConfigByte1;                                        % The current value of the config byte1 setting on the Shimmer3
-        ConfigByte2;                                        % The current value of the config byte2 setting on the Shimmer3
-        ConfigByte3;                                        % The current value of the config byte3 setting on the Shimmer3
-
-        AccelRange='Nan';                                   % Numerical value defining the accelerometer range of the Shimmer
-        AccelWideRangeDataRate='Nan';
-        AccelWideRangeHRMode = 'Nan';                       % High Resolution mode LSM303DLHC/LSM303AHTR
-        AccelWideRangeLPMode = 'Nan';                       % Low Power mode LSM303DLHC/LSM303AHTR
-        MagRange='Nan';                                                    % Numerical value defining the mag range of the Shimmer
-        GyroRange='Nan';                                                   % Numerical value defining the gyro range of the Shimmer
-        MagRate='Nan';                                                     % Numerical value defining the mag rate of the Shimmer
-        InternalExpPower='Nan';                                            % Numerical value defining the internal exp power for the Shimmer3
-        GyroRate='Nan';
-        PressureResolution='Nan';
-        EnabledSensors;
-
-        % Enable PC Timestamps
-        EnableTimestampUnix = 0;
-        LastSampleSystemTimeStamp = 0;
-
-        Orientation3D = 1;                                  % Enable/disable 3D orientation, i.e. get quaternions in getdata
-
-        GyroInUseCalibration = 1;                           % Enable/disable gyro in-use calibration
-        GyroBufferSize = 100;                               % Buffer size (samples)
-        GyroBuffer;                                         % Buffer for gyro in-use calibration
-        GyroMotionThreshold = 1.2;                          % Threshold for detecting motion
-
-        GetADCFlag = 0;                                     % Flag for getdata/getadcdata
-
-        LatestBatteryVoltageReading = 'Nan'; 
-        GsrRange='Nan';                                     % Numerical value defining the gsr range of the Shimmer
-
+    properties (Access = protected)
+        % Calibration properties
         % ACCEL Calibration
         DefaultAccelCalibrationParameters=true;
         DefaultDAccelCalibrationParameters=true;
@@ -166,8 +119,61 @@ classdef ShimmerHandleClass < handle
         MagneCalParametersAMShimmer3=[-1 0 0; 0 1 0; 0 0 -1];              % Default Calibration Parameters for Magnetometer (Alignment Matrix)   - LSM303DLHC
         MagneCalParametersAMShimmer3_2=[0 -1 0; 1 0 0; 0 0 -1];            % Default Calibration Parameters for Magnetometer (Alignment Matrix)   - LSM303AHTR
 
-        nClockOverflows = 0;                                               % count number of clock overflows for time stamp calibration
-        LastUncalibratedLoopTimeStamp = 0;                                 % Last received uncalibrated looped time stamp data
+        %Data properties
+        LastQuaternion = [0.5, 0.5, 0.5, 0.5];              % Last estimated quaternion value, used to incrementally update quaternion.
+        SerialDataOverflow = [];                            % Feedback buffer used by the framepackets method
+
+        SignalNameArray;                                    % Cell array contain the names of the enabled sensor signals in string format
+        SignalDataTypeArray;                                % Cell array contain the names of the sensor signal datatypes in string format
+        nBytesDataPacket;                                   % Unsigned integer value containing the size of a data packet for the Shimmer in its current setting
+
+        %Config properties
+        BufferSize = 1;                                     % Not currently used
+
+        SamplingRate = 'Nan';                               % Numerical value defining the sampling rate of the Shimmer
+        ConfigByte0;                                        % The current value of the config byte0 setting on the Shimmer
+        ConfigByte1;                                        % The current value of the config byte1 setting on the Shimmer3
+        ConfigByte2;                                        % The current value of the config byte2 setting on the Shimmer3
+        ConfigByte3;                                        % The current value of the config byte3 setting on the Shimmer3
+
+        AccelRange='Nan';                                   % Numerical value defining the accelerometer range of the Shimmer
+        AccelWideRangeDataRate='Nan';
+        AccelWideRangeHRMode = 'Nan';                       % High Resolution mode LSM303DLHC/LSM303AHTR
+        AccelWideRangeLPMode = 'Nan';                       % Low Power mode LSM303DLHC/LSM303AHTR
+        MagRange='Nan';                                     % Numerical value defining the mag range of the Shimmer
+        GyroRange='Nan';                                    % Numerical value defining the gyro range of the Shimmer
+        MagRate='Nan';                                      % Numerical value defining the mag rate of the Shimmer
+        InternalExpPower='Nan';                             % Numerical value defining the internal exp power for the Shimmer3
+        GyroRate='Nan';
+        PressureResolution='Nan';
+        EnabledSensors;
+
+        % Enable PC Timestamps
+        EnableTimestampUnix = 0;
+        LastSampleSystemTimeStamp = 0;
+
+        Orientation3D = 1;                                  % Enable/disable 3D orientation, i.e. get quaternions in getdata
+
+        GyroInUseCalibration = 1;                           % Enable/disable gyro in-use calibration
+        GyroBufferSize = 100;                               % Buffer size (samples)
+        GyroBuffer;                                         % Buffer for gyro in-use calibration
+        GyroMotionThreshold = 1.2;                          % Threshold for detecting motion
+
+        GetADCFlag = 0;                                     % Flag for getdata/getadcdata
+
+        LatestBatteryVoltageReading = 'Nan'; 
+        GsrRange='Nan';                                     % Numerical value defining the gsr range of the Shimmer
+
+        nClockOverflows = 0;                                % count number of clock overflows for time stamp calibration
+        LastUncalibratedLoopTimeStamp = 0;                  % Last received uncalibrated looped time stamp data
+
+    end
+
+    properties
+        name (1,:) {string};
+        bluetoothConn bluetooth;
+        isConnected {logical} = false;
+        isStreaming {logical} = false;
     end
     
     methods
@@ -186,7 +192,10 @@ classdef ShimmerHandleClass < handle
             try
                 thisShimmer.bluetoothConn = bluetooth(thisShimmer.name);
                 thisShimmer.isConnected = true;
+
+                disp("Successfully connected to " + thisShimmer.name);
             catch
+                disp("Failed to connect to " + thisShimmer.name);
             end
 
             isConnected = thisShimmer.isConnected;
@@ -825,7 +834,6 @@ classdef ShimmerHandleClass < handle
                 if strcmp(dataMode, 'c')
                     
                     quaternionData = thisShimmer.updateQuaternion(accelCalibratedData, gyroCalibratedData, magCalibratedData);
-                    disp(quaternionData);
                     
                     signalName{1}='Quaternion 0';
                     signalName{2}='Quaternion 1';

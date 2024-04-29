@@ -1,4 +1,4 @@
-function orientation3Dexample(shimmer, captureDuration, fileName)
+function orientation3Dexample(shimmer1, shimmer2, captureDuration, fileName)
 %ORIENTATION3DEXAMPLE - Demonstrate 3D orientation visualation and write to file
 %
 %  ORIENTATION3DEXAMPLE(COMPORT, CAPTUREDURATION, FILENAME) streams 3
@@ -37,22 +37,25 @@ SensorMacros = SetEnabledSensorsMacrosClass;                               % ass
 
 % Note: these constants are only relevant to this examplescript and are not used
 % by the ShimmerHandle Class
-DELAY_PERIOD = 0.2;                                                        % A delay period of time in seconds between data read operations
+DELAY_PERIOD = 0.1;                                                        % A delay period of time in seconds between data read operations
 
 firsttime = true;
 
-if (shimmer.isConnected)                                                       % TRUE if the shimmer connects
+if (shimmer1.isConnected)                                                       % TRUE if the shimmer connects
     % Define settings for shimmer
     %shimmer.setsamplingrate(51.2);                                         % Set the shimmer sampling rate to 51.2Hz
     %shimmer.setinternalboard('9DOF');                                      % Set the shimmer internal daughter board to '9DOF'
-    shimmer.disableAllSensors;                                             % disable all sensors
-    shimmer.setEnabledSensors(SensorMacros.GYRO,1,SensorMacros.MAG,1,...   % Enable the gyroscope, magnetometer and accelerometer.
-    SensorMacros.ACCEL,1);                                                  
-    shimmer.setaccelrange(0);                                              % Set the accelerometer range to 0 (+/- 1.5g for Shimmer2/2r, +/- 2.0g for Shimmer3)
+    shimmer1.disableAllSensors;                                             % disable all sensors
+    shimmer2.disableAllSensors;
+    shimmer1.setEnabledSensors(SensorMacros.GYRO,1,SensorMacros.MAG,1,...   % Enable the gyroscope, magnetometer and accelerometer.
+    SensorMacros.ACCEL,1);
+    shimmer1.setEnabledSensors(SensorMacros.GYRO,1,SensorMacros.MAG,1, SensorMacros.ACCEL,1);                                    
+    shimmer1.setaccelrange(0);                                              % Set the accelerometer range to 0 (+/- 1.5g for Shimmer2/2r, +/- 2.0g for Shimmer3)
+    shimmer2.setaccelrange(0);
     %shimmer.setorientation3D(1);                                           % Enable orientation3D
     %shimmer.setgyroinusecalibration(1);                                    % Enable gyro in-use calibration
     
-    if (shimmer.startStreaming)                                                     % TRUE if the shimmer starts streaming
+    if (shimmer1.startStreaming)                                                     % TRUE if the shimmer starts streaming
         
         % initial viewpoint for 3D visualisation
         cameraUpVector = [0,1,0,0];
@@ -76,9 +79,9 @@ if (shimmer.isConnected)                                                       %
                               'p13',[0,0,0,1], 'p14',[0,0,0,1],...
                               'p15',[0,0,0,1],'p16',[0,0,0,1]);
         
-        allData = [];
+        s1AllData = [];
         
-        h.figure1=figure('Name','Shimmer 1');                              % Create a handle to figure for plotting data from shimmer
+        h.figure1=figure('Name','Shimmer 1');                              % Create a handle to figure for plotting data from the first shimmer
         
         uicontrol('Style', 'pushbutton', 'String', 'Set',...
             'Position', [20 20 50 20],...
@@ -96,24 +99,25 @@ if (shimmer.isConnected)                                                       %
             
             pause(DELAY_PERIOD);                                           % Pause for this period of time on each iteration to allow data to arrive in the buffer
             
-            [newData,signalNameArray,signalFormatArray,signalUnitArray] = shimmer.getdata('c');   % Read the latest data from shimmer data buffer, signalFormatArray defines the format of the data and signalUnitArray the unit
+            [s1NewData,s1SignalNameArray,s1SignalFormatArray,s1SignalUnitArray] = shimmer1.getdata('c');   % Read the latest data from shimmer data buffer, signalFormatArray defines the format of the data and signalUnitArray the unit
+            [s2NewData,s2SignalNameArray,s2SignalFormatArray,s2SignalUnitArray] = shimmer2.getdata('c');
+
+            % if (firsttime==true && isempty(newData)~=1)
+            %     firsttime = writeHeadersToFile(fileName,signalNameArray,signalFormatArray,signalUnitArray);
+            % end
             
-            if (firsttime==true && isempty(newData)~=1)
-                firsttime = writeHeadersToFile(fileName,signalNameArray,signalFormatArray,signalUnitArray);
-            end
-            
-            if ~isempty(newData)                                                                          % TRUE if new data has arrived
+            if ~isempty(s1NewData)                                                                          % TRUE if new data has arrived
                 
-                allData = [allData; newData];
+                s1AllData = [s1AllData; s1NewData];
                 
-                dlmwrite(fileName, newData, '-append', 'delimiter', '\t','precision',16);                                % Append the new data to the file in a tab delimited format
+                %dlmwrite(fileName, newData, '-append', 'delimiter', '\t','precision',16);                                % Append the new data to the file in a tab delimited format
                 
-                quaternionChannels(1) = find(ismember(signalNameArray, 'Quaternion 0'));                  % Find Quaternion signal indices.
-                quaternionChannels(2) = find(ismember(signalNameArray, 'Quaternion 1'));
-                quaternionChannels(3) = find(ismember(signalNameArray, 'Quaternion 2'));
-                quaternionChannels(4) = find(ismember(signalNameArray, 'Quaternion 3'));
+                quaternionChannels(1) = find(ismember(s1SignalNameArray, 'Quaternion 0'));                  % Find Quaternion signal indices.
+                quaternionChannels(2) = find(ismember(s1SignalNameArray, 'Quaternion 1'));
+                quaternionChannels(3) = find(ismember(s1SignalNameArray, 'Quaternion 2'));
+                quaternionChannels(4) = find(ismember(s1SignalNameArray, 'Quaternion 3'));
                 
-                quaternion = newData(end, quaternionChannels);                                            % Only use the most recent quaternion sample for the graphic
+                quaternion = s1NewData(end, quaternionChannels);                                            % Only use the most recent quaternion sample for the graphic
                                 
                 shimmer3dRotated.p1 = quatrotate(quaternion, [0 shimmer3d.p1]);                           % Rotate the vertices
                 shimmer3dRotated.p2 = quatrotate(quaternion, [0 shimmer3d.p2]);
@@ -197,7 +201,7 @@ if (shimmer.isConnected)                                                       %
         
         elapsedTime = elapsedTime + toc;                                                                  % Stop timer
         %fprintf('The percentage of received packets: %d \n',shimmer.getpercentageofpacketsreceived(allData(:,1))); % Detect lost packets
-        shimmer.stopStreaming;                                                                                     % Stop data streaming
+        shimmer1.stopStreaming;                                                                                     % Stop data streaming
         
     end
     %shimmer.disconnect;                                                                                   % Disconnect from shimmer
