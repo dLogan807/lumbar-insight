@@ -541,6 +541,179 @@ classdef ShimmerHandleClass < handle
             end
             
         end % function setsamplingrate
+
+        function [sensorData,signalName,signalFormat,signalUnit] = getdata(thisShimmer,varargin)
+            %GETDATA - Get sensor data from the data buffer and calibrates
+            %them depending on user instructions
+            %
+            %   SENSORDATA = GETDATA returns a 2D array of sensor data from
+            %   the data buffer and the corresponding signal names
+            %
+            %   SYNOPSIS: [sensorData,signalName,signalFormat,signalUnit] = thisShimmer.getdata(dataMode)
+            %
+            %   INPUT: dataMode - Value defining the DATAMODE where
+            %                     DATAMODE = 'a' retrieves data in both calibrated
+            %                     and uncalibrated format DATAMODE = 'u'
+            %                     retrieves data in uncalibrated format
+            %                     DATAMODE = 'c' retrieves data in
+            %                     calibrated format.
+            %
+            %                     Valid values for DATAMODE are 'a', 'c'
+            %                     and 'u'.
+            %
+            %   OUTPUT: sensorData - [m x n] array of sensor data
+            %                              read from the data buffer, where
+            %                              m = number of data samples and n
+            %                              = number of data signals. Output
+            %                              will depend on the data mode.
+            % 
+            %           signalName - a 1 dimensional cell array of the
+            %                        signal names. The index of each signal
+            %                        name corresponds to the index of the
+            %                        sensor data. 
+            %
+            %           signalFormat - a 1 dimensional cell array of the
+            %                        signal names. The index of each signal
+            %                        format corresponds to the index of the
+            %                        sensor data. 
+            %
+            %           signalUnit - a 1 dimensional cell array of the
+            %                        signal units. The index of each signal
+            %                        unit corresponds to the index of the
+            %                        sensor data. Signal units end with a
+            %                        '*' when default calibration
+            %                        parameters are used.
+            %
+            %
+            %   EXAMPLE:  [newData,signalNameArray,signalFormatArray,signalUnitArray] = shimmer1.getdata('c');
+            %
+            %   See also setenabledsensors getenabledsignalnames
+            %   getsignalname getsignalindex getpercentageofpacketsreceived
+            
+            sensorData=double([]);
+            signalName=[];
+            signalFormat=[];
+            signalUnit=[];
+            
+            if (nargin > 2)                                                % getdata requires only one argument, dataMode = a, u, or c.
+                disp('Warning: getdata - Requires only one argument: dataMode = ''a'', ''u'', or ''c''.');
+                disp('Warning: getdata - Getdata has changed since MATLAB ID v2.3;');
+                disp('deprecatedgetdata() facilitates backwards compatibility');
+            elseif ~(strcmp(varargin{1},'c') || strcmp(varargin{1},'u') || strcmp(varargin{1},'a'))
+                disp('Warning: getdata - Valid arguments for getdata = ''a'', ''u'', or ''c''.');
+            else
+                dataMode = varargin{1};
+                [parsedData,systemTime] = capturedata(thisShimmer);
+                parsedData = double(parsedData);
+                
+                if (~isempty(parsedData))
+                                    
+                    numSignals = length(thisShimmer.SignalNameArray);      % get number of signals from signalNameArray
+                                                      
+                    s = 1;
+                    while s <= numSignals                                 % check signalNameArray for enabled signals
+                        if strcmp(thisShimmer.SignalNameArray(s),'Timestamp')
+                            [tempData,tempSignalName,tempSignalFormat,tempSignalUnit]=gettimestampdata(thisShimmer,dataMode,parsedData); % Time Stamp
+                            s = s+1;
+
+                            if (thisShimmer.EnableTimestampUnix && strcmp(dataMode,'c'))
+                                thisShimmer.LastSampleSystemTimeStamp = thisShimmer.convertMatlabTimeToUnixTimeMilliseconds(systemTime);
+                                nSamp = size(tempData,1);
+                                timeStampUnixData = zeros(nSamp,1);
+                                timeStampUnixData(nSamp) = thisShimmer.LastSampleSystemTimeStamp;
+                                for iUnix = 1:nSamp-1
+                                    timeStampUnixData(iUnix,1)=NaN;
+                                end
+                                timeStampUnixSignalName = 'Time Stamp Unix';
+                                timeStampUnixDataSignalFormat = 'CAL';
+                                timeStampUnixSignalUnit = 'milliseconds'; 
+                                tempData = [tempData timeStampUnixData];
+                                tempSignalName = [tempSignalName timeStampUnixSignalName];
+                                tempSignalFormat = [tempSignalFormat timeStampUnixDataSignalFormat];
+                                tempSignalUnit = [tempSignalUnit timeStampUnixSignalUnit];
+                            end
+                        elseif strcmp(thisShimmer.SignalNameArray(s),'Low Noise Accelerometer X')
+                            [tempData,tempSignalName,tempSignalFormat,tempSignalUnit]=getlownoiseacceldata(thisShimmer,dataMode,parsedData); % Shimmer3 only
+                            s = s+3;            % skip Y and Z
+                        elseif strcmp(thisShimmer.SignalNameArray(s),'Battery Voltage') % Shimmer3 battery voltage
+                            [tempData,tempSignalName,tempSignalFormat,tempSignalUnit]=getbattvoltdata(thisShimmer,dataMode,parsedData); %takes average of batt volt data and send a command to change LED if it is reaching low power
+                            s = s+1;
+                        elseif strcmp(thisShimmer.SignalNameArray(s),'Wide Range Accelerometer X')
+                            [tempData,tempSignalName,tempSignalFormat,tempSignalUnit]=getwiderangeacceldata(thisShimmer,dataMode,parsedData); % Shimmer3 only
+                            s = s+3;            % skip Y and Z
+                        elseif strcmp(thisShimmer.SignalNameArray(s),'Accelerometer X')
+                            [tempData,tempSignalName,tempSignalFormat,tempSignalUnit]=getacceldata(thisShimmer,dataMode,parsedData);
+                            s = s+3;            % skip Y and Z
+                        elseif strcmp(thisShimmer.SignalNameArray(s),'Gyroscope X')
+                            [tempData,tempSignalName,tempSignalFormat,tempSignalUnit]=getgyrodata(thisShimmer,dataMode,parsedData);
+                            if(thisShimmer.GyroInUseCalibration)
+                                if(dataMode == 'u')
+                                    thisShimmer.GyroBuffer = [thisShimmer.GyroBuffer; tempData];
+                                else
+                                    [uncalibratedGyroData,~,~,~] = getgyrodata(thisShimmer,'u',parsedData);
+                                    thisShimmer.GyroBuffer = [thisShimmer.GyroBuffer; uncalibratedGyroData];
+                                end
+                                bufferOverflow = size(thisShimmer.GyroBuffer,1) - thisShimmer.GyroBufferSize;
+                                if(bufferOverflow > 0)
+                                    thisShimmer.GyroBuffer = thisShimmer.GyroBuffer((bufferOverflow+1):end,:);
+                                end
+                                if(nomotiondetect(thisShimmer))
+                                    estimategyrooffset(thisShimmer); 
+                                end
+                            end
+                            s = s+3;            % skip Y and Z
+                        elseif strcmp(thisShimmer.SignalNameArray(s),'Magnetometer X')
+                            [tempData,tempSignalName,tempSignalFormat,tempSignalUnit]=getmagdata(thisShimmer,dataMode,parsedData);
+                            s = s+3;            % skip Y and Z
+                        elseif strcmp(thisShimmer.SignalNameArray(s),'GSR Raw')   % GSR
+                            if(ischar(thisShimmer.GsrRange))
+                                disp('Warning: getdata - GSR range undefined, see setgsrrange().');
+                            else
+                                [tempData,tempSignalName,tempSignalFormat,tempSignalUnit]=getgsrdata(thisShimmer,dataMode,parsedData);
+                                s = s+1;
+                            end
+                        elseif (strcmp(thisShimmer.SignalNameArray(s),'External ADC A7') || strcmp(thisShimmer.SignalNameArray(s),'External ADC A6') ||...  % Shimmer3 ADCs
+                                strcmp(thisShimmer.SignalNameArray(s),'External ADC A15') || strcmp(thisShimmer.SignalNameArray(s),'Internal ADC A1') ||...
+                                strcmp(thisShimmer.SignalNameArray(s),'Internal ADC A12') || strcmp(thisShimmer.SignalNameArray(s),'Internal ADC A13') ||...
+                                strcmp(thisShimmer.SignalNameArray(s),'Internal ADC A14'))
+                             
+                            [tempData,tempSignalName,tempSignalFormat,tempSignalUnit]=getadcdata(thisShimmer,dataMode,parsedData);
+                            thisShimmer.GetADCFlag = 1; % Set getadcdata flag so that getadcdata is only called once.
+                            s = s + 1;
+                        elseif (strcmp(thisShimmer.SignalNameArray(s),'Pressure') || strcmp(thisShimmer.SignalNameArray(s),'Temperature')) % Shimmer3 BMP180/BMP280 pressure and temperature)
+                            [tempData,tempSignalName,tempSignalFormat,tempSignalUnit]=getpressuredata(thisShimmer,dataMode,parsedData);
+                            s = s+2;
+                        elseif (strcmp(thisShimmer.SignalNameArray(s),'EXG1 STA') || strcmp(thisShimmer.SignalNameArray(s),'EXG2 STA')) % Shimmer3 EXG
+                            [tempData,tempSignalName,tempSignalFormat,tempSignalUnit]=getexgdata(thisShimmer,dataMode,parsedData);
+                            if (size(tempData,2) == 2)
+                                s = s+size(tempData,2)+1;  % EXG1 or EXG2 enabled.
+                            else
+                                s = s+size(tempData,2)+2;  % EXG1 and EXG2 enabled.
+                            end
+                        elseif strcmp(thisShimmer.SignalNameArray(s),'Bridge Amplifier High') % Shimmer3 Bridge Amplifier
+                            [tempData,tempSignalName,tempSignalFormat,tempSignalUnit]=getbridgeamplifierdata(thisShimmer,dataMode,parsedData);
+                            s = s+2;
+                        end
+                        sensorData=[sensorData tempData];
+                        signalName=[signalName tempSignalName];
+                        signalFormat=[signalFormat tempSignalFormat];
+                        signalUnit=[signalUnit tempSignalUnit];
+                    end
+                    if (thisShimmer.Orientation3D && bitand(thisShimmer.EnabledSensors, hex2dec('E0'))>0 && strcmp(dataMode,'c')) % Get Quaternion data if Orientation3D setting and sensors Accel, Gyro and Mag are enabled.
+                        [accelData,~,~,~]=getacceldata(thisShimmer,'c',parsedData);
+                        [gyroData,~,~,~]=getgyrodata(thisShimmer,'c',parsedData);
+                        [magData,~,~,~]=getmagdata(thisShimmer,'c',parsedData);
+                        [quaternionData,tempSignalName,tempSignalFormat,tempSignalUnit]=getQuaternionData(thisShimmer,'c',accelData,gyroData,magData);
+                        
+                        sensorData=[sensorData quaternionData];
+                        signalName=[signalName tempSignalName];
+                        signalFormat=[signalFormat tempSignalFormat];
+                        signalUnit=[signalUnit tempSignalUnit];
+                    end
+                end
+            end
+            thisShimmer.GetADCFlag = 0; % Reset getadcdata flag.
+        end % function getdata
     end
     
     methods (Access = private)
@@ -2296,179 +2469,6 @@ classdef ShimmerHandleClass < handle
             end
             
         end %function captureData
-
-        function [sensorData,signalName,signalFormat,signalUnit] = getdata(thisShimmer,varargin)
-            %GETDATA - Get sensor data from the data buffer and calibrates
-            %them depending on user instructions
-            %
-            %   SENSORDATA = GETDATA returns a 2D array of sensor data from
-            %   the data buffer and the corresponding signal names
-            %
-            %   SYNOPSIS: [sensorData,signalName,signalFormat,signalUnit] = thisShimmer.getdata(dataMode)
-            %
-            %   INPUT: dataMode - Value defining the DATAMODE where
-            %                     DATAMODE = 'a' retrieves data in both calibrated
-            %                     and uncalibrated format DATAMODE = 'u'
-            %                     retrieves data in uncalibrated format
-            %                     DATAMODE = 'c' retrieves data in
-            %                     calibrated format.
-            %
-            %                     Valid values for DATAMODE are 'a', 'c'
-            %                     and 'u'.
-            %
-            %   OUTPUT: sensorData - [m x n] array of sensor data
-            %                              read from the data buffer, where
-            %                              m = number of data samples and n
-            %                              = number of data signals. Output
-            %                              will depend on the data mode.
-            % 
-            %           signalName - a 1 dimensional cell array of the
-            %                        signal names. The index of each signal
-            %                        name corresponds to the index of the
-            %                        sensor data. 
-            %
-            %           signalFormat - a 1 dimensional cell array of the
-            %                        signal names. The index of each signal
-            %                        format corresponds to the index of the
-            %                        sensor data. 
-            %
-            %           signalUnit - a 1 dimensional cell array of the
-            %                        signal units. The index of each signal
-            %                        unit corresponds to the index of the
-            %                        sensor data. Signal units end with a
-            %                        '*' when default calibration
-            %                        parameters are used.
-            %
-            %
-            %   EXAMPLE:  [newData,signalNameArray,signalFormatArray,signalUnitArray] = shimmer1.getdata('c');
-            %
-            %   See also setenabledsensors getenabledsignalnames
-            %   getsignalname getsignalindex getpercentageofpacketsreceived
-            
-            sensorData=double([]);
-            signalName=[];
-            signalFormat=[];
-            signalUnit=[];
-            
-            if (nargin > 2)                                                % getdata requires only one argument, dataMode = a, u, or c.
-                disp('Warning: getdata - Requires only one argument: dataMode = ''a'', ''u'', or ''c''.');
-                disp('Warning: getdata - Getdata has changed since MATLAB ID v2.3;');
-                disp('deprecatedgetdata() facilitates backwards compatibility');
-            elseif ~(strcmp(varargin{1},'c') || strcmp(varargin{1},'u') || strcmp(varargin{1},'a'))
-                disp('Warning: getdata - Valid arguments for getdata = ''a'', ''u'', or ''c''.');
-            else
-                dataMode = varargin{1};
-                [parsedData,systemTime] = capturedata(thisShimmer);
-                parsedData = double(parsedData);
-                
-                if (~isempty(parsedData))
-                                    
-                    numSignals = length(thisShimmer.SignalNameArray);      % get number of signals from signalNameArray
-                                                      
-                    s = 1;
-                    while s <= numSignals                                 % check signalNameArray for enabled signals
-                        if strcmp(thisShimmer.SignalNameArray(s),'Timestamp')
-                            [tempData,tempSignalName,tempSignalFormat,tempSignalUnit]=gettimestampdata(thisShimmer,dataMode,parsedData); % Time Stamp
-                            s = s+1;
-
-                            if (thisShimmer.EnableTimestampUnix && strcmp(dataMode,'c'))
-                                thisShimmer.LastSampleSystemTimeStamp = thisShimmer.convertMatlabTimeToUnixTimeMilliseconds(systemTime);
-                                nSamp = size(tempData,1);
-                                timeStampUnixData = zeros(nSamp,1);
-                                timeStampUnixData(nSamp) = thisShimmer.LastSampleSystemTimeStamp;
-                                for iUnix = 1:nSamp-1
-                                    timeStampUnixData(iUnix,1)=NaN;
-                                end
-                                timeStampUnixSignalName = 'Time Stamp Unix';
-                                timeStampUnixDataSignalFormat = 'CAL';
-                                timeStampUnixSignalUnit = 'milliseconds'; 
-                                tempData = [tempData timeStampUnixData];
-                                tempSignalName = [tempSignalName timeStampUnixSignalName];
-                                tempSignalFormat = [tempSignalFormat timeStampUnixDataSignalFormat];
-                                tempSignalUnit = [tempSignalUnit timeStampUnixSignalUnit];
-                            end
-                        elseif strcmp(thisShimmer.SignalNameArray(s),'Low Noise Accelerometer X')
-                            [tempData,tempSignalName,tempSignalFormat,tempSignalUnit]=getlownoiseacceldata(thisShimmer,dataMode,parsedData); % Shimmer3 only
-                            s = s+3;            % skip Y and Z
-                        elseif strcmp(thisShimmer.SignalNameArray(s),'Battery Voltage') % Shimmer3 battery voltage
-                            [tempData,tempSignalName,tempSignalFormat,tempSignalUnit]=getbattvoltdata(thisShimmer,dataMode,parsedData); %takes average of batt volt data and send a command to change LED if it is reaching low power
-                            s = s+1;
-                        elseif strcmp(thisShimmer.SignalNameArray(s),'Wide Range Accelerometer X')
-                            [tempData,tempSignalName,tempSignalFormat,tempSignalUnit]=getwiderangeacceldata(thisShimmer,dataMode,parsedData); % Shimmer3 only
-                            s = s+3;            % skip Y and Z
-                        elseif strcmp(thisShimmer.SignalNameArray(s),'Accelerometer X')
-                            [tempData,tempSignalName,tempSignalFormat,tempSignalUnit]=getacceldata(thisShimmer,dataMode,parsedData);
-                            s = s+3;            % skip Y and Z
-                        elseif strcmp(thisShimmer.SignalNameArray(s),'Gyroscope X')
-                            [tempData,tempSignalName,tempSignalFormat,tempSignalUnit]=getgyrodata(thisShimmer,dataMode,parsedData);
-                            if(thisShimmer.GyroInUseCalibration)
-                                if(dataMode == 'u')
-                                    thisShimmer.GyroBuffer = [thisShimmer.GyroBuffer; tempData];
-                                else
-                                    [uncalibratedGyroData,~,~,~] = getgyrodata(thisShimmer,'u',parsedData);
-                                    thisShimmer.GyroBuffer = [thisShimmer.GyroBuffer; uncalibratedGyroData];
-                                end
-                                bufferOverflow = size(thisShimmer.GyroBuffer,1) - thisShimmer.GyroBufferSize;
-                                if(bufferOverflow > 0)
-                                    thisShimmer.GyroBuffer = thisShimmer.GyroBuffer((bufferOverflow+1):end,:);
-                                end
-                                if(nomotiondetect(thisShimmer))
-                                    estimategyrooffset(thisShimmer); 
-                                end
-                            end
-                            s = s+3;            % skip Y and Z
-                        elseif strcmp(thisShimmer.SignalNameArray(s),'Magnetometer X')
-                            [tempData,tempSignalName,tempSignalFormat,tempSignalUnit]=getmagdata(thisShimmer,dataMode,parsedData);
-                            s = s+3;            % skip Y and Z
-                        elseif strcmp(thisShimmer.SignalNameArray(s),'GSR Raw')   % GSR
-                            if(ischar(thisShimmer.GsrRange))
-                                disp('Warning: getdata - GSR range undefined, see setgsrrange().');
-                            else
-                                [tempData,tempSignalName,tempSignalFormat,tempSignalUnit]=getgsrdata(thisShimmer,dataMode,parsedData);
-                                s = s+1;
-                            end
-                        elseif (strcmp(thisShimmer.SignalNameArray(s),'External ADC A7') || strcmp(thisShimmer.SignalNameArray(s),'External ADC A6') ||...  % Shimmer3 ADCs
-                                strcmp(thisShimmer.SignalNameArray(s),'External ADC A15') || strcmp(thisShimmer.SignalNameArray(s),'Internal ADC A1') ||...
-                                strcmp(thisShimmer.SignalNameArray(s),'Internal ADC A12') || strcmp(thisShimmer.SignalNameArray(s),'Internal ADC A13') ||...
-                                strcmp(thisShimmer.SignalNameArray(s),'Internal ADC A14'))
-                             
-                            [tempData,tempSignalName,tempSignalFormat,tempSignalUnit]=getadcdata(thisShimmer,dataMode,parsedData);
-                            thisShimmer.GetADCFlag = 1; % Set getadcdata flag so that getadcdata is only called once.
-                            s = s + 1;
-                        elseif (strcmp(thisShimmer.SignalNameArray(s),'Pressure') || strcmp(thisShimmer.SignalNameArray(s),'Temperature')) % Shimmer3 BMP180/BMP280 pressure and temperature)
-                            [tempData,tempSignalName,tempSignalFormat,tempSignalUnit]=getpressuredata(thisShimmer,dataMode,parsedData);
-                            s = s+2;
-                        elseif (strcmp(thisShimmer.SignalNameArray(s),'EXG1 STA') || strcmp(thisShimmer.SignalNameArray(s),'EXG2 STA')) % Shimmer3 EXG
-                            [tempData,tempSignalName,tempSignalFormat,tempSignalUnit]=getexgdata(thisShimmer,dataMode,parsedData);
-                            if (size(tempData,2) == 2)
-                                s = s+size(tempData,2)+1;  % EXG1 or EXG2 enabled.
-                            else
-                                s = s+size(tempData,2)+2;  % EXG1 and EXG2 enabled.
-                            end
-                        elseif strcmp(thisShimmer.SignalNameArray(s),'Bridge Amplifier High') % Shimmer3 Bridge Amplifier
-                            [tempData,tempSignalName,tempSignalFormat,tempSignalUnit]=getbridgeamplifierdata(thisShimmer,dataMode,parsedData);
-                            s = s+2;
-                        end
-                        sensorData=[sensorData tempData];
-                        signalName=[signalName tempSignalName];
-                        signalFormat=[signalFormat tempSignalFormat];
-                        signalUnit=[signalUnit tempSignalUnit];
-                    end
-                    if (thisShimmer.Orientation3D && bitand(thisShimmer.EnabledSensors, hex2dec('E0'))>0 && strcmp(dataMode,'c')) % Get Quaternion data if Orientation3D setting and sensors Accel, Gyro and Mag are enabled.
-                        [accelData,~,~,~]=getacceldata(thisShimmer,'c',parsedData);
-                        [gyroData,~,~,~]=getgyrodata(thisShimmer,'c',parsedData);
-                        [magData,~,~,~]=getmagdata(thisShimmer,'c',parsedData);
-                        [quaternionData,tempSignalName,tempSignalFormat,tempSignalUnit]=getQuaternionData(thisShimmer,'c',accelData,gyroData,magData);
-                        
-                        sensorData=[sensorData quaternionData];
-                        signalName=[signalName tempSignalName];
-                        signalFormat=[signalFormat tempSignalFormat];
-                        signalUnit=[signalUnit tempSignalUnit];
-                    end
-                end
-            end
-            thisShimmer.GetADCFlag = 0; % Reset getadcdata flag.
-        end % function getdata
         
         function unixTimeMilliseconds = convertMatlabTimeToUnixTimeMilliseconds(matlabTime)
             %CONVERTMATLABTIMETOUNIXTIMEMILLISECONDS - converts a MATLAB  
