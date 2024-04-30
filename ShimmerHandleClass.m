@@ -22,6 +22,9 @@ classdef ShimmerHandleClass < handle
         SET_MAG_SAMPLING_RATE_COMMAND    = char(hex2dec('3A'));
         GET_EXG_REGS_COMMAND = char(hex2dec('63'));
         SET_EXG_REGS_COMMAND = char(hex2dec('61'));
+        GET_MPU9150_SAMPLING_RATE_COMMAND = char(hex2dec('4E'));
+        GET_LSM303DLHC_ACCEL_SAMPLING_RATE_COMMAND	= char(hex2dec('42')); % Only available for Shimmer3
+        GET_MAG_SAMPLING_RATE_COMMAND    = char(hex2dec('3C')); 
 
         %Responses
         ACK_RESPONSE              = 255;                                   %Shimmer acknowledged response       
@@ -34,6 +37,9 @@ classdef ShimmerHandleClass < handle
         CONFIG_BYTE0_RESPONSE     = char(15);                              % First byte value received from the shimmer in the config byte0 response, it is followed by the byte value defining the setting
         SAMPLING_RATE_RESPONSE    = char(4);                               % First byte value received from the shimmer in the sampling rate response, it is followed by the byte value defining the setting
         EXG_REGS_RESPONSE = char(hex2dec('62'));
+        MPU9150_SAMPLING_RATE_RESPONSE = char(hex2dec('4D'));
+        LSM303DLHC_ACCEL_SAMPLING_RATE_RESPONSE	= char(hex2dec('41'));     % Only available for Shimmer3
+        MAG_SAMPLING_RATE_RESPONSE       = char(hex2dec('3B'));
 
         %Sensors
         SENSOR_A_ACCEL            = 8;   % 0x000080
@@ -1509,6 +1515,129 @@ classdef ShimmerHandleClass < handle
             
         end % function readexgrate
 
+        function isRead = readmagrate(thisShimmer)
+            % Sends the GET_MAG_SAMPLING_RATE_COMMAND to Shimmer - in Connected state 
+            % Receives Magetometer data rate and updates the MagRate property. 
+            if (thisShimmer.isConnected)
+                
+                flush(thisShimmer.bluetoothConn, "input");                                         % As a precaution always clear the read data buffer before a write
+                write(thisShimmer.bluetoothConn, thisShimmer.GET_MAG_SAMPLING_RATE_COMMAND);    % Send the Get Mag Rate Command to the Shimmer
+                
+                isAcknowledged = waitForAck(thisShimmer, thisShimmer.DEFAULT_TIMEOUT);     % Wait for Acknowledgment from Shimmer
+                
+                if (isAcknowledged == true)
+                    [shimmerResponse] = read(thisShimmer.bluetoothConn, 2);        % Read the 2 byte response from the realterm buffer
+                    
+                    if ~isempty(shimmerResponse)
+                        
+                        if (shimmerResponse(1) == thisShimmer.MAG_SAMPLING_RATE_RESPONSE)
+                            thisShimmer.MagRate = shimmerResponse(2);
+                            isRead = true;
+                        else
+                            thisShimmer.MagRate = 'Nan';                  % Set the MagRate to 'Nan' to indicate unknown
+                            fprintf(strcat('Warning: readmagrate - Get mag rate command response expected but not returned for Shimmer COM',thisShimmer.name,'.\n'));
+                            isRead = false;
+                        end
+                    else
+                        thisShimmer.MagRate = 'Nan';                  % Set the MagRate to 'Nan' to indicate unknown
+                        fprintf(strcat('Warning: readmagrate - Get mag rate command response expected but not returned for Shimmer COM',thisShimmer.name,'.\n'));
+                        isRead = false;
+                    end
+                else
+                    thisShimmer.MagRate = 'Nan';                        % Set the MagRate to 'Nan' to indicate unknown
+                    fprintf(strcat('Warning: readmagrate - Get mag rate command response expected but not returned for Shimmer COM',thisShimmer.name,'.\n'));
+                    isRead = false;
+                end
+                
+            else
+                isRead = false;
+                fprintf(strcat('Warning: readmagrate - Cannot get mag rate for COM ',thisShimmer.name,' as Shimmer is not connected.\n'));
+            end
+            
+        end % function readmagrate
+
+        function isRead = readgyrorate(thisShimmer)
+            % Sends the GET_MPU9150_SAMPLING_RATE_COMMAND to Shimmer3 - in Connected state 
+            % Receives MPU9150 - Gyroscope data rate and updates the GyroRate property. 
+            if (thisShimmer.isConnected)
+                
+                flush(thisShimmer.bluetoothConn, "input");                                          % As a precaution always clear the read data buffer before a write
+                write(thisShimmer.bluetoothConn, thisShimmer.GET_MPU9150_SAMPLING_RATE_COMMAND); % Send the Get Gyro Rate Command to the Shimmer
+                
+                isAcknowledged = waitForAck(thisShimmer, thisShimmer.DEFAULT_TIMEOUT);      % Wait for Acknowledgment from Shimmer
+                
+                if (isAcknowledged == true)
+                    [shimmerResponse] = read(thisShimmer.bluetoothConn, 2);         % Read the 2 byte response from the realterm buffer
+                    
+                    if ~isempty(shimmerResponse)
+                        
+                        if (shimmerResponse(1) == thisShimmer.MPU9150_SAMPLING_RATE_RESPONSE)
+                            thisShimmer.GyroRate = shimmerResponse(2);
+                            isRead = true;
+                        else
+                            thisShimmer.GyroRate = 'Nan';                  % Set the GyroRate to 'Nan' to indicate unknown
+                            fprintf(strcat('Warning: readgyrorate - Get gyro rate command response expected but not returned for Shimmer COM',thisShimmer.name,'.\n'));
+                            isRead = false;
+                        end
+                    else
+                        thisShimmer.GyroRate = 'Nan';                  % Set the GyroRate to 'Nan' to indicate unknown
+                        fprintf(strcat('Warning: readgyrorate - Get gyro rate command response expected but not returned for Shimmer COM',thisShimmer.name,'.\n'));
+                        isRead = false;
+                    end
+                else
+                    thisShimmer.GyroRate = 'Nan';                        % Set the GyroRate to 'Nan' to indicate unknown
+                    fprintf(strcat('Warning: readgyrorate - Get gyro rate command response expected but not returned for Shimmer COM',thisShimmer.name,'.\n'));
+                    isRead = false;
+                end
+                
+            else
+                isRead = false;
+                fprintf(strcat('Warning: readgyrorate - Cannot get gyro rate for COM ',thisShimmer.name,' as Shimmer is not connected\n'));
+            end
+            
+        end % function readgyrorate
+        
+        function isRead = readaccelrate(thisShimmer)
+            % Sends the GET_LSM303DLHC_ACCEL_SAMPLING_RATE_COMMAND to Shimmer3 - in Connected state 
+            % Receives LSM303DLHC/LSM303AHTR - Accelerometer data rate and updates the AccelWideRangeDataRate property.
+            if (thisShimmer.isConnected)
+                
+                flush(thisShimmer.bluetoothConn, "input");                                                    % As a precaution always clear the read data buffer before a write
+                write(thisShimmer.bluetoothConn, thisShimmer.GET_LSM303DLHC_ACCEL_SAMPLING_RATE_COMMAND);  % Send the Get Accel Rate Command to the Shimmer
+                
+                isAcknowledged = waitForAck(thisShimmer, thisShimmer.DEFAULT_TIMEOUT);                % Wait for Acknowledgment from Shimmer
+                
+                if (isAcknowledged == true)
+                    [shimmerResponse] = read(thisShimmer.bluetoothConn, 2);                   % Read the 2 byte response from the realterm buffer
+                    
+                    if ~isempty(shimmerResponse)
+                        
+                        if (shimmerResponse(1) == thisShimmer.LSM303DLHC_ACCEL_SAMPLING_RATE_RESPONSE)
+                            thisShimmer.AccelWideRangeDataRate = shimmerResponse(2);
+                            isRead = true;
+                        else
+                            thisShimmer.AccelWideRangeDataRate = 'Nan';                  % Set the AccelWideRangeDataRate to 'Nan' to indicate unknown
+                            fprintf(strcat('Warning: readaccelrate - Get accel rate command response expected but not returned for Shimmer COM',thisShimmer.name,'.\n'));
+                            isRead = false;
+                        end
+                    else
+                        thisShimmer.AccelWideRangeDataRate = 'Nan';                  % Set the AccelWideRangeDataRate to 'Nan' to indicate unknown
+                        fprintf(strcat('Warning: readaccelrate - Get accel rate command response expected but not returned for Shimmer COM',thisShimmer.name,'.\n'));
+                        isRead = false;
+                    end
+                else
+                    thisShimmer.AccelWideRangeDataRate = 'Nan';                        % Set the AccelWideRangeDataRate to 'Nan' to indicate unknown
+                    fprintf(strcat('Warning: readaccelrate - Get accel rate command response expected but not returned for Shimmer COM',thisShimmer.name,'.\n'));
+                    isRead = false;
+                end
+                
+            else
+                isRead = false;
+                fprintf(strcat('Warning: readaccelrate - Cannot get accel rate for COM ',thisShimmer.name,' as Shimmer is not connected.\n'));
+            end
+            
+        end % function readaccelrate
+
         function quaternionData = updateQuaternion(thisShimmer, accelCalibratedData, gyroCalibratedData, magCalibratedData)
             % Updates quaternion data based on accelerometer, gyroscope and
             % magnetometer data inputs: accelCalibratedData,
@@ -2529,6 +2658,27 @@ classdef ShimmerHandleClass < handle
                 parsedData = [];                                                                     % Return empty array
             end
         end % function parsedata
+        
+        function exgGain = convertEXGGain(thisShimmer,gainsetting) 
+            % Converts ExG gain setting from input gainsetting to exgGain.
+            if (gainsetting ==0)
+                exgGain=6;
+            elseif (gainsetting ==1)
+                exgGain=1;
+            elseif (gainsetting ==2)
+                exgGain=2;
+            elseif (gainsetting ==3)
+                exgGain=3;
+            elseif (gainsetting ==4)
+                exgGain=4;
+            elseif (gainsetting ==5)
+                exgGain=8;
+            elseif (gainsetting ==6)
+                exgGain=12;
+            else
+                exgGain = 'Nan';
+            end
+        end % function exgGain
 
         function iSignal = getsignalindex(thisShimmer,signalName)
             %GETSIGNALINDEX - Get the index of a sensor signal
