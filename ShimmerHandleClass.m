@@ -1,6 +1,6 @@
 % Code modified from the official Instrumentation Driver.
 % Shimmer. (2022). Shimmer Matlab Instrumentation Driver. https://github.com/ShimmerEngineering/Shimmer-MATLAB-ID
-% No Shimmer 2/2r support. Only supports 9DOF daughter board and assumes latest Shimmer3 firmware.
+% No Shimmer 2/2r support. Only supports 9DOF (IMU) daughter board and assumes latest Shimmer3 firmware.
 % Reduced functionality due to time constraints and project goals.
 
 classdef ShimmerHandleClass < handle
@@ -15,6 +15,11 @@ classdef ShimmerHandleClass < handle
         GET_ACCEL_RANGE_COMMAND   = char(11);                              % Get accelerometer range command sent to the shimmer in order to receive the accelerometer range response
         GET_CONFIG_BYTE0_COMMAND  = char(16);                              % Get config byte0 command sent to the shimmer in order to receive the config byte0 response (Get config bytes byte0, byte1, byte2, byte3 For Shimmer3.) 
         SET_ACCEL_RANGE_COMMAND   = char(9);                               % First byte sent to the shimmer when implementing a set accelerometer range operation, it is followed by the byte value defining the setting
+        GET_SAMPLING_RATE_COMMAND = char(3);                               % Get sampling rate command sent to the shimmer in order to receive the sampling rate response
+        SET_SAMPLING_RATE_COMMAND = char(5);                               % First byte sent to the shimmer when implementing a set sampling rate operation, it is followed by the byte value defining the setting
+        SET_LSM303DLHC_ACCEL_SAMPLING_RATE_COMMAND = char(hex2dec('40'));  % Only available for Shimmer3 
+        SET_MPU9150_SAMPLING_RATE_COMMAND = char(hex2dec('4C'));
+        SET_MAG_SAMPLING_RATE_COMMAND    = char(hex2dec('3A'));
 
         %Responses
         ACK_RESPONSE              = 255;                                   %Shimmer acknowledged response       
@@ -25,6 +30,7 @@ classdef ShimmerHandleClass < handle
         INQUIRY_RESPONSE          = 0x02;
         ACCEL_RANGE_RESPONSE      = newline;                               % First byte value received from the shimmer in the accel range response, it is followed by the byte value defining the setting
         CONFIG_BYTE0_RESPONSE     = char(15);                              % First byte value received from the shimmer in the config byte0 response, it is followed by the byte value defining the setting
+        SAMPLING_RATE_RESPONSE    = char(4);                               % First byte value received from the shimmer in the sampling rate response, it is followed by the byte value defining the setting
 
         %Sensors
         SENSOR_A_ACCEL            = 8;   % 0x000080
@@ -149,6 +155,10 @@ classdef ShimmerHandleClass < handle
         GyroRate='Nan';
         PressureResolution='Nan';
         EnabledSensors;
+
+        %SHIMMER3 ExG Configurations
+        EXG1Rate = 'Nan'; 
+        EXG2Rate = 'Nan';  
 
         % Enable PC Timestamps
         EnableTimestampUnix = 0;
@@ -464,7 +474,7 @@ classdef ShimmerHandleClass < handle
                     samplingRate = thisShimmer.SamplingRate;               % Following a failed write, set the return value (samplingRate) to value stored in the SamplingRate property
                 end
             else
-                fprintf(strcat('Warning: setsamplingrate - Cannot set sampling range for COM ',thisShimmer.ComPort,' as Shimmer is not connected.\n'));
+                fprintf(strcat('Warning: setsamplingrate - Cannot set sampling range for COM ',thisShimmer.name,' as Shimmer is not connected.\n'));
                 samplingRate = 'Nan';
             end
             
@@ -793,6 +803,123 @@ classdef ShimmerHandleClass < handle
             
         end % function writeaccelrange
 
+        function isSet = setexgrate(thisShimmer, exgRate, chipIdentifier) % function setexgrate  
+            %SETEXGRATE - Set the exg rate on the Shimmer
+            %
+            %   SETEXGRATE(EXGRATE, CHIPIDENTIFIER) sets the ExG Data Rate
+            %   for chip CHIPIDENTIER on the Shimmer to the value of the
+            %   input EXGRATE. The function will return a 1 if the
+            %   operation was successful otherwise it will return a 0.
+            %
+            %   SYNOPSIS: isSet = thisShimmer.setexgrate(exgRate, chipIdentifier)
+            %
+            %   INPUT: exgRate -  Numeric value defining the desired exg
+            %                     data rate. Valid rate settings are 0
+            %                     (125 Hz), 1 (250 Hz), 2 (500 Hz
+            %                     (default)), 3 (1000 Hz), 4 (2000 Hz), 5
+            %                     (4000 Hz), 6 (8000 Hz)
+            % 
+            %   INPUT: chipIdentifier - numeric value to select SENSOR_EXG1 or SENSOR_EXG2
+            %
+            %   OUTPUT: isSet -   Boolean value which indicates if the
+            %                     operation was successful or not (1=TRUE, 0=FALSE).
+            %
+            %   EXAMPLE: isSet = shimmer1.setexgrate(4,2);
+            %
+            %   See also getexgrate
+            if (thisShimmer.isConnected)                     % Shimmer must be in a Connected state
+                
+                isWritten = writeexgrate(thisShimmer, exgRate, chipIdentifier); % Write exgRate to the Shimmer
+                
+                if (isWritten)
+                    isRead = readexgrate(thisShimmer, chipIdentifier);          % Following a succesful write, call the readexgrate function which updates the exgRate property with the current Shimmer exg rate setting
+                    
+                    if (isRead)
+                        if (chipIdentifier == 1)
+                            isSet = (exgRate == thisShimmer.EXG1Rate);          % isSet will be equal to 1 the current exg rate setting is equal to the requested setting
+                        else
+                            isSet = (exgRate == thisShimmer.EXG2Rate);
+                        end
+                    else
+                        isSet = false;
+                    end
+                else
+                    isSet = false;
+                end
+            else
+                fprintf(strcat('Warning: setexgrate - Cannot set exg rate for COM ',thisShimmer.name,' as Shimmer is not connected.\n'));
+                isSet = false;
+            end
+        end % function setexgrate
+
+        function isWritten = writesamplingrate(thisShimmer,samplingRate)
+            % Writes sampling rate to Shimmer - in Connected state.
+            if (thisShimmer.isConnected)
+                
+                flush(thisShimmer.bluetoothConn, "input");                                 % As a precaution always clear the read data buffer before a write
+                write(thisShimmer.bluetoothConn, thisShimmer.SET_SAMPLING_RATE_COMMAND);  % Send the Set Sampling Rate Command to the Shimmer
+                samplingByteValue = uint16(32768/samplingRate);
+                writetocomport(thisShimmer, char(bitand(255,samplingByteValue)));
+                writetocomport(thisShimmer, char(bitshift(samplingByteValue,-8)));
+
+                isWritten = waitforack(thisShimmer, thisShimmer.DEFAULT_TIMEOUT);   % Wait for Acknowledgment from Shimmer
+
+                if (isWritten == false)
+                    fprintf(strcat('Warning: writesamplingrate - Set sampling rate command response expected but not returned for Shimmer COM',thisShimmer.name,'.\n'));
+                end
+                
+            else
+                isWritten = false;
+                fprintf(strcat('Warning: writesamplingrate - Cannot set sampling rate for COM ',thisShimmer.name,' as Shimmer is not connected.\n'));
+            end
+            
+        end % function writesamplingrate
+
+        function isRead = readsamplingrate(thisShimmer)
+            % Sends the GET_SAMPLING_RATE_COMMAND to Shimmer - in Connected state 
+            % Receives the sampling rate and updates the SamplingRate property.
+            if (thisShimmer.isConnected)
+                
+                flush(thisShimmer.bluetoothConn, "input");                                       % As a precaution always clear the read data buffer before a write
+                writetocomport(thisShimmer, thisShimmer.GET_SAMPLING_RATE_COMMAND);     % Send the Get Sampling Rate Command to the Shimmer
+                
+                isAcknowledged = waitforack(thisShimmer, thisShimmer.DEFAULT_TIMEOUT);  % Wait for Acknowledgment from Shimmer
+                
+                if (isAcknowledged == true)
+                    [shimmerResponse] = read(thisShimmer.bluetoothConn, thisShimmer.bluetoothConn.NumBytesAvailable);     % Read the 2 byte response from the realterm buffer
+                    
+                    if ~isempty(shimmerResponse)
+                        
+                        if (shimmerResponse(1) == thisShimmer.SAMPLING_RATE_RESPONSE)
+                            if shimmerResponse(2) == 255                                % samplingRate == 0 is a special case, refer to 'Sampling Rate Table.txt' for more details
+                                thisShimmer.SamplingRate = 0;
+                            else
+                                thisShimmer.SamplingRate = 1024 / double(shimmerResponse(2));   % Refer to 'Sampling Rate Table.txt' for more details
+                            end
+                            isRead = true;
+                        else
+                            thisShimmer.SamplingRate = 'Nan';              % Set the SamplingRate to 'Nan' to indicate unknown
+                            fprintf(strcat('Warning: readsamplingrate - Get sampling rate command response expected but not returned for Shimmer COM',thisShimmer.name,'.\n'));
+                            isRead = false;
+                        end
+                    else
+                        thisShimmer.SamplingRate = 'Nan';              % Set the SamplingRate to 'Nan' to indicate unknown
+                        fprintf(strcat('Warning: readsamplingrate - Get sampling rate command response expected but not returned for Shimmer COM',thisShimmer.name,'.\n'));
+                        isRead = false;
+                    end
+                else
+                    thisShimmer.SamplingRate = 'Nan';                      % Set the SamplingRate to 'Nan' to indicate unknown
+                    fprintf(strcat('Warning: readsamplingrate - Get sampling rate command response expected but not returned for Shimmer COM',thisShimmer.name,'.\n'));
+                    isRead = false;
+                end
+                
+            else
+                isRead = false;
+                fprintf(strcat('Warning: readsamplingrate - Cannot get sampling rate for COM ',thisShimmer.name,' as Shimmer is not connected.\n'));
+            end
+            
+        end % function readsamplingrate
+
         function isRead = readconfigbytes(thisShimmer)     
             % Sends the GET_CONFIG_BYTE0_COMMAND to Shimmer3 - in Connected state 
             % Receives Config Byte 0, Config Byte 1, Config Byte 2 and Config Byte 3
@@ -867,6 +994,234 @@ classdef ShimmerHandleClass < handle
                 fprintf(strcat('Warning: getaccelrange - Cannot determine accelerometer range as COM ',thisShimmer.name,' Shimmer is not Connected.\n'));
             end
         end
+
+        function isSet = setmagrate(thisShimmer, magRate)
+            %SETMAGRATE - Set the Mag Data Rate on the Shimmer
+            %
+            %   SETMAGRATE(MAGRATE) sets the mag data rate on the Shimmer 
+            %   to the value of the input MAGRATE.
+            %   The function will return a 1 if the operation was successful
+            %   otherwise it will return a 0.
+            %
+            %   SYNOPSIS: isSet = thisShimmer.setmagrate(magRate)
+            %
+            %   INPUT: magRate - Numeric value defining the desired mag
+            %                    data rate. Valid rate settings for Shimmer 2 are 0 (0.5
+            %                    Hz), 1 (1.0 Hz), 2 (2.0 Hz), 3 (5.0 Hz), 4
+            %                    (10.0 Hz), 5 (20.0 Hz), 6 (50.0 Hz). For
+            %                    Shimmer3 with LSM303DLHC valid settings are
+            %                    0 (0.75Hz), 1 (1.5Hz), 2 (3Hz), 3 (7.5Hz),
+            %                    4 (15Hz), 5 (30Hz), 6 (75Hz), 7 (220Hz). For 
+            %                    Shimmer3 with LSM303AHTR valid settings are
+            %                    0 (10.0Hz), 1 (20.0Hz)), 2 (50.0Hz), 3 (100.0Hz).
+            %
+            %   OUTPUT: isSet - Boolean value which indicates if the operation was
+            %                   successful or not (1=TRUE, 0=FALSE).
+            %
+            %   EXAMPLE: isSet = shimmer1.setmagrate(1);
+            %
+            %   
+            
+            if (thisShimmer.isConnected)                     % Shimmer must be in a Connected state
+                
+                isWritten = writemagrate(thisShimmer,magRate);             % Write mag range to the Shimmer
+                
+                if (isWritten)
+                    isRead = readmagrate(thisShimmer);                     % Following a succesful write, call the readmagrange function which updates the magRange property with the current Shimmer mag range setting
+                    
+                    if (isRead)
+                        thisShimmer.readconfigbytes;                       % update config bytes class properties
+                        isSet = (magRate == thisShimmer.MagRate);          % isSet will be equal to 1 the current mag range setting is equal to the requested setting
+                    else
+                        isSet = false;
+                    end
+                else
+                    isSet = false;
+                end
+                
+            else
+                fprintf(strcat('Warning: setmagrate - Cannot set mag rate for COM ',thisShimmer.name,' as Shimmer is not connected.\n'));
+                isSet = false;
+            end
+        end % function setmagrate
+              
+        function isSet = setaccelrate(thisShimmer, accelRate)
+            %SETACCELRATE - Set the Wide Range Accel (Digital Accel) Data Rate on the Shimmer3
+            %
+            %   SETACCELRATE(ACCELRATE) sets the mag data rate on the Shimmer 
+            %   to the value of the input ACCELRATE.
+            %   The function will return a 1 if the operation was successful
+            %   otherwise it will return a 0.
+            %
+            %   SYNOPSIS: isSet = thisShimmer.setaccelrate(accelRate)
+            %
+            %   INPUT: accelRate - Numeric value defining the desired accel
+            %                    data rate. Valid rate settings for Shimmer3 
+            %                    with LSM303DLHC are 1 (1.0 Hz), 2 (10.0 Hz), 3 (25.0 Hz), 4
+            %                    (50.0 Hz), 5 (100.0 Hz), 6 (200.0 Hz), 7 (400.0 Hz) and 9 (1344.0Hz).
+            %                    Valid rate settings for Shimmer3 with LSM303AHTR are
+            %                    1 (12.5 Hz), 2 (25.0 Hz), 3 (50.0 Hz), 4 (100.0 Hz), 
+            %                    5 (200.0 Hz), 6 (400.0 Hz), 7 (800.0 Hz), 8 (1600.0 Hz), 
+            %                    9 (3200.0Hz) and 10 (6400.0Hz).  
+            %
+            %   OUTPUT: isSet - Boolean value which indicates if the operation was
+            %                   successful or not (1=TRUE, 0=FALSE).
+            %
+            %   EXAMPLE: isSet = shimmer1.setaccelrate(1);
+            %
+        
+            
+            
+            if (thisShimmer.isConnected)                                  % Shimmer must be in a Connected state
+                isWritten = writeaccelrate(thisShimmer,accelRate);                  % Write mag range to the Shimmer
+                
+                if (isWritten)
+                    isRead = readaccelrate(thisShimmer);                            % Following a succesful write, call the readmagrange function which updates the magRange property with the current Shimmer mag range setting
+                    
+                    if (isRead)
+                        thisShimmer.readconfigbytes;                                % update config bytes class properties
+                        isSet = (accelRate == thisShimmer.AccelWideRangeDataRate);  % isSet will be equal to 1 the current mag range setting is equal to the requested setting
+                    else
+                        isSet = false;
+                    end
+                else
+                    isSet = false;
+                end
+            else
+                fprintf(strcat('Warning: setaccelrate - Cannot set accel rate for COM ',thisShimmer.name,' as Shimmer is not connected.\n'));
+                isSet = false;
+            end
+        end % function setaccelrate
+        
+        function isSet = setgyrorate(thisShimmer, gyroRate)
+            %SETGYRORATE - Set the Gyroscope Rate (MPU 9150) on the Shimmer3
+            %
+            %   SETGYRORATE(GYRORATE) sets the mag data rate on the Shimmer 
+            %   to the value of the input GYRORATE.
+            %   The function will return a 1 if the operation was successful
+            %   otherwise it will return a 0.
+            %
+            %   SYNOPSIS: isSet = thisShimmer.setmagrate(magRate)
+            %
+            %   INPUT: gyroRate - Numeric value defining the desired mag
+            %                    data rate. Valid rate settings for Shimmer
+            %                    3 are 255 (31.25 Hz), 155(51.28 Hz), 45
+            %                    (173.91 Hz), 30 (258.06 Hz), 14 (533.33 Hz), 6 (1142.86 Hz). 
+            %   OUTPUT: isSet - Boolean value which indicates if the operation was
+            %                   successful or not (1=TRUE, 0=FALSE).
+            %
+            %   EXAMPLE: isSet = shimmer1.setgyrorate(255);
+            %
+            
+            if (thisShimmer.isConnected)                     % Shimmer must be in a Connected state
+                isWritten = writegyrorate(thisShimmer,gyroRate);       % Write mag range to the Shimmer
+                
+                if (isWritten)
+                    isRead = readgyrorate(thisShimmer);                % Following a succesful write, call the readmagrange function which updates the magRange property with the current Shimmer mag range setting
+                    
+                    if (isRead)
+                        thisShimmer.readconfigbytes;                   % update config bytes class properties
+                        isSet = (gyroRate == thisShimmer.GyroRate);    % isSet will be equal to 1 the current mag range setting is equal to the requested setting
+                    else
+                        isSet = false;
+                    end
+                else
+                    isSet = false;
+                end
+            else
+                fprintf(strcat('Warning: setgyrorate - Cannot set gyro rate for COM ',thisShimmer.name,' as Shimmer is not connected.\n'));
+                isSet = false;
+            end
+        end % function setgyrorate
+
+        function isWritten = writemagrate(thisShimmer,magRate)
+            % Writes Magnetometer data rate to Shimmer2r or Shimmer3 - in Connected state
+            if (thisShimmer.isConnected)
+                
+                if ((magRate == 0) || (magRate == 1) || (magRate == 2) || (magRate == 3))
+                    
+                    flush(thisShimmer.bluetoothConn, "input");                                    % As a precaution always clear the read data buffer before a write
+                    writetocomport(thisShimmer, thisShimmer.SET_MAG_SAMPLING_RATE_COMMAND); % Send the Set Mag Rate Command to the Shimmer
+                    
+                    writetocomport(thisShimmer, char(magRate));                             % Write the mag rate char value to the Shimmer
+                    isWritten = waitforack(thisShimmer, thisShimmer.DEFAULT_TIMEOUT);       % Wait for Acknowledgment from Shimmer
+                    
+                    if (isWritten == false)
+                        fprintf(strcat('Warning: writemagrate - Set mag rate response expected but not returned for Shimmer COM',thisShimmer.name,'.\n'));
+                    end
+                else
+                    isWritten = false;
+                    fprintf(strcat('Warning: writemagrate - Attempt to set mag rate failed due to a request to set the range to an \n'));
+                    fprintf(strcat('invalid setting for Shimmer COM',thisShimmer.name,'.\n'));
+                    fprintf('For Shimmer2r: Valid rate settings are 0 (0.5 Hz), 1 (1.0 Hz), 2 (2.0 Hz), 3 (5.0 Hz), 4 (10.0 Hz), 5 (20.0 Hz) and 6 (50.0 Hz).\n');
+                    fprintf('For Shimmer3 with LSM303DLHC: Valid rate settings are 0 (0.75Hz), 1 (1.5Hz), 2 (3Hz), 3 (7.5Hz), 4 (15Hz), 5 (30Hz), 6 (75Hz), 7 (220Hz).\n');
+                    fprintf('For Shimmer3 with LSM303AHTR: Valid rate settings are 0 (10.0Hz), 1 (20.0Hz)), 2 (50.0Hz), 3 (100.0Hz).\n');
+                end
+                
+            else
+                isWritten = false;
+                fprintf(strcat('Warning: writemagrate - Cannot set mag rate for COM ',thisShimmer.name,' as Shimmer is not connected.\n'));
+            end
+            
+        end % function writemagrate      
+        
+        function isWritten = writeaccelrate(thisShimmer,accelRate)
+            % Writes LSM303DLHC/LSM303AHTR accelerometer data rate for Shimmer3 - in Connected state
+            if (thisShimmer.isConnected)
+                if ((accelRate == 1) || (accelRate == 2) || (accelRate == 3) || (accelRate == 4) || (accelRate == 5)...
+                        || (accelRate == 6) || (accelRate == 7) || (accelRate == 8) || (accelRate == 9) || (accelRate == 10))
+                                           
+                    flush(thisShimmer.bluetoothConn, "input");                                            % As a precaution always clear the read data buffer before a write
+                    writetocomport(thisShimmer, thisShimmer.SET_LSM303DLHC_ACCEL_SAMPLING_RATE_COMMAND);  % Send the Set Mag Rate Command to the Shimmer
+                    
+                    writetocomport(thisShimmer, char(accelRate));                                         % Write the mag rate char value to the Shimmer
+                    isWritten = waitforack(thisShimmer, thisShimmer.DEFAULT_TIMEOUT);                     % Wait for Acknowledgment from Shimmer
+                    
+                    if (isWritten == false)
+                        fprintf(strcat('Warning: writeaccelrate - Set acc rate response expected but not returned for Shimmer COM',thisShimmer.name,'.\n'));
+                    end
+                else
+                    isWritten = false;
+                    fprintf(strcat('Warning: writeaccelrate - Attempt to set acc rate failed due to a request to set the range to an \n'));
+                    fprintf(strcat('invalid setting for Shimmer COM',thisShimmer.name,'.\n'));
+                    fprintf(strcat('Valid rate settings are  1 (12.5 Hz), 2 (25.0 Hz), 3 (50.0 Hz), 4 (100.0 Hz), 5 (200.0 Hz), 6 (400.0 Hz), 7 (800.0 Hz), 8 (1600.0 Hz), 9 (3200.0Hz) and 10 (6400.0Hz).\n'));
+                end
+                
+            else
+                isWritten = false;
+                fprintf(strcat('Warning: writeaccelrate - Cannot set accel rate for COM ',thisShimmer.name,' as Shimmer is not connected.\n'));
+            end
+            
+        end % function writeaccelrate
+        
+        function isWritten = writegyrorate(thisShimmer,gyroRate)
+            % Writes MPU9150 gyroscope data rate for Shimmer3 - in Connected state
+            if (thisShimmer.isConnected)
+                
+                if (gyroRate>=0 && gyroRate<=255)
+                    
+                    flush(thisShimmer.bluetoothConn, "input");                                        % As a precaution always clear the read data buffer before a write
+                    writetocomport(thisShimmer, thisShimmer.SET_MPU9150_SAMPLING_RATE_COMMAND); % Send the Set Gyro Rate Command to the Shimmer
+                    
+                    writetocomport(thisShimmer, char(gyroRate));                                % Write the gyroRate char value to the Shimmer
+                    isWritten = waitforack(thisShimmer, thisShimmer.DEFAULT_TIMEOUT);           % Wait for acknowledgment from Shimmer
+                    
+                    if (isWritten == false)
+                        fprintf(strcat('Warning: writegyrorate - Set gyro rate response expected but not returned for Shimmer COM',thisShimmer.name,'.\n'));
+                    end
+                else
+                    isWritten = false;
+                    fprintf(strcat('Warning: writegyrorate - Attempt to set gyro rate failed due to a request to set the range to an \n'));
+                    fprintf(strcat('invalid setting for Shimmer COM',thisShimmer.name,'.\n'));
+                    fprintf(strcat('Valid range settings are 0 - 255, see datasheet of MPU9150 for further info'));
+                end
+                
+            else
+                isWritten = false;
+                fprintf(strcat('Warning: writegyrorate - Cannot set gyro rate for COM ',thisShimmer.name,' as Shimmer is not connected\n'));
+            end
+            
+        end % function writegyrorate
 
         function quaternionData = updateQuaternion(thisShimmer, accelCalibratedData, gyroCalibratedData, magCalibratedData)
             % Updates quaternion data based on accelerometer, gyroscope and
