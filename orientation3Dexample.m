@@ -39,22 +39,22 @@ SensorMacros = SetEnabledSensorsMacrosClass;                               % ass
 % by the ShimmerHandle Class
 DELAY_PERIOD = 0.2;                                                        % A delay period of time in seconds between data read operations
 
-if (shimmer1.isConnected)                                                       % TRUE if the shimmer connects
+if (shimmer1.isConnected && shimmer2.isConnected)                          % TRUE if the shimmer connects
     % Define settings for shimmer
-    shimmer1.setsamplingrate(51.2);                                         % Set the shimmer sampling rate to 51.2Hz
+    shimmer1.setsamplingrate(51.2);                                        % Set the shimmer sampling rate to 51.2Hz
     shimmer2.setsamplingrate(51.2);
-    %shimmer.setinternalboard('9DOF');                                      % Set the shimmer internal daughter board to '9DOF'
-    shimmer1.disableAllSensors;                                             % disable all sensors
+    %shimmer.setinternalboard('9DOF');                                     % Set the shimmer internal daughter board to '9DOF'
+    shimmer1.disableAllSensors;                                            % disable all sensors
     shimmer2.disableAllSensors;
-    shimmer1.setEnabledSensors(SensorMacros.GYRO,1,SensorMacros.MAG,1,...   % Enable the gyroscope, magnetometer and accelerometer.
+    shimmer1.setEnabledSensors(SensorMacros.GYRO,1,SensorMacros.MAG,1,...  % Enable the gyroscope, magnetometer and accelerometer.
     SensorMacros.ACCEL,1);
     shimmer1.setEnabledSensors(SensorMacros.GYRO,1,SensorMacros.MAG,1, SensorMacros.ACCEL,1);                                    
-    shimmer1.setaccelrange(0);                                              % Set the accelerometer range to 0 (+/- 1.5g for Shimmer2/2r, +/- 2.0g for Shimmer3)
+    shimmer1.setaccelrange(0);                                             % Set the accelerometer range to 0 (+/- 1.5g for Shimmer2/2r, +/- 2.0g for Shimmer3)
     shimmer2.setaccelrange(0);
-    %shimmer.setorientation3D(1);                                           % Enable orientation3D
-    %shimmer.setgyroinusecalibration(1);                                    % Enable gyro in-use calibration
+    %shimmer.setorientation3D(1);                                          % Enable orientation3D
+    %shimmer.setgyroinusecalibration(1);                                   % Enable gyro in-use calibration
     
-    if (shimmer1.startStreaming)                                                     % TRUE if the shimmer starts streaming
+    if (shimmer1.startStreaming && shimmer2.startStreaming)                 % TRUE if the shimmer starts streaming
         
         % initial viewpoint for 3D visualisation
         cameraUpVector = [0,1,0,0];
@@ -63,7 +63,7 @@ if (shimmer1.isConnected)                                                       
         shimmer1AllData = [];
         shimmer2AllData = [];
         
-        h.figure1=figure('Name','Shimmer Device Orientation');                              % Create a handle to figure for plotting data from the first shimmer
+        h.figure1=figure('Name','Shimmer Device Orientation');             % Create a handle to figure for plotting data from the shimmers
         
         uicontrol('Style', 'pushbutton', 'String', 'Set',...
             'Position', [20 20 50 20],...
@@ -71,7 +71,7 @@ if (shimmer1.isConnected)                                                       
         
         uicontrol('Style', 'pushbutton', 'String', 'Reset',...
             'Position', [80 20 50 20],...
-            'Callback', {@resetaxes});                                       % Pushbutton to reset the viewpoint
+            'Callback', {@resetaxes});                                     % Pushbutton to reset the viewpoint
         
         elapsedTime = 0;                                                   % Reset to 0
         
