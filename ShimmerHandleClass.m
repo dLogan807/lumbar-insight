@@ -277,14 +277,14 @@ classdef ShimmerHandleClass < handle
                 disp("Failed to connect to " + thisShimmer.name);
             end
 
-            if (readexgrate(thisShimmer, 2))
-                disp("Read exg configuration from " + thisShimmer.name);
-            end
+            %Update class properties
+            thisShimmer.readexgconfiguration(1);
+            thisShimmer.readexgconfiguration(2);
 
             isConnected = thisShimmer.isConnected;
         end
 
-                %Start streaming
+        %Start streaming
         function startedStreaming = startStreaming(thisShimmer)
             startedStreaming = false;
 
@@ -924,7 +924,7 @@ classdef ShimmerHandleClass < handle
                     serialData = [];
                     nIterations = 0;
                     while(length(serialData) < 12 && nIterations < 4 )                                       % Read the 12 byte response from the realterm buffer
-                        [tempSerialData] = read(thisShimmer.bluetoothConn, inf);   % Read all available serial data from the com port
+                        [tempSerialData] = read(thisShimmer.bluetoothConn, thisShimmer.bluetoothConn.NumBytesAvailable);   % Read all available serial data from the com port
                         serialData = [serialData; tempSerialData];
                         pause(.2);
                         nIterations = nIterations + 1;
@@ -1458,6 +1458,7 @@ classdef ShimmerHandleClass < handle
                     write(thisShimmer.bluetoothConn, char(0));                                      % Start at byte 0.
                     write(thisShimmer.bluetoothConn, char(1));                                      % Read one byte.
                     isAcknowledged = waitForAck(thisShimmer, thisShimmer.DEFAULT_TIMEOUT);     % Wait for Acknowledgment from Shimmer
+
                     if (chipIdentifier == 1) 
                         % SENSOR_EXG1
                         if (isAcknowledged == true)
