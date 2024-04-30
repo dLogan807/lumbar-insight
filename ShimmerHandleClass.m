@@ -20,6 +20,8 @@ classdef ShimmerHandleClass < handle
         SET_LSM303DLHC_ACCEL_SAMPLING_RATE_COMMAND = char(hex2dec('40'));  % Only available for Shimmer3 
         SET_MPU9150_SAMPLING_RATE_COMMAND = char(hex2dec('4C'));
         SET_MAG_SAMPLING_RATE_COMMAND    = char(hex2dec('3A'));
+        GET_EXG_REGS_COMMAND = char(hex2dec('63'));
+        SET_EXG_REGS_COMMAND = char(hex2dec('61'));
 
         %Responses
         ACK_RESPONSE              = 255;                                   %Shimmer acknowledged response       
@@ -31,6 +33,7 @@ classdef ShimmerHandleClass < handle
         ACCEL_RANGE_RESPONSE      = newline;                               % First byte value received from the shimmer in the accel range response, it is followed by the byte value defining the setting
         CONFIG_BYTE0_RESPONSE     = char(15);                              % First byte value received from the shimmer in the config byte0 response, it is followed by the byte value defining the setting
         SAMPLING_RATE_RESPONSE    = char(4);                               % First byte value received from the shimmer in the sampling rate response, it is followed by the byte value defining the setting
+        EXG_REGS_RESPONSE = char(hex2dec('62'));
 
         %Sensors
         SENSOR_A_ACCEL            = 8;   % 0x000080
@@ -155,8 +158,57 @@ classdef ShimmerHandleClass < handle
         EnabledSensors;
 
         %SHIMMER3 ExG Configurations
+        %ExG chip1
+        EXG1Config1 = 'Nan';
+        EXG1Config2 = 'Nan';
+        EXG1Loff = 'Nan';
+        EXG1Ch1Set = 'Nan';
+        EXG1Ch2Set = 'Nan';
+        EXG1RLD_Sens = 'Nan';
+        EXG1LOFF_Sens = 'Nan';
+        EXG1LOFF_Stat = 'Nan';
+        EXG1Resp1 = 'Nan';
+        EXG1Resp2 = 'Nan';
+        EXG1CH1Gain = 'Nan';
+        EXG1CH2Gain = 'Nan';
         EXG1Rate = 'Nan'; 
+        EXG1PDB_LOFF_COMP = 'Nan'; % Lead-off comparator power-down
+        EXG1FLEAD_OFF = 'Nan'; % Lead-off frequency 
+        EXG1RLD_LOFF_SENSE = 'Nan'; % RLD lead-off sense function
+        EXG1LOFF2N = 'Nan'; % Channel 2 lead-off detection negative inputs
+        EXG1LOFF2P = 'Nan'; % Channel 2 lead-off detection positive inputs
+        EXG1LOFF1N = 'Nan'; % Channel 1 lead-off detection negative inputs
+        EXG1LOFF1P = 'Nan'; % Channel 1 lead-off detection positive inputs
+        EXG1PD1 = 'Nan'; % Channel 1 power-down
+        EXG1PD2 = 'Nan'; % Channel 2 power-down
+        EXG1ILEAD_OFF = 'Nan'; % Lead-off current magnitude
+        EXG1COMP_TH = 'Nan'; % Lead-off comparator threshold
+        
+        %ExG chip2
+        EXG2Config1 = 'Nan';
+        EXG2Config2 = 'Nan';
+        EXG2Loff = 'Nan';
+        EXG2Ch1Set = 'Nan';
+        EXG2Ch2Set = 'Nan';
+        EXG2RLD_Sens = 'Nan';
+        EXG2LOFF_Sens = 'Nan';
+        EXG2LOFF_Stat = 'Nan';
+        EXG2Resp1 = 'Nan';
+        EXG2Resp2 = 'Nan';
+        EXG2CH1Gain = 'Nan';
+        EXG2CH2Gain = 'Nan';
         EXG2Rate = 'Nan';  
+        EXG2PDB_LOFF_COMP = 'Nan'; % Lead-off comparator power-down
+        EXG2FLEAD_OFF = 'Nan'; % Lead-off frequency 
+        EXG2RLD_LOFF_SENSE = 'Nan'; % RLD lead-off sense function
+        EXG2LOFF2N = 'Nan'; % Channel 2 lead-off detection negative inputs
+        EXG2LOFF2P = 'Nan'; % Channel 2 lead-off detection positive inputs
+        EXG2LOFF1N = 'Nan'; % Channel 1 lead-off detection negative inputs
+        EXG2LOFF1P = 'Nan'; % Channel 1 lead-off detection positive inputs
+        EXG2PD1 = 'Nan'; % Channel 1 power-down
+        EXG2PD2 = 'Nan'; % Channel 2 power-down
+        EXG2ILEAD_OFF = 'Nan'; % Lead-off current magnitude
+        EXG2COMP_TH = 'Nan'; % Lead-off comparator threshold
 
         % Enable PC Timestamps
         EnableTimestampUnix = 0;
@@ -223,6 +275,10 @@ classdef ShimmerHandleClass < handle
                 disp("Successfully connected to " + thisShimmer.name);
             catch
                 disp("Failed to connect to " + thisShimmer.name);
+            end
+
+            if (readexgrate(thisShimmer, 2))
+                disp("Read exg configuration from " + thisShimmer.name);
             end
 
             isConnected = thisShimmer.isConnected;
@@ -852,6 +908,130 @@ classdef ShimmerHandleClass < handle
             end
         end % function setexgrate
 
+        function isRead = readexgconfiguration(thisShimmer,chipIdentifier)  % chipIdentifier selects SENSOR_EXG1 or SENSOR_EXG2
+            % Sends the GET_EXG_REGS_COMMAND to Shimmer3 - in Connected state 
+            % Receives (all) ExG configuration bytes and updates the corresponding properties. 
+            if (thisShimmer.isConnected && (chipIdentifier == 1 || chipIdentifier == 2))
+                
+                flush(thisShimmer.bluetoothConn, "input");                                          % As a precaution always clear the read data buffer before a write
+                write(thisShimmer.bluetoothConn, thisShimmer.GET_EXG_REGS_COMMAND);
+                write(thisShimmer.bluetoothConn, char(chipIdentifier-1));                       % char(0) selects SENSOR_EXG1, char(1) selects SENSOR_EXG2
+                write(thisShimmer.bluetoothConn, char(0));
+                write(thisShimmer.bluetoothConn, char(10));
+                isAcknowledged = waitForAck(thisShimmer, thisShimmer.DEFAULT_TIMEOUT);     % Wait for acknowledgment from Shimmer
+                
+                if (isAcknowledged == true)
+                    serialData = [];
+                    nIterations = 0;
+                    while(length(serialData) < 12 && nIterations < 4 )                                       % Read the 12 byte response from the realterm buffer
+                        [tempSerialData] = read(thisShimmer.bluetoothConn, inf);   % Read all available serial data from the com port
+                        serialData = [serialData; tempSerialData];
+                        pause(.2);
+                        nIterations = nIterations + 1;
+                    end
+                    shimmerResponse = serialData(1:12);
+                    ExG1Failed = false;
+                    ExG2Failed = false;
+                    if ~isempty(shimmerResponse)
+                        if (chipIdentifier==1)
+                            if (shimmerResponse(1) == thisShimmer.EXG_REGS_RESPONSE)
+                                thisShimmer.EXG1Config1 = shimmerResponse(3);
+                                thisShimmer.EXG1Config2 = shimmerResponse(4);
+                                thisShimmer.EXG1Loff = shimmerResponse(5);
+                                thisShimmer.EXG1Ch1Set = shimmerResponse(6);
+                                thisShimmer.EXG1Ch2Set = shimmerResponse(7);
+                                thisShimmer.EXG1RLD_Sens = shimmerResponse(8);
+                                thisShimmer.EXG1LOFF_Sens = shimmerResponse(9);
+                                thisShimmer.EXG1LOFF_Stat = shimmerResponse(10);
+                                thisShimmer.EXG1Resp1 = shimmerResponse(11);
+                                thisShimmer.EXG1Resp2 = shimmerResponse(12);
+                                thisShimmer.EXG1CH1Gain = convertEXGGain(thisShimmer, bitshift(bitand(112,thisShimmer.EXG1Ch1Set),-4));
+                                thisShimmer.EXG1CH2Gain = convertEXGGain(thisShimmer, bitshift(bitand(112,thisShimmer.EXG1Ch2Set),-4));
+                                thisShimmer.EXG1Rate = bitand(thisShimmer.EXG1Config1,7);
+                                isRead = true;
+                            else
+                                ExG1Failed = true;
+                            end
+                        elseif (chipIdentifier==2)
+                            if (shimmerResponse(1) == thisShimmer.EXG_REGS_RESPONSE)
+                                thisShimmer.EXG2Config1 = shimmerResponse(3);
+                                thisShimmer.EXG2Config2 = shimmerResponse(4);
+                                thisShimmer.EXG2Loff = shimmerResponse(5);
+                                thisShimmer.EXG2Ch1Set = shimmerResponse(6);
+                                thisShimmer.EXG2Ch2Set = shimmerResponse(7);
+                                thisShimmer.EXG2RLD_Sens = shimmerResponse(8);
+                                thisShimmer.EXG2LOFF_Sens = shimmerResponse(9);
+                                thisShimmer.EXG2LOFF_Stat = shimmerResponse(10);
+                                thisShimmer.EXG2Resp1 = shimmerResponse(11);
+                                thisShimmer.EXG2Resp2 = shimmerResponse(12);
+                                thisShimmer.EXG2CH1Gain = convertEXGGain(thisShimmer, bitshift(bitand(112,thisShimmer.EXG2Ch1Set),-4));
+                                thisShimmer.EXG2CH2Gain = convertEXGGain(thisShimmer, bitshift(bitand(112,thisShimmer.EXG2Ch2Set),-4));
+                                thisShimmer.EXG2Rate = bitand(thisShimmer.EXG2Config1,7);
+                                isRead = true;
+                            else
+                                ExG2Failed = true;
+                            end
+                        end
+                    else
+                        if (chipIdentifier == 1)
+                            ExG1Failed = true;
+                        elseif (chipIdentifier == 2)
+                            ExG2Failed = true;
+                        end
+                    end
+                else
+                    if (chipIdentifier == 1)
+                        ExG1Failed = true;
+                    elseif (chipIdentifier == 2)
+                        ExG2Failed = true;
+                    end
+                    fprintf(strcat('Warning: readexgconfiguration - Get EXG settings command response expected but not returned for Shimmer COM',thisShimmer.name,'.\n'));
+                    isRead = false;
+                end
+                if(ExG1Failed == true)
+                    thisShimmer.EXG1Config1 = 'Nan';
+                    thisShimmer.EXG1Config2 = 'Nan';
+                    thisShimmer.EXG1Loff = 'Nan';
+                    thisShimmer.EXG1Ch1Set = 'Nan';
+                    thisShimmer.EXG1Ch2Set = 'Nan';
+                    thisShimmer.EXG1RLD_Sens = 'Nan';
+                    thisShimmer.EXG1LOFF_Sens = 'Nan';
+                    thisShimmer.EXG1LOFF_Stat = 'Nan';
+                    thisShimmer.EXG1Resp1 = 'Nan';
+                    thisShimmer.EXG1Resp2 = 'Nan';
+                    thisShimmer.EXG1CH1Gain = 'Nan';
+                    thisShimmer.EXG1CH2Gain = 'Nan';
+                    thisShimmer.EXG1Rate = 'Nan';
+                    fprintf(strcat('Warning: readexgconfiguration - Get EXG settings command response expected but not returned for Shimmer COM',thisShimmer.name,'.\n'));
+                    isRead = false;
+                end
+                if(ExG2Failed == true)
+                    thisShimmer.EXG2Config1 = 'Nan';
+                    thisShimmer.EXG2Config2 = 'Nan';
+                    thisShimmer.EXG2Loff = 'Nan';
+                    thisShimmer.EXG2Ch1Set = 'Nan';
+                    thisShimmer.EXG2Ch2Set = 'Nan';
+                    thisShimmer.EXG2RLD_Sens = 'Nan';
+                    thisShimmer.EXG2LOFF_Sens = 'Nan';
+                    thisShimmer.EXG2LOFF_Stat = 'Nan';
+                    thisShimmer.EXG2Resp1 = 'Nan';
+                    thisShimmer.EXG2Resp2 = 'Nan';
+                    thisShimmer.EXG2CH1Gain = 'Nan';
+                    thisShimmer.EXG2CH2Gain = 'Nan';
+                    thisShimmer.EXG2Rate = 'Nan';
+                    fprintf(strcat('Warning: readexgconfiguration - Get EXG settings command response expected but not returned for Shimmer COM',thisShimmer.name,'.\n'));
+                    isRead = false;
+                end
+            elseif(~(chipIdentifier == 1 || chipIdentifier == 2))
+                isRead = false;
+                disp('Warning: readexgconfiguration - Invalid chip identifier (please use 1 (Chip1) or 2 (Chip2).');
+            else
+                isRead = false;
+                fprintf(strcat('Warning: readexgconfiguration - Cannot get EXG settings for COM ',thisShimmer.name,' as Shimmer is not connected.\n'));
+            end
+            
+        end % function readEXGconfiguration
+
         function isWritten = writesamplingrate(thisShimmer,samplingRate)
             % Writes sampling rate to Shimmer - in Connected state.
             if (thisShimmer.isConnected)
@@ -862,7 +1042,7 @@ classdef ShimmerHandleClass < handle
                 write(thisShimmer.bluetoothConn, char(bitand(255,samplingByteValue)));
                 write(thisShimmer.bluetoothConn, char(bitshift(samplingByteValue,-8)));
 
-                isWritten = waitforack(thisShimmer, thisShimmer.DEFAULT_TIMEOUT);   % Wait for Acknowledgment from Shimmer
+                isWritten = waitForAck(thisShimmer, thisShimmer.DEFAULT_TIMEOUT);   % Wait for Acknowledgment from Shimmer
 
                 if (isWritten == false)
                     fprintf(strcat('Warning: writesamplingrate - Set sampling rate command response expected but not returned for Shimmer COM',thisShimmer.name,'.\n'));
@@ -883,7 +1063,7 @@ classdef ShimmerHandleClass < handle
                 flush(thisShimmer.bluetoothConn, "input");                                       % As a precaution always clear the read data buffer before a write
                 write(thisShimmer.bluetoothConn, thisShimmer.GET_SAMPLING_RATE_COMMAND);     % Send the Get Sampling Rate Command to the Shimmer
                 
-                isAcknowledged = waitforack(thisShimmer, thisShimmer.DEFAULT_TIMEOUT);  % Wait for Acknowledgment from Shimmer
+                isAcknowledged = waitForAck(thisShimmer, thisShimmer.DEFAULT_TIMEOUT);  % Wait for Acknowledgment from Shimmer
                 
                 if (isAcknowledged == true)
                     [shimmerResponse] = read(thisShimmer.bluetoothConn, thisShimmer.bluetoothConn.NumBytesAvailable);     % Read the 2 byte response from the realterm buffer
@@ -1069,9 +1249,7 @@ classdef ShimmerHandleClass < handle
             %
             %   EXAMPLE: isSet = shimmer1.setaccelrate(1);
             %
-        
-            
-            
+
             if (thisShimmer.isConnected)                                  % Shimmer must be in a Connected state
                 isWritten = writeaccelrate(thisShimmer,accelRate);                  % Write mag range to the Shimmer
                 
@@ -1144,7 +1322,7 @@ classdef ShimmerHandleClass < handle
                     write(thisShimmer.bluetoothConn, thisShimmer.SET_MAG_SAMPLING_RATE_COMMAND); % Send the Set Mag Rate Command to the Shimmer
                     
                     write(thisShimmer.bluetoothConn, char(magRate));                             % Write the mag rate char value to the Shimmer
-                    isWritten = waitforack(thisShimmer, thisShimmer.DEFAULT_TIMEOUT);       % Wait for Acknowledgment from Shimmer
+                    isWritten = waitForAck(thisShimmer, thisShimmer.DEFAULT_TIMEOUT);       % Wait for Acknowledgment from Shimmer
                     
                     if (isWritten == false)
                         fprintf(strcat('Warning: writemagrate - Set mag rate response expected but not returned for Shimmer COM',thisShimmer.name,'.\n'));
@@ -1175,7 +1353,7 @@ classdef ShimmerHandleClass < handle
                     write(thisShimmer.bluetoothConn, thisShimmer.SET_LSM303DLHC_ACCEL_SAMPLING_RATE_COMMAND);  % Send the Set Mag Rate Command to the Shimmer
                     
                     write(thisShimmer.bluetoothConn, char(accelRate));                                         % Write the mag rate char value to the Shimmer
-                    isWritten = waitforack(thisShimmer, thisShimmer.DEFAULT_TIMEOUT);                     % Wait for Acknowledgment from Shimmer
+                    isWritten = waitForAck(thisShimmer, thisShimmer.DEFAULT_TIMEOUT);                     % Wait for Acknowledgment from Shimmer
                     
                     if (isWritten == false)
                         fprintf(strcat('Warning: writeaccelrate - Set acc rate response expected but not returned for Shimmer COM',thisShimmer.name,'.\n'));
@@ -1204,7 +1382,7 @@ classdef ShimmerHandleClass < handle
                     write(thisShimmer.bluetoothConn, thisShimmer.SET_MPU9150_SAMPLING_RATE_COMMAND); % Send the Set Gyro Rate Command to the Shimmer
                     
                     write(thisShimmer.bluetoothConn, char(gyroRate));                                % Write the gyroRate char value to the Shimmer
-                    isWritten = waitforack(thisShimmer, thisShimmer.DEFAULT_TIMEOUT);           % Wait for acknowledgment from Shimmer
+                    isWritten = waitForAck(thisShimmer, thisShimmer.DEFAULT_TIMEOUT);           % Wait for acknowledgment from Shimmer
                     
                     if (isWritten == false)
                         fprintf(strcat('Warning: writegyrorate - Set gyro rate response expected but not returned for Shimmer COM',thisShimmer.name,'.\n'));
@@ -1222,6 +1400,113 @@ classdef ShimmerHandleClass < handle
             end
             
         end % function writegyrorate
+
+        function isWritten = writeexgrate(thisShimmer, exgRate, chipIdentifier)            % function write exgrate 
+            % Writes ExG data rate to Shimmer3 - in Connected state
+            if (chipIdentifier == 1 || chipIdentifier == 2)
+           
+                if ((exgRate == 1) || (exgRate == 2) || (exgRate == 3) || (exgRate == 4) || (exgRate == 5) || (exgRate == 6)  || (exgRate == 0)) % check for valid settings
+                    if (thisShimmer.isConnected)
+                        if (chipIdentifier ==1)
+                            EXG1Config1ClearedDataRateBits = thisShimmer.EXG1Config1;
+                            EXG1Config1ClearedDataRateBits = bitand((EXG1Config1ClearedDataRateBits),248);   % Clear the data rate bits of the EXG1Config1 byte
+                            EXGConfig1UpdatedDataRateBits = bitor((EXG1Config1ClearedDataRateBits), exgRate); % Updated EXG1Config1 byte
+                        else
+                            EXG2Config1ClearedDataRateBits = thisShimmer.EXG2Config1;
+                            EXG2Config1ClearedDataRateBits = bitand((EXG2Config1ClearedDataRateBits),248);    % Clear the data rate bits of the EXG1Config1 byte
+                            EXGConfig1UpdatedDataRateBits = bitor((EXG2Config1ClearedDataRateBits), exgRate); % Updated EXG2Config1 byte
+                        end
+                                                                                
+                            flush(thisShimmer.bluetoothConn, "input");                                   % As a precaution always clear the read data buffer before a write
+                            write(thisShimmer.bluetoothConn, thisShimmer.SET_EXG_REGS_COMMAND);      % Send the SET_EXG_REGS_COMMAND to the Shimmer
+                            write(thisShimmer.bluetoothConn, char(chipIdentifier-1));                % char(0) selects SENSOR_EXG1, char(1) selects SENSOR_EXG2
+                            write(thisShimmer.bluetoothConn, char(0));                               % Start at byte 0
+                            write(thisShimmer.bluetoothConn, char(1));                               % and write 1 byte
+                            write(thisShimmer.bluetoothConn, char(EXGConfig1UpdatedDataRateBits));   % Write the updated ExG configuration byte to the Shimmer
+
+                            isWritten = waitForAck(thisShimmer, thisShimmer.DEFAULT_TIMEOUT);   % Wait for Acknowledgment from Shimmer
+
+                        if (isWritten == false)
+                            fprintf(strcat('Warning: writeexgrate - Set ExG Regs response expected but not returned for Shimmer COM',thisShimmer.name,'.\n'));
+                        end
+               
+                    else
+                        isWritten = false;
+                        fprintf(strcat('Warning: writeexgrate - Cannot set exg rate for COM ',thisShimmer.name,' as Shimmer is not connected\n'));
+                    end
+                else
+                    isWritten = false;
+                    fprintf(strcat('Warning: writeexgrate - Attempt to set exg rate failed due to a request to set the rate to an \n'));
+                    fprintf(strcat('invalid setting for Shimmer COM',thisShimmer.name,'.\n'));
+                    fprintf(strcat('Valid rate settings are 0 (125 Hz), 1 (250 Hz), 2 (500 Hz), 3 (1000 Hz), 4 (2000 Hz), 5 (4000 Hz) and 6 (8000 Hz).\n'));
+                end
+             else
+                isWritten = false;
+                fprintf(strcat('Warning: writeexgrate - Invalid chip selection.\n'));
+             end
+        end % function write exgrate
+
+        function isRead = readexgrate(thisShimmer, chipIdentifier) % function readexgrate
+            % Sends the GET_EXG_REGS_COMMAND to Shimmer3 - in Connected state 
+            % Receives ExG data rate and updates the corresponding properties.
+            if((chipIdentifier == 1 || chipIdentifier == 2))
+
+                if (thisShimmer.isConnected)
+                    flush(thisShimmer.bluetoothConn, "input");                                          % As a precaution always clear the read data buffer before a write
+                    write(thisShimmer.bluetoothConn, thisShimmer.GET_EXG_REGS_COMMAND);             % Send the GET_EXG_REGS_COMMAND to the Shimmer
+                    write(thisShimmer.bluetoothConn, char(chipIdentifier-1));                       % char(0) selects SENSOR_EXG1, char(1) selects SENSOR_EXG2
+                    write(thisShimmer.bluetoothConn, char(0));                                      % Start at byte 0.
+                    write(thisShimmer.bluetoothConn, char(1));                                      % Read one byte.
+                    isAcknowledged = waitForAck(thisShimmer, thisShimmer.DEFAULT_TIMEOUT);     % Wait for Acknowledgment from Shimmer
+                    if (chipIdentifier == 1) 
+                        % SENSOR_EXG1
+                        if (isAcknowledged == true)
+                            [shimmerResponse] = read(thisShimmer.bluetoothConn, 3);        % Read the 3 bytes response from the realterm buffer
+
+                            if ( ~isempty(shimmerResponse) && (shimmerResponse(1) == thisShimmer.EXG_REGS_RESPONSE) )
+                                    thisShimmer.EXG1Config1 = shimmerResponse(3);       % Update property EXG1Config1
+                                    thisShimmer.EXG1Rate = bitand(thisShimmer.EXG1Config1,7);%Update property EXG1Rate
+                                    isRead = true;
+                            else
+                                thisShimmer.EXG1Config1 = 'Nan';                  % Set the  to 'Nan' to indicate unknown
+                                fprintf(strcat('Warning: readexgrate - Get exg regs command response expected but not returned for Shimmer COM',thisShimmer.name,'.\n'));
+                                isRead = false;
+                            end
+                        else
+                            thisShimmer.EXG1Config1 = 'Nan';                  % Set the  to 'Nan' to indicate unknown
+                            fprintf(strcat('Warning: readexgrate - Get exg regs command response expected but not returned for Shimmer COM',thisShimmer.name,'.\n'));
+                            isRead = false;
+                        end
+                    else
+                        % SENSOR_EXG2
+                        if (isAcknowledged == true)
+                            [shimmerResponse] = read(thisShimmer.bluetoothConn, 3);        % Read the 3 bytes response from the realterm buffer
+
+                            if (~isempty(shimmerResponse) && (shimmerResponse(1) == thisShimmer.EXG_REGS_RESPONSE))
+                                    thisShimmer.EXG2Config1 = shimmerResponse(3);       % Update property EXG2Config1
+                                    thisShimmer.EXG2Rate = bitand(thisShimmer.EXG2Config1,7);%Update property EXG2Rate
+                                    isRead = true;
+                            else
+                                thisShimmer.EXG2Config1 = 'Nan';                  % Set the  to 'Nan' to indicate unknown
+                                fprintf(strcat('Warning: readexgrate - Get exg regs command response expected but not returned for Shimmer COM',thisShimmer.name,'.\n'));
+                                isRead = false;
+                            end
+                        else
+                            thisShimmer.EXG2Config1 = 'Nan';                  % Set the  to 'Nan' to indicate unknown
+                            fprintf(strcat('Warning: readexgrate - Get exg regs command response expected but not returned for Shimmer COM',thisShimmer.name,'.\n'));
+                            isRead = false;
+                        end
+                    end
+                else
+                    isRead = false;
+                    fprintf(strcat('Warning: readexgrate - Cannot get exg rate for COM ',thisShimmer.name,' as Shimmer is not connected.\n'));
+                end
+            else
+                isRead = false;
+                fprintf(strcat('Warning: readexgrate - Invalid chip selection.\n'));
+            end
+            
+        end % function readexgrate
 
         function quaternionData = updateQuaternion(thisShimmer, accelCalibratedData, gyroCalibratedData, magCalibratedData)
             % Updates quaternion data based on accelerometer, gyroscope and
