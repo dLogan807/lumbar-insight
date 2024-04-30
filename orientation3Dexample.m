@@ -37,11 +37,12 @@ SensorMacros = SetEnabledSensorsMacrosClass;                               % ass
 
 % Note: these constants are only relevant to this examplescript and are not used
 % by the ShimmerHandle Class
-DELAY_PERIOD = 0.1;                                                        % A delay period of time in seconds between data read operations
+DELAY_PERIOD = 0.2;                                                        % A delay period of time in seconds between data read operations
 
 if (shimmer1.isConnected)                                                       % TRUE if the shimmer connects
     % Define settings for shimmer
-    %shimmer.setsamplingrate(51.2);                                         % Set the shimmer sampling rate to 51.2Hz
+    shimmer1.setsamplingrate(51.2);                                         % Set the shimmer sampling rate to 51.2Hz
+    shimmer2.setsamplingrate(51.2);
     %shimmer.setinternalboard('9DOF');                                      % Set the shimmer internal daughter board to '9DOF'
     shimmer1.disableAllSensors;                                             % disable all sensors
     shimmer2.disableAllSensors;
@@ -59,9 +60,10 @@ if (shimmer1.isConnected)                                                       
         cameraUpVector = [0,1,0,0];
         cameraPosition = [0,0,0,1];
         
-        s1AllData = [];
+        shimmer1AllData = [];
+        shimmer2AllData = [];
         
-        h.figure1=figure('Name','Shimmer 1');                              % Create a handle to figure for plotting data from the first shimmer
+        h.figure1=figure('Name','Shimmer Device Orientation');                              % Create a handle to figure for plotting data from the first shimmer
         
         uicontrol('Style', 'pushbutton', 'String', 'Set',...
             'Position', [20 20 50 20],...
@@ -79,92 +81,48 @@ if (shimmer1.isConnected)                                                       
             
             pause(DELAY_PERIOD);                                           % Pause for this period of time on each iteration to allow data to arrive in the buffer
             
-            [s1NewData,s1SignalNameArray,s1SignalFormatArray,s1SignalUnitArray] = shimmer1.getdata('c');   % Read the latest data from shimmer data buffer, signalFormatArray defines the format of the data and signalUnitArray the unit
-            [s2NewData,s2SignalNameArray,s2SignalFormatArray,s2SignalUnitArray] = shimmer2.getdata('c');
+            [shimmer1NewData,shimmer1SignalNameArray,shimmer1SignalFormatArray,shimmer1SignalUnitArray] = shimmer1.getdata('c');   % Read the latest data from shimmer data buffer, signalFormatArray defines the format of the data and signalUnitArray the unit
+            [shimmer2NewData,shimmer2SignalNameArray,shimmer2SignalFormatArray,shimmer2SignalUnitArray] = shimmer2.getdata('c');
 
             % if (firsttime==true && isempty(newData)~=1)
             %     firsttime = writeHeadersToFile(fileName,signalNameArray,signalFormatArray,signalUnitArray);
             % end
             
-            if ~isempty(s1NewData)                                                                          % TRUE if new data has arrived
+            if ~isempty(shimmer1NewData)                                                                          % TRUE if new data has arrived
                 
-                s1AllData = [s1AllData; s1NewData];
+                shimmer1AllData = [shimmer1AllData; shimmer1NewData];
+                shimmer2AllData = [shimmer2AllData; shimmer2NewData];
                 
                 %dlmwrite(fileName, newData, '-append', 'delimiter', '\t','precision',16);                                % Append the new data to the file in a tab delimited format
                 
-                quaternionChannels(1) = find(ismember(s1SignalNameArray, 'Quaternion 0'));                  % Find Quaternion signal indices.
-                quaternionChannels(2) = find(ismember(s1SignalNameArray, 'Quaternion 1'));
-                quaternionChannels(3) = find(ismember(s1SignalNameArray, 'Quaternion 2'));
-                quaternionChannels(4) = find(ismember(s1SignalNameArray, 'Quaternion 3'));
-                
-                quaternion = s1NewData(end, quaternionChannels);                                            % Only use the most recent quaternion sample for the graphic
-                                
-                shimmer3dRotated.p1 = quatrotate(quaternion, [0 shimmer3d.p1]);                           % Rotate the vertices
-                shimmer3dRotated.p2 = quatrotate(quaternion, [0 shimmer3d.p2]);
-                shimmer3dRotated.p3 = quatrotate(quaternion, [0 shimmer3d.p3]);
-                shimmer3dRotated.p4 = quatrotate(quaternion, [0 shimmer3d.p4]);
-                shimmer3dRotated.p5 = quatrotate(quaternion, [0 shimmer3d.p5]);
-                shimmer3dRotated.p6 = quatrotate(quaternion, [0 shimmer3d.p6]);
-                shimmer3dRotated.p7 = quatrotate(quaternion, [0 shimmer3d.p7]);
-                shimmer3dRotated.p8 = quatrotate(quaternion, [0 shimmer3d.p8]);
-                shimmer3dRotated.p9 = quatrotate(quaternion, [0 shimmer3d.p9]);
-                shimmer3dRotated.p10 = quatrotate(quaternion, [0 shimmer3d.p10]);
-                shimmer3dRotated.p11 = quatrotate(quaternion, [0 shimmer3d.p11]);
-                shimmer3dRotated.p12 = quatrotate(quaternion, [0 shimmer3d.p12]);
-                shimmer3dRotated.p13 = quatrotate(quaternion, [0 shimmer3d.p13]);
-                shimmer3dRotated.p14 = quatrotate(quaternion, [0 shimmer3d.p14]);
-                shimmer3dRotated.p15 = quatrotate(quaternion, [0 shimmer3d.p15]);
-                shimmer3dRotated.p16 = quatrotate(quaternion, [0 shimmer3d.p16]);
+                quaternionChannels(1) = find(ismember(shimmer1SignalNameArray, 'Quaternion 0'));                  % Find Quaternion signal indices.
+                quaternionChannels(2) = find(ismember(shimmer1SignalNameArray, 'Quaternion 1'));
+                quaternionChannels(3) = find(ismember(shimmer1SignalNameArray, 'Quaternion 2'));
+                quaternionChannels(4) = find(ismember(shimmer1SignalNameArray, 'Quaternion 3'));
 
-                x = [shimmer3dRotated.p1(2),shimmer3dRotated.p2(2),shimmer3dRotated.p3(2),shimmer3dRotated.p4(2),...      % Calculate the convex hull for the graphic
-                     shimmer3dRotated.p5(2),shimmer3dRotated.p6(2),shimmer3dRotated.p7(2),shimmer3dRotated.p8(2),...      
-                     shimmer3dRotated.p9(2),shimmer3dRotated.p10(2),shimmer3dRotated.p11(2),shimmer3dRotated.p12(2)]';
-                y = [shimmer3dRotated.p1(3),shimmer3dRotated.p2(3),shimmer3dRotated.p3(3),shimmer3dRotated.p4(3),...
-                     shimmer3dRotated.p5(3),shimmer3dRotated.p6(3),shimmer3dRotated.p7(3),shimmer3dRotated.p8(3),...      
-                     shimmer3dRotated.p9(3),shimmer3dRotated.p10(3),shimmer3dRotated.p11(3),shimmer3dRotated.p12(3)]';
-                z = [shimmer3dRotated.p1(4),shimmer3dRotated.p2(4),shimmer3dRotated.p3(4),shimmer3dRotated.p4(4),...
-                     shimmer3dRotated.p5(4),shimmer3dRotated.p6(4),shimmer3dRotated.p7(4),shimmer3dRotated.p8(4),...      
-                     shimmer3dRotated.p9(4),shimmer3dRotated.p10(4),shimmer3dRotated.p11(4),shimmer3dRotated.p12(4)]';
+                quaternionChannels(1) = find(ismember(shimmer2SignalNameArray, 'Quaternion 0'));                  % Find Quaternion signal indices.
+                quaternionChannels(2) = find(ismember(shimmer2SignalNameArray, 'Quaternion 1'));
+                quaternionChannels(3) = find(ismember(shimmer2SignalNameArray, 'Quaternion 2'));
+                quaternionChannels(4) = find(ismember(shimmer2SignalNameArray, 'Quaternion 3'));
+                
+                quaternion = shimmer1NewData(end, quaternionChannels);                                            % Only use the most recent quaternion sample for the graphic
+                
+                rotateVertices(shimmer1);
+                rotateVertices(shimmer2);
                  
-                X = [x,y,z];
-                K = convhulln(X);      
+                X1 = generateConvexHullArray(shimmer1);
+                X2 = generateConvexHullArray(shimmer2);
+                K1 = convhulln(X1);
+                K2 = convhulln(X2);
 
                 set(0,'CurrentFigure',h.figure1);
                 hold off;
                 % Plot object surface
-                trisurf(K,X(:,1),X(:,2),X(:,3),'EdgeColor','None','FaceColor','w');
+                trisurf(K1,X1(:,1),X1(:,2),X1(:,3),'EdgeColor','None','FaceColor','w');
                 hold on;
-                % Plot object outlines
-                plot3([shimmer3dRotated.p1(2), shimmer3dRotated.p2(2)],[shimmer3dRotated.p1(3), shimmer3dRotated.p2(3)],[shimmer3dRotated.p1(4), shimmer3dRotated.p2(4)],'-k','LineWidth',2)
-                plot3([shimmer3dRotated.p2(2), shimmer3dRotated.p3(2)],[shimmer3dRotated.p2(3), shimmer3dRotated.p3(3)],[shimmer3dRotated.p2(4), shimmer3dRotated.p3(4)],'-k','LineWidth',2)
-                plot3([shimmer3dRotated.p3(2), shimmer3dRotated.p4(2)],[shimmer3dRotated.p3(3), shimmer3dRotated.p4(3)],[shimmer3dRotated.p3(4), shimmer3dRotated.p4(4)],'-k','LineWidth',2)
-                plot3([shimmer3dRotated.p4(2), shimmer3dRotated.p1(2)],[shimmer3dRotated.p4(3), shimmer3dRotated.p1(3)],[shimmer3dRotated.p4(4), shimmer3dRotated.p1(4)],'-k','LineWidth',2)
 
-                plot3([shimmer3dRotated.p5(2), shimmer3dRotated.p6(2)],[shimmer3dRotated.p5(3), shimmer3dRotated.p6(3)],[shimmer3dRotated.p5(4), shimmer3dRotated.p6(4)],'-k','LineWidth',2)
-                plot3([shimmer3dRotated.p6(2), shimmer3dRotated.p7(2)],[shimmer3dRotated.p6(3), shimmer3dRotated.p7(3)],[shimmer3dRotated.p6(4), shimmer3dRotated.p7(4)],'-k','LineWidth',2)
-                plot3([shimmer3dRotated.p7(2), shimmer3dRotated.p8(2)],[shimmer3dRotated.p7(3), shimmer3dRotated.p8(3)],[shimmer3dRotated.p7(4), shimmer3dRotated.p8(4)],'-k','LineWidth',2)
-                plot3([shimmer3dRotated.p8(2), shimmer3dRotated.p5(2)],[shimmer3dRotated.p8(3), shimmer3dRotated.p5(3)],[shimmer3dRotated.p8(4), shimmer3dRotated.p5(4)],'-k','LineWidth',2)
-
-                plot3([shimmer3dRotated.p9(2), shimmer3dRotated.p10(2)],[shimmer3dRotated.p9(3), shimmer3dRotated.p10(3)],[shimmer3dRotated.p9(4), shimmer3dRotated.p10(4)],'-k','LineWidth',2)
-                plot3([shimmer3dRotated.p10(2), shimmer3dRotated.p11(2)],[shimmer3dRotated.p10(3), shimmer3dRotated.p11(3)],[shimmer3dRotated.p10(4), shimmer3dRotated.p11(4)],'-k','LineWidth',2)
-                plot3([shimmer3dRotated.p11(2), shimmer3dRotated.p12(2)],[shimmer3dRotated.p11(3), shimmer3dRotated.p12(3)],[shimmer3dRotated.p11(4), shimmer3dRotated.p12(4)],'-k','LineWidth',2)
-                plot3([shimmer3dRotated.p12(2), shimmer3dRotated.p9(2)],[shimmer3dRotated.p12(3), shimmer3dRotated.p9(3)],[shimmer3dRotated.p12(4), shimmer3dRotated.p9(4)],'-k','LineWidth',2)
-
-                plot3([shimmer3dRotated.p1(2), shimmer3dRotated.p5(2)],[shimmer3dRotated.p1(3), shimmer3dRotated.p5(3)],[shimmer3dRotated.p1(4), shimmer3dRotated.p5(4)],'-k','LineWidth',2)
-                plot3([shimmer3dRotated.p2(2), shimmer3dRotated.p6(2)],[shimmer3dRotated.p2(3), shimmer3dRotated.p6(3)],[shimmer3dRotated.p2(4), shimmer3dRotated.p6(4)],'-k','LineWidth',2)
-                plot3([shimmer3dRotated.p3(2), shimmer3dRotated.p7(2)],[shimmer3dRotated.p3(3), shimmer3dRotated.p7(3)],[shimmer3dRotated.p3(4), shimmer3dRotated.p7(4)],'-k','LineWidth',2)
-                plot3([shimmer3dRotated.p4(2), shimmer3dRotated.p8(2)],[shimmer3dRotated.p4(3), shimmer3dRotated.p8(3)],[shimmer3dRotated.p4(4), shimmer3dRotated.p8(4)],'-k','LineWidth',2)
-
-                plot3([shimmer3dRotated.p1(2), shimmer3dRotated.p9(2)],[shimmer3dRotated.p1(3), shimmer3dRotated.p9(3)],[shimmer3dRotated.p1(4), shimmer3dRotated.p9(4)],'-k','LineWidth',2)
-                plot3([shimmer3dRotated.p2(2), shimmer3dRotated.p10(2)],[shimmer3dRotated.p2(3), shimmer3dRotated.p10(3)],[shimmer3dRotated.p2(4), shimmer3dRotated.p10(4)],'-k','LineWidth',2)
-                plot3([shimmer3dRotated.p3(2), shimmer3dRotated.p11(2)],[shimmer3dRotated.p3(3), shimmer3dRotated.p11(3)],[shimmer3dRotated.p3(4), shimmer3dRotated.p11(4)],'-k','LineWidth',2)
-                plot3([shimmer3dRotated.p4(2), shimmer3dRotated.p12(2)],[shimmer3dRotated.p4(3), shimmer3dRotated.p12(3)],[shimmer3dRotated.p4(4), shimmer3dRotated.p12(4)],'-k','LineWidth',2)
-
-                % Plot outline of dock connector
-                plot3([shimmer3dRotated.p13(2), shimmer3dRotated.p14(2)],[shimmer3dRotated.p13(3), shimmer3dRotated.p14(3)],[shimmer3dRotated.p13(4), shimmer3dRotated.p14(4)],'-k','LineWidth',2)
-                plot3([shimmer3dRotated.p14(2), shimmer3dRotated.p15(2)],[shimmer3dRotated.p14(3), shimmer3dRotated.p15(3)],[shimmer3dRotated.p14(4), shimmer3dRotated.p15(4)],'-k','LineWidth',2)
-                plot3([shimmer3dRotated.p15(2), shimmer3dRotated.p16(2)],[shimmer3dRotated.p15(3), shimmer3dRotated.p16(3)],[shimmer3dRotated.p15(4), shimmer3dRotated.p16(4)],'-k','LineWidth',2)
-                plot3([shimmer3dRotated.p16(2), shimmer3dRotated.p13(2)],[shimmer3dRotated.p16(3), shimmer3dRotated.p13(3)],[shimmer3dRotated.p16(4), shimmer3dRotated.p13(4)],'-k','LineWidth',2)
+                plotOutlines(shimmer1);
+                plotOutlines(shimmer2);
 
                 xlim([-2,2])
                 ylim([-2,2])
@@ -182,12 +140,78 @@ if (shimmer1.isConnected)                                                       
         elapsedTime = elapsedTime + toc;                                                                  % Stop timer
         %fprintf('The percentage of received packets: %d \n',shimmer.getpercentageofpacketsreceived(allData(:,1))); % Detect lost packets
         shimmer1.stopStreaming;                                                                                     % Stop data streaming
-        
+        shimmer2.stopStreaming;
     end
     %shimmer.disconnect;                                                                                   % Disconnect from shimmer
     
 end
+
+    function rotateVertices(shimmer)
+        shimmer.shimmer3dRotated.p1 = quatrotate(quaternion, [0 shimmer.shimmer3d.p1]);                           % Rotate the vertices
+        shimmer.shimmer3dRotated.p2 = quatrotate(quaternion, [0 shimmer.shimmer3d.p2]);
+        shimmer.shimmer3dRotated.p3 = quatrotate(quaternion, [0 shimmer.shimmer3d.p3]);
+        shimmer.shimmer3dRotated.p4 = quatrotate(quaternion, [0 shimmer.shimmer3d.p4]);
+        shimmer.shimmer3dRotated.p5 = quatrotate(quaternion, [0 shimmer.shimmer3d.p5]);
+        shimmer.shimmer3dRotated.p6 = quatrotate(quaternion, [0 shimmer.shimmer3d.p6]);
+        shimmer.shimmer3dRotated.p7 = quatrotate(quaternion, [0 shimmer.shimmer3d.p7]);
+        shimmer.shimmer3dRotated.p8 = quatrotate(quaternion, [0 shimmer.shimmer3d.p8]);
+        shimmer.shimmer3dRotated.p9 = quatrotate(quaternion, [0 shimmer.shimmer3d.p9]);
+        shimmer.shimmer3dRotated.p10 = quatrotate(quaternion, [0 shimmer.shimmer3d.p10]);
+        shimmer.shimmer3dRotated.p11 = quatrotate(quaternion, [0 shimmer.shimmer3d.p11]);
+        shimmer.shimmer3dRotated.p12 = quatrotate(quaternion, [0 shimmer.shimmer3d.p12]);
+        shimmer.shimmer3dRotated.p13 = quatrotate(quaternion, [0 shimmer.shimmer3d.p13]);
+        shimmer.shimmer3dRotated.p14 = quatrotate(quaternion, [0 shimmer.shimmer3d.p14]);
+        shimmer.shimmer3dRotated.p15 = quatrotate(quaternion, [0 shimmer.shimmer3d.p15]);
+        shimmer.shimmer3dRotated.p16 = quatrotate(quaternion, [0 shimmer.shimmer3d.p16]);
+    end
     
+    function convexArray = generateConvexHullArray(shimmer)
+        x = [shimmer.shimmer3dRotated.p1(2),shimmer.shimmer3dRotated.p2(2),shimmer.shimmer3dRotated.p3(2),shimmer.shimmer3dRotated.p4(2),...      % Calculate the convex hull for the graphic
+             shimmer.shimmer3dRotated.p5(2),shimmer.shimmer3dRotated.p6(2),shimmer.shimmer3dRotated.p7(2),shimmer.shimmer3dRotated.p8(2),...      
+             shimmer.shimmer3dRotated.p9(2),shimmer.shimmer3dRotated.p10(2),shimmer.shimmer3dRotated.p11(2),shimmer.shimmer3dRotated.p12(2)]';
+        y = [shimmer.shimmer3dRotated.p1(3),shimmer.shimmer3dRotated.p2(3),shimmer.shimmer3dRotated.p3(3),shimmer.shimmer3dRotated.p4(3),...
+             shimmer.shimmer3dRotated.p5(3),shimmer.shimmer3dRotated.p6(3),shimmer.shimmer3dRotated.p7(3),shimmer.shimmer3dRotated.p8(3),...      
+             shimmer.shimmer3dRotated.p9(3),shimmer.shimmer3dRotated.p10(3),shimmer.shimmer3dRotated.p11(3),shimmer.shimmer3dRotated.p12(3)]';
+        z = [shimmer.shimmer3dRotated.p1(4),shimmer.shimmer3dRotated.p2(4),shimmer.shimmer3dRotated.p3(4),shimmer.shimmer3dRotated.p4(4),...
+             shimmer.shimmer3dRotated.p5(4),shimmer.shimmer3dRotated.p6(4),shimmer.shimmer3dRotated.p7(4),shimmer.shimmer3dRotated.p8(4),...      
+             shimmer.shimmer3dRotated.p9(4),shimmer.shimmer3dRotated.p10(4),shimmer.shimmer3dRotated.p11(4),shimmer.shimmer3dRotated.p12(4)]';
+
+        convexArray = [x,y,z];
+    end
+
+    function plotOutlines(shimmer) 
+        % Plot object outlines
+        plot3([shimmer.shimmer3dRotated.p1(2), shimmer.shimmer3dRotated.p2(2)],[shimmer.shimmer3dRotated.p1(3), shimmer.shimmer3dRotated.p2(3)],[shimmer.shimmer3dRotated.p1(4), shimmer.shimmer3dRotated.p2(4)],'-k','LineWidth',2)
+        plot3([shimmer.shimmer3dRotated.p2(2), shimmer.shimmer3dRotated.p3(2)],[shimmer.shimmer3dRotated.p2(3), shimmer.shimmer3dRotated.p3(3)],[shimmer.shimmer3dRotated.p2(4), shimmer.shimmer3dRotated.p3(4)],'-k','LineWidth',2)
+        plot3([shimmer.shimmer3dRotated.p3(2), shimmer.shimmer3dRotated.p4(2)],[shimmer.shimmer3dRotated.p3(3), shimmer.shimmer3dRotated.p4(3)],[shimmer.shimmer3dRotated.p3(4), shimmer.shimmer3dRotated.p4(4)],'-k','LineWidth',2)
+        plot3([shimmer.shimmer3dRotated.p4(2), shimmer.shimmer3dRotated.p1(2)],[shimmer.shimmer3dRotated.p4(3), shimmer.shimmer3dRotated.p1(3)],[shimmer.shimmer3dRotated.p4(4), shimmer.shimmer3dRotated.p1(4)],'-k','LineWidth',2)
+        
+        plot3([shimmer.shimmer3dRotated.p5(2), shimmer.shimmer3dRotated.p6(2)],[shimmer.shimmer3dRotated.p5(3), shimmer.shimmer3dRotated.p6(3)],[shimmer.shimmer3dRotated.p5(4), shimmer.shimmer3dRotated.p6(4)],'-k','LineWidth',2)
+        plot3([shimmer.shimmer3dRotated.p6(2), shimmer.shimmer3dRotated.p7(2)],[shimmer.shimmer3dRotated.p6(3), shimmer.shimmer3dRotated.p7(3)],[shimmer.shimmer3dRotated.p6(4), shimmer.shimmer3dRotated.p7(4)],'-k','LineWidth',2)
+        plot3([shimmer.shimmer3dRotated.p7(2), shimmer.shimmer3dRotated.p8(2)],[shimmer.shimmer3dRotated.p7(3), shimmer.shimmer3dRotated.p8(3)],[shimmer.shimmer3dRotated.p7(4), shimmer.shimmer3dRotated.p8(4)],'-k','LineWidth',2)
+        plot3([shimmer.shimmer3dRotated.p8(2), shimmer.shimmer3dRotated.p5(2)],[shimmer.shimmer3dRotated.p8(3), shimmer.shimmer3dRotated.p5(3)],[shimmer.shimmer3dRotated.p8(4), shimmer.shimmer3dRotated.p5(4)],'-k','LineWidth',2)
+        
+        plot3([shimmer.shimmer3dRotated.p9(2), shimmer.shimmer3dRotated.p10(2)],[shimmer.shimmer3dRotated.p9(3), shimmer.shimmer3dRotated.p10(3)],[shimmer.shimmer3dRotated.p9(4), shimmer.shimmer3dRotated.p10(4)],'-k','LineWidth',2)
+        plot3([shimmer.shimmer3dRotated.p10(2), shimmer.shimmer3dRotated.p11(2)],[shimmer.shimmer3dRotated.p10(3), shimmer.shimmer3dRotated.p11(3)],[shimmer.shimmer3dRotated.p10(4), shimmer.shimmer3dRotated.p11(4)],'-k','LineWidth',2)
+        plot3([shimmer.shimmer3dRotated.p11(2), shimmer.shimmer3dRotated.p12(2)],[shimmer.shimmer3dRotated.p11(3), shimmer.shimmer3dRotated.p12(3)],[shimmer.shimmer3dRotated.p11(4), shimmer.shimmer3dRotated.p12(4)],'-k','LineWidth',2)
+        plot3([shimmer.shimmer3dRotated.p12(2), shimmer.shimmer3dRotated.p9(2)],[shimmer.shimmer3dRotated.p12(3), shimmer.shimmer3dRotated.p9(3)],[shimmer.shimmer3dRotated.p12(4), shimmer.shimmer3dRotated.p9(4)],'-k','LineWidth',2)
+        
+        plot3([shimmer.shimmer3dRotated.p1(2), shimmer.shimmer3dRotated.p5(2)],[shimmer.shimmer3dRotated.p1(3), shimmer.shimmer3dRotated.p5(3)],[shimmer.shimmer3dRotated.p1(4), shimmer.shimmer3dRotated.p5(4)],'-k','LineWidth',2)
+        plot3([shimmer.shimmer3dRotated.p2(2), shimmer.shimmer3dRotated.p6(2)],[shimmer.shimmer3dRotated.p2(3), shimmer.shimmer3dRotated.p6(3)],[shimmer.shimmer3dRotated.p2(4), shimmer.shimmer3dRotated.p6(4)],'-k','LineWidth',2)
+        plot3([shimmer.shimmer3dRotated.p3(2), shimmer.shimmer3dRotated.p7(2)],[shimmer.shimmer3dRotated.p3(3), shimmer.shimmer3dRotated.p7(3)],[shimmer.shimmer3dRotated.p3(4), shimmer.shimmer3dRotated.p7(4)],'-k','LineWidth',2)
+        plot3([shimmer.shimmer3dRotated.p4(2), shimmer.shimmer3dRotated.p8(2)],[shimmer.shimmer3dRotated.p4(3), shimmer.shimmer3dRotated.p8(3)],[shimmer.shimmer3dRotated.p4(4), shimmer.shimmer3dRotated.p8(4)],'-k','LineWidth',2)
+        
+        plot3([shimmer.shimmer3dRotated.p1(2), shimmer.shimmer3dRotated.p9(2)],[shimmer.shimmer3dRotated.p1(3), shimmer.shimmer3dRotated.p9(3)],[shimmer.shimmer3dRotated.p1(4), shimmer.shimmer3dRotated.p9(4)],'-k','LineWidth',2)
+        plot3([shimmer.shimmer3dRotated.p2(2), shimmer.shimmer3dRotated.p10(2)],[shimmer.shimmer3dRotated.p2(3), shimmer.shimmer3dRotated.p10(3)],[shimmer.shimmer3dRotated.p2(4), shimmer.shimmer3dRotated.p10(4)],'-k','LineWidth',2)
+        plot3([shimmer.shimmer3dRotated.p3(2), shimmer.shimmer3dRotated.p11(2)],[shimmer.shimmer3dRotated.p3(3), shimmer.shimmer3dRotated.p11(3)],[shimmer.shimmer3dRotated.p3(4), shimmer.shimmer3dRotated.p11(4)],'-k','LineWidth',2)
+        plot3([shimmer.shimmer3dRotated.p4(2), shimmer.shimmer3dRotated.p12(2)],[shimmer.shimmer3dRotated.p4(3), shimmer.shimmer3dRotated.p12(3)],[shimmer.shimmer3dRotated.p4(4), shimmer.shimmer3dRotated.p12(4)],'-k','LineWidth',2)
+        
+        % Plot outline of dock connector
+        plot3([shimmer.shimmer3dRotated.p13(2), shimmer.shimmer3dRotated.p14(2)],[shimmer.shimmer3dRotated.p13(3), shimmer.shimmer3dRotated.p14(3)],[shimmer.shimmer3dRotated.p13(4), shimmer.shimmer3dRotated.p14(4)],'-k','LineWidth',2)
+        plot3([shimmer.shimmer3dRotated.p14(2), shimmer.shimmer3dRotated.p15(2)],[shimmer.shimmer3dRotated.p14(3), shimmer.shimmer3dRotated.p15(3)],[shimmer.shimmer3dRotated.p14(4), shimmer.shimmer3dRotated.p15(4)],'-k','LineWidth',2)
+        plot3([shimmer.shimmer3dRotated.p15(2), shimmer.shimmer3dRotated.p16(2)],[shimmer.shimmer3dRotated.p15(3), shimmer.shimmer3dRotated.p16(3)],[shimmer.shimmer3dRotated.p15(4), shimmer.shimmer3dRotated.p16(4)],'-k','LineWidth',2)
+        plot3([shimmer.shimmer3dRotated.p16(2), shimmer.shimmer3dRotated.p13(2)],[shimmer.shimmer3dRotated.p16(3), shimmer.shimmer3dRotated.p13(3)],[shimmer.shimmer3dRotated.p16(4), shimmer.shimmer3dRotated.p13(4)],'-k','LineWidth',2)
+    end
 
     function setaxes(hObj,event) 
         % Called when user presses "Set" button  
