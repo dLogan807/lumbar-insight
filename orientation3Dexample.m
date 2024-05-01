@@ -37,9 +37,9 @@ SensorMacros = SetEnabledSensorsMacrosClass;                               % ass
 
 % Note: these constants are only relevant to this examplescript and are not used
 % by the ShimmerHandle Class
-DELAY_PERIOD = 0.2;                                                        % A delay period of time in seconds between data read operations
+DELAY_PERIOD = 0.1;                                                        % A delay period of time in seconds between data read operations
 
-if (shimmer1.isConnected && shimmer2.isConnected)                          % TRUE if the shimmer connects
+if (shimmer1.connect && shimmer2.connect)                                  % TRUE if the shimmers connect
     % Define settings for shimmer
     shimmer1.setsamplingrate(51.2);                                        % Set the shimmer sampling rate to 51.2Hz
     shimmer2.setsamplingrate(51.2);
@@ -54,16 +54,19 @@ if (shimmer1.isConnected && shimmer2.isConnected)                          % TRU
     %shimmer.setorientation3D(1);                                          % Enable orientation3D
     %shimmer.setgyroinusecalibration(1);                                   % Enable gyro in-use calibration
     
-    if (shimmer1.startStreaming && shimmer2.startStreaming)                 % TRUE if the shimmer starts streaming
+    if (shimmer1.startStreaming && shimmer2.startStreaming)                % TRUE if the shimmers start streaming
         
         % initial viewpoint for 3D visualisation
         cameraUpVector = [0,1,0,0];
         cameraPosition = [0,0,0,1];
         
+        layout = tiledlayout(1,2);
+
         shimmer1AllData = [];
         shimmer2AllData = [];
         
-        h.figure1=figure('Name','Shimmer Device Orientation');             % Create a handle to figure for plotting data from the shimmers
+        h.figure1=figure('Name', shimmer1.name + ' Orientation');             % Create a handle to figure for plotting data from the shimmers
+        h.figure2=figure('Name', shimmer2.name + ' Orientation');             % Create a handle to figure for plotting data from the shimmers
         
         uicontrol('Style', 'pushbutton', 'String', 'Set',...
             'Position', [20 20 50 20],...
@@ -87,28 +90,30 @@ if (shimmer1.isConnected && shimmer2.isConnected)                          % TRU
             % if (firsttime==true && isempty(newData)~=1)
             %     firsttime = writeHeadersToFile(fileName,signalNameArray,signalFormatArray,signalUnitArray);
             % end
-            
-            if ~isempty(shimmer1NewData)                                                                          % TRUE if new data has arrived
+            disp("Shimmer 1 new data: " + shimmer1NewData);
+            disp("Shimmer 2 new data: " + shimmer2NewData);
+            if (~isempty(shimmer1NewData) && ~isempty(shimmer2NewData))                                                                          % TRUE if new data has arrived
                 
                 shimmer1AllData = [shimmer1AllData; shimmer1NewData];
                 shimmer2AllData = [shimmer2AllData; shimmer2NewData];
                 
                 %dlmwrite(fileName, newData, '-append', 'delimiter', '\t','precision',16);                                % Append the new data to the file in a tab delimited format
                 
-                quaternionChannels(1) = find(ismember(shimmer1SignalNameArray, 'Quaternion 0'));                  % Find Quaternion signal indices.
-                quaternionChannels(2) = find(ismember(shimmer1SignalNameArray, 'Quaternion 1'));
-                quaternionChannels(3) = find(ismember(shimmer1SignalNameArray, 'Quaternion 2'));
-                quaternionChannels(4) = find(ismember(shimmer1SignalNameArray, 'Quaternion 3'));
+                shimmer1QuaternionChannels(1) = find(ismember(shimmer1SignalNameArray, 'Quaternion 0'));                  % Find Quaternion signal indices.
+                shimmer1QuaternionChannels(2) = find(ismember(shimmer1SignalNameArray, 'Quaternion 1'));
+                shimmer1QuaternionChannels(3) = find(ismember(shimmer1SignalNameArray, 'Quaternion 2'));
+                shimmer1QuaternionChannels(4) = find(ismember(shimmer1SignalNameArray, 'Quaternion 3'));
 
-                quaternionChannels(1) = find(ismember(shimmer2SignalNameArray, 'Quaternion 0'));                  % Find Quaternion signal indices.
-                quaternionChannels(2) = find(ismember(shimmer2SignalNameArray, 'Quaternion 1'));
-                quaternionChannels(3) = find(ismember(shimmer2SignalNameArray, 'Quaternion 2'));
-                quaternionChannels(4) = find(ismember(shimmer2SignalNameArray, 'Quaternion 3'));
+                shimmer2QuaternionChannels(1) = find(ismember(shimmer2SignalNameArray, 'Quaternion 0'));                  % Find Quaternion signal indices.
+                shimmer2QuaternionChannels(2) = find(ismember(shimmer2SignalNameArray, 'Quaternion 1'));
+                shimmer2QuaternionChannels(3) = find(ismember(shimmer2SignalNameArray, 'Quaternion 2'));
+                shimmer2QuaternionChannels(4) = find(ismember(shimmer2SignalNameArray, 'Quaternion 3'));
                 
-                quaternion = shimmer1NewData(end, quaternionChannels);                                            % Only use the most recent quaternion sample for the graphic
-                
-                rotateVertices(shimmer1);
-                rotateVertices(shimmer2);
+                shimmer1Quaternion = shimmer1NewData(end, shimmer1QuaternionChannels);                                            % Only use the most recent quaternion sample for the graphic
+                shimmer2Quaternion = shimmer1NewData(end, shimmer2QuaternionChannels);
+
+                rotateVertices(shimmer1, shimmer1Quaternion);
+                rotateVertices(shimmer2, shimmer2Quaternion);
                  
                 X1 = generateConvexHullArray(shimmer1);
                 X2 = generateConvexHullArray(shimmer2);
@@ -121,6 +126,12 @@ if (shimmer1.isConnected && shimmer2.isConnected)                          % TRU
                 trisurf(K1,X1(:,1),X1(:,2),X1(:,3),'EdgeColor','None','FaceColor','w');
                 hold on;
 
+                set(0,'CurrentFigure',h.figure2);
+                hold off;
+                % Plot object surface
+                trisurf(K1,X1(:,1),X1(:,2),X1(:,3),'EdgeColor','None','FaceColor','w');
+                hold on;
+
                 plotOutlines(shimmer1);
                 plotOutlines(shimmer2);
 
@@ -128,7 +139,7 @@ if (shimmer1.isConnected && shimmer2.isConnected)                          % TRU
                 ylim([-2,2])
                 zlim([-2,2])
                 grid on
-                view(cameraPosition(2:4))
+                vie2w(cameraPosition(2:4))
                 set(gca,'CameraUpVector',cameraUpVector(2:4));
             end
             
@@ -146,7 +157,7 @@ if (shimmer1.isConnected && shimmer2.isConnected)                          % TRU
     
 end
 
-    function rotateVertices(shimmer)
+    function rotateVertices(shimmer, quaternion)
         shimmer.shimmer3dRotated.p1 = quatrotate(quaternion, [0 shimmer.shimmer3d.p1]);                           % Rotate the vertices
         shimmer.shimmer3dRotated.p2 = quatrotate(quaternion, [0 shimmer.shimmer3d.p2]);
         shimmer.shimmer3dRotated.p3 = quatrotate(quaternion, [0 shimmer.shimmer3d.p3]);
@@ -217,8 +228,8 @@ end
         % Called when user presses "Set" button  
 
         % Calculate camera position and angle for front view
-        cameraPosition = quatrotate(quaternion,[0,0,0,1]);
-        cameraUpVector = quatrotate(quaternion,[0,-1,0,0]); % orientation for Shimmer3
+        cameraPosition = quatrotate(shimmer1Quaternion,[0,0,0,1]);
+        cameraUpVector = quatrotate(shimmer1Quaternion,[0,-1,0,0]); % orientation for Shimmer3
     end
 
     function resetaxes(hObj,event) 

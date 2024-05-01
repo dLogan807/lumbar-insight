@@ -25,6 +25,7 @@ classdef ShimmerHandleClass < handle
         GET_MPU9150_SAMPLING_RATE_COMMAND = char(hex2dec('4E'));
         GET_LSM303DLHC_ACCEL_SAMPLING_RATE_COMMAND	= char(hex2dec('42')); % Only available for Shimmer3
         GET_MAG_SAMPLING_RATE_COMMAND    = char(hex2dec('3C')); 
+        GET_DAUGHTER_CARD_ID_COMMAND = char(hex2dec('66'));
 
         %Responses
         ACK_RESPONSE              = 255;                                   %Shimmer acknowledged response       
@@ -40,6 +41,7 @@ classdef ShimmerHandleClass < handle
         MPU9150_SAMPLING_RATE_RESPONSE = char(hex2dec('4D'));
         LSM303DLHC_ACCEL_SAMPLING_RATE_RESPONSE	= char(hex2dec('41'));     % Only available for Shimmer3
         MAG_SAMPLING_RATE_RESPONSE       = char(hex2dec('3B'));
+        DAUGHTER_CARD_ID_RESPONSE = char(hex2dec('65'));
 
         %Sensors
         SENSOR_A_ACCEL            = 8;   % 0x000080
@@ -242,6 +244,8 @@ classdef ShimmerHandleClass < handle
         isConnected {logical} = false;
         isStreaming {logical} = false;
 
+        HardwareCompatibilityCode;                          %1 if IMU
+
         % Vertices of a 3d representation of a shimmer object
         shimmer3d = struct('p1',[0.5,-1,0.2],'p2',[-0.5,-1,0.2],...
                        'p3',[-0.5,1,0.2],'p4',[0.5,1,0.2],...
@@ -298,7 +302,7 @@ classdef ShimmerHandleClass < handle
                 flush(thisShimmer.bluetoothConn);
                 write(thisShimmer.bluetoothConn, thisShimmer.START_STREAMING_COMMAND);
                 
-                startedStreaming = waitForAck(thisShimmer, thisShimmer.DEFAULT_TIMEOUT);
+                startedStreaming = waitforack(thisShimmer, thisShimmer.DEFAULT_TIMEOUT);
                 thisShimmer.isStreaming = startedStreaming;
             end
         end
@@ -335,6 +339,68 @@ classdef ShimmerHandleClass < handle
                 readenabledsensors(thisShimmer);    % Following a succesful write, call the readenabledsensors function which updates the enabledSensors property with the current Shimmer enabled sensors setting                    
             end
         end
+
+        function determinehwcompcode(thisShimmer)
+            % Checks Expansion Board ID and sets 'HardwareCompatibilityCode' accordingly
+            % HardwareCompatibilityCode = 1:
+            %  - BMP180 ('Pressure' & 'Temperature')
+            %  - MPU9150 ('Gyro')
+            %  - LSM303DLHC ('Wide Range Accel', 'Mag')
+            %  - KXRB5-2042 ('Low Noise Accel')
+            %
+            % HardwareCompatibilityCode = 2:
+            %  - BMP280 ('Pressure' & 'Temperature')
+            %  - MPU9250 ('Gyro')
+            %  - LSM303AHTR ('Wide Range Accel', 'Mag')
+            %  - KXTC9-2050 ('Low Noise Accel')
+            IDByteArray = readexpansionboardidbytes(thisShimmer, 3, 0);    % call readexpansionboardidbytes with numBytes = 3 and offset = 0
+            IDByte0 = IDByteArray(1);
+            IDByte1 = IDByteArray(2);
+            IDByte2 = IDByteArray(3);
+            
+            thisShimmer.HardwareCompatibilityCode = 1;
+            if (IDByte0 == 8 || IDByte0 == 14 || IDByte0 == 37)
+                % Old 'not-unified' expansion board - check 'special
+                % revision'
+                if IDByte2 == 171
+                    thisShimmer.HardwareCompatibilityCode = 2;
+                end
+            elseif IDByte0 == 31
+                % IMU
+                if IDByte1 >= 6
+                    thisShimmer.HardwareCompatibilityCode = 2;
+                end
+            elseif (IDByte0 == 36 || IDByte0 == 38)
+                % PROTO3 Mini/PROTO3 Deluxe 
+                if IDByte1 < 3
+                    % check 'special revision' for 'not-unified'
+                    % expansion board
+                    if IDByte2 == 171
+                        thisShimmer.HardwareCompatibilityCode = 2;
+                    end
+                else
+                    thisShimmer.HardwareCompatibilityCode = 2;
+                end
+            elseif IDByte0 == 47
+                % ExG
+                if IDByte1 >= 3
+                    thisShimmer.HardwareCompatibilityCode = 2;
+                end
+            elseif IDByte0 == 48
+                % GSR+
+                if IDByte1 >= 3
+                    thisShimmer.HardwareCompatibilityCode = 2;
+                end
+            elseif IDByte0 == 49
+                % Bridge Amplifier+
+                if IDByte1 >= 2
+                    thisShimmer.HardwareCompatibilityCode = 2;
+                end
+            elseif IDByte0 == 59
+                % Shimmer Development
+                thisShimmer.HardwareCompatibilityCode = 2;
+            end
+        end % determinehwcompcode
 
         function isSet = setaccelrange(thisShimmer, accelRange)
             %SETACCELRANGE - Set the accelerometer range of the Shimmer
@@ -717,6 +783,50 @@ classdef ShimmerHandleClass < handle
     end
     
     methods (Access = private)
+        function IDByteArray = readexpansionboardidbytes(thisShimmer, numBytes, offset)
+            %READEXPANSIONBOARDIDBYTES - retrieves expansion board id bytes
+            %
+            %   ISREAD = READEXPANSIONBOARDIDBYTES retrieves expansion
+            %   board id bytes
+            %
+            %   SYNOPSIS: isRead = thisShimmer.readexpansionboardidbytes
+            %
+            %   OUTPUT: isRead - isRead is true if expansion board id bytes
+            %                    are successfully retrieved
+            %                    isRead is false means if retrieval of
+            %                    expansion board id bytes is not
+            %                    successful.
+            %
+            %   EXAMPLE: isRead = shimmer1.readexpansionboardidbytes()
+            %
+            if (~thisShimmer.isConnected)
+                fprintf(strcat('Warning: readexpansionboardidbytes - Cannot get Expansion Board ID bytes for COM ',thisShimmer.name,' as Shimmer is not connected.\n'));
+                IDByteArray = 'Nan';
+            else
+                flush(thisShimmer.bluetoothConn, "input");                                        % As a precaution always clear the read data buffer before a write
+                write(thisShimmer.bluetoothConn,thisShimmer.GET_DAUGHTER_CARD_ID_COMMAND);    % Send command to get expansion board ID bytes
+                write(thisShimmer.bluetoothConn, char(numBytes));                             % Send numBytes value
+                write(thisShimmer.bluetoothConn, char(offset));                               % Send offset value
+                isAcknowledged = waitforack(thisShimmer, thisShimmer.DEFAULT_TIMEOUT);   % Wait for Acknowledgment from Shimmer
+                
+                if(~isAcknowledged)
+                    fprintf(strcat('Warning: readexpansionboardidbytes - Get Expansion Board ID bytes command response expected but not returned for Shimmer COM',thisShimmer.name,'.\n'));
+                    IDByteArray = 'Nan';
+                else
+                    serialData = [];
+                    [serialData] = read(thisShimmer.bluetoothConn, thisShimmer.bluetoothConn.NumBytesAvailable);         % Read all available serial data from the com port
+                    if (~isempty(serialData) && serialData(1)==thisShimmer.DAUGHTER_CARD_ID_RESPONSE)
+                        for numByte = 1:numBytes
+                            IDByteArray(numByte) = serialData(numByte+2);                % First two bytes are DAUGHTER_CARD_ID_RESPONSE and numBytes.
+                        end
+                    else
+                        fprintf(strcat('Warning: readexpansionboardidbytes - Get Expansion Board ID bytes command response expected but not returned for Shimmer COM',thisShimmer.name,'.\n'));
+                        IDByteArray = 'Nan';
+                    end
+                end
+            end
+        end    % read expansion board ID bytes
+
         function isRead = readenabledsensors(thisShimmer)
             % Calls the inquiry function and updates the EnabledSensors property.
             if (thisShimmer.isConnected)
@@ -737,7 +847,7 @@ classdef ShimmerHandleClass < handle
             
         end % function readenabledsensors
 
-        function isAcknowledged = waitForAck(thisShimmer, timeout)
+        function isAcknowledged = waitforack(thisShimmer, timeout)
             % Reads serial data buffer until either an acknowledgement is
             % received or time out from input timeout is exceeded.
             serialData = [];
@@ -767,10 +877,10 @@ classdef ShimmerHandleClass < handle
                 end
             else
                 isAcknowledged = false;
-                fprintf(strcat('Warning: waitForAck - Timed-out on wait for acknowledgement byte on Shimmer COM',thisShimmer.name,'.\n'));
+                fprintf(strcat('Warning: waitforack - Timed-out on wait for acknowledgement byte on Shimmer COM',thisShimmer.name,'.\n'));
             end
             
-        end %function waitForAck
+        end %function waitforack
 
         %Write the enabled sensors to the shimmer
         function areEnabled = writeEnabledSensors(thisShimmer, enabledSensors)
@@ -790,7 +900,7 @@ classdef ShimmerHandleClass < handle
                 write(thisShimmer.bluetoothConn, char(enabledSensorsHighByte));          % Write the enabled sensors higher byte value to the Shimmer
                 write(thisShimmer.bluetoothConn, char(enabledSensorsHigherByte));        % Write the enabled sensors higher byte value to the Shimmer
 
-                areEnabled = waitForAck(thisShimmer, thisShimmer.DEFAULT_TIMEOUT);
+                areEnabled = waitforack(thisShimmer, thisShimmer.DEFAULT_TIMEOUT);
             end
         end
 
@@ -967,7 +1077,7 @@ classdef ShimmerHandleClass < handle
                 flush(thisShimmer.bluetoothConn, "input");                                          % As a precaution always clear the read data buffer before a write
                 write(thisShimmer.bluetoothConn, thisShimmer.GET_ACCEL_RANGE_COMMAND);          % Send the Set Accel Range Command to the Shimmer
                 
-                isAcknowledged = waitForAck(thisShimmer, thisShimmer.DEFAULT_TIMEOUT);     % Wait for Acknowledgment from Shimmer
+                isAcknowledged = waitforack(thisShimmer, thisShimmer.DEFAULT_TIMEOUT);     % Wait for Acknowledgment from Shimmer
                 
                 if (isAcknowledged == true)
                     [shimmerResponse] = read(thisShimmer.bluetoothConn, 2);        % Read the 2 byte response from the bluetooth buffer
@@ -1016,13 +1126,15 @@ classdef ShimmerHandleClass < handle
                     
                     flush(thisShimmer.bluetoothConn, "input");                                  % As a precaution always clear the read data buffer before a write
                     write(thisShimmer.bluetoothConn, thisShimmer.SET_ACCEL_RANGE_COMMAND);      % Send the Set accel range Command to the Shimmer
-                    waitForAck(thisShimmer, thisShimmer.DEFAULT_TIMEOUT);
+                    waitforack(thisShimmer, thisShimmer.DEFAULT_TIMEOUT);
                     
                     write(thisShimmer.bluetoothConn, char(accelRange));                         % Write the accel range char value to the Shimmer
-                    isWritten = waitForAck(thisShimmer, thisShimmer.DEFAULT_TIMEOUT);           % Wait for Acknowledgment from Shimmer
+                    isWritten = waitforack(thisShimmer, thisShimmer.DEFAULT_TIMEOUT);           % Wait for Acknowledgment from Shimmer
                     
                     if (~isWritten)
                         fprintf(strcat('Warning: writeaccelrange - Set accel range response expected but not returned for Shimmer COM',thisShimmer.name,'.\n'));
+                    else
+                        disp("Wrote accel range of " + accelRange + " to " + thisShimmer.name);
                     end
                 else
                     isWritten = false;
@@ -1097,7 +1209,7 @@ classdef ShimmerHandleClass < handle
                 write(thisShimmer.bluetoothConn, char(chipIdentifier-1));                       % char(0) selects SENSOR_EXG1, char(1) selects SENSOR_EXG2
                 write(thisShimmer.bluetoothConn, char(0));
                 write(thisShimmer.bluetoothConn, char(10));
-                isAcknowledged = waitForAck(thisShimmer, thisShimmer.DEFAULT_TIMEOUT);     % Wait for acknowledgment from Shimmer
+                isAcknowledged = waitforack(thisShimmer, thisShimmer.DEFAULT_TIMEOUT);     % Wait for acknowledgment from Shimmer
                 
                 if (isAcknowledged == true)
                     serialData = [];
@@ -1221,7 +1333,7 @@ classdef ShimmerHandleClass < handle
                 write(thisShimmer.bluetoothConn, char(bitand(255,samplingByteValue)));
                 write(thisShimmer.bluetoothConn, char(bitshift(samplingByteValue,-8)));
 
-                isWritten = waitForAck(thisShimmer, thisShimmer.DEFAULT_TIMEOUT);   % Wait for Acknowledgment from Shimmer
+                isWritten = waitforack(thisShimmer, thisShimmer.DEFAULT_TIMEOUT);   % Wait for Acknowledgment from Shimmer
 
                 if (isWritten == false)
                     fprintf(strcat('Warning: writesamplingrate - Set sampling rate command response expected but not returned for Shimmer COM',thisShimmer.name,'.\n'));
@@ -1242,7 +1354,7 @@ classdef ShimmerHandleClass < handle
                 flush(thisShimmer.bluetoothConn, "input");                                       % As a precaution always clear the read data buffer before a write
                 write(thisShimmer.bluetoothConn, thisShimmer.GET_SAMPLING_RATE_COMMAND);     % Send the Get Sampling Rate Command to the Shimmer
                 
-                isAcknowledged = waitForAck(thisShimmer, thisShimmer.DEFAULT_TIMEOUT);  % Wait for Acknowledgment from Shimmer
+                isAcknowledged = waitforack(thisShimmer, thisShimmer.DEFAULT_TIMEOUT);  % Wait for Acknowledgment from Shimmer
                 
                 if (isAcknowledged == true)
                     [shimmerResponse] = read(thisShimmer.bluetoothConn, thisShimmer.bluetoothConn.NumBytesAvailable);     % Read the 2 byte response from the realterm buffer
@@ -1286,7 +1398,7 @@ classdef ShimmerHandleClass < handle
             if (thisShimmer.isConnected)
                 flush(thisShimmer.bluetoothConn, "input");                                           % As a precaution always clear the read data buffer before a write                
                 write(thisShimmer.bluetoothConn, thisShimmer.GET_CONFIG_BYTE0_COMMAND);          % Send GET_CONFIG_BYTE0_COMMAND to Shimmer3 to get config bytes byte0, byte1, byte2, byte3.              
-                isAcknowledged = waitForAck(thisShimmer, thisShimmer.DEFAULT_TIMEOUT);      % Wait for Acknowledgment from Shimmer                
+                isAcknowledged = waitforack(thisShimmer, thisShimmer.DEFAULT_TIMEOUT);      % Wait for Acknowledgment from Shimmer                
                 if (isAcknowledged == true)
                     [shimmerResponse] = read(thisShimmer.bluetoothConn, 5);     % Read the 5 byte response from the bluetooth buffer  
                     if ~isempty(shimmerResponse)
@@ -1501,7 +1613,7 @@ classdef ShimmerHandleClass < handle
                     write(thisShimmer.bluetoothConn, thisShimmer.SET_MAG_SAMPLING_RATE_COMMAND); % Send the Set Mag Rate Command to the Shimmer
                     
                     write(thisShimmer.bluetoothConn, char(magRate));                             % Write the mag rate char value to the Shimmer
-                    isWritten = waitForAck(thisShimmer, thisShimmer.DEFAULT_TIMEOUT);       % Wait for Acknowledgment from Shimmer
+                    isWritten = waitforack(thisShimmer, thisShimmer.DEFAULT_TIMEOUT);       % Wait for Acknowledgment from Shimmer
                     
                     if (isWritten == false)
                         fprintf(strcat('Warning: writemagrate - Set mag rate response expected but not returned for Shimmer COM',thisShimmer.name,'.\n'));
@@ -1532,7 +1644,7 @@ classdef ShimmerHandleClass < handle
                     write(thisShimmer.bluetoothConn, thisShimmer.SET_LSM303DLHC_ACCEL_SAMPLING_RATE_COMMAND);  % Send the Set Mag Rate Command to the Shimmer
                     
                     write(thisShimmer.bluetoothConn, char(accelRate));                                         % Write the mag rate char value to the Shimmer
-                    isWritten = waitForAck(thisShimmer, thisShimmer.DEFAULT_TIMEOUT);                     % Wait for Acknowledgment from Shimmer
+                    isWritten = waitforack(thisShimmer, thisShimmer.DEFAULT_TIMEOUT);                     % Wait for Acknowledgment from Shimmer
                     
                     if (isWritten == false)
                         fprintf(strcat('Warning: writeaccelrate - Set acc rate response expected but not returned for Shimmer COM',thisShimmer.name,'.\n'));
@@ -1561,7 +1673,7 @@ classdef ShimmerHandleClass < handle
                     write(thisShimmer.bluetoothConn, thisShimmer.SET_MPU9150_SAMPLING_RATE_COMMAND); % Send the Set Gyro Rate Command to the Shimmer
                     
                     write(thisShimmer.bluetoothConn, char(gyroRate));                                % Write the gyroRate char value to the Shimmer
-                    isWritten = waitForAck(thisShimmer, thisShimmer.DEFAULT_TIMEOUT);           % Wait for acknowledgment from Shimmer
+                    isWritten = waitforack(thisShimmer, thisShimmer.DEFAULT_TIMEOUT);           % Wait for acknowledgment from Shimmer
                     
                     if (isWritten == false)
                         fprintf(strcat('Warning: writegyrorate - Set gyro rate response expected but not returned for Shimmer COM',thisShimmer.name,'.\n'));
@@ -1603,7 +1715,7 @@ classdef ShimmerHandleClass < handle
                             write(thisShimmer.bluetoothConn, char(1));                               % and write 1 byte
                             write(thisShimmer.bluetoothConn, char(EXGConfig1UpdatedDataRateBits));   % Write the updated ExG configuration byte to the Shimmer
 
-                            isWritten = waitForAck(thisShimmer, thisShimmer.DEFAULT_TIMEOUT);   % Wait for Acknowledgment from Shimmer
+                            isWritten = waitforack(thisShimmer, thisShimmer.DEFAULT_TIMEOUT);   % Wait for Acknowledgment from Shimmer
 
                         if (isWritten == false)
                             fprintf(strcat('Warning: writeexgrate - Set ExG Regs response expected but not returned for Shimmer COM',thisShimmer.name,'.\n'));
@@ -1636,7 +1748,7 @@ classdef ShimmerHandleClass < handle
                     write(thisShimmer.bluetoothConn, char(chipIdentifier-1));                       % char(0) selects SENSOR_EXG1, char(1) selects SENSOR_EXG2
                     write(thisShimmer.bluetoothConn, char(0));                                      % Start at byte 0.
                     write(thisShimmer.bluetoothConn, char(1));                                      % Read one byte.
-                    isAcknowledged = waitForAck(thisShimmer, thisShimmer.DEFAULT_TIMEOUT);     % Wait for Acknowledgment from Shimmer
+                    isAcknowledged = waitforack(thisShimmer, thisShimmer.DEFAULT_TIMEOUT);     % Wait for Acknowledgment from Shimmer
 
                     if (chipIdentifier == 1) 
                         % SENSOR_EXG1
@@ -1696,7 +1808,7 @@ classdef ShimmerHandleClass < handle
                 flush(thisShimmer.bluetoothConn, "input");                                         % As a precaution always clear the read data buffer before a write
                 write(thisShimmer.bluetoothConn, thisShimmer.GET_MAG_SAMPLING_RATE_COMMAND);    % Send the Get Mag Rate Command to the Shimmer
                 
-                isAcknowledged = waitForAck(thisShimmer, thisShimmer.DEFAULT_TIMEOUT);     % Wait for Acknowledgment from Shimmer
+                isAcknowledged = waitforack(thisShimmer, thisShimmer.DEFAULT_TIMEOUT);     % Wait for Acknowledgment from Shimmer
                 
                 if (isAcknowledged == true)
                     [shimmerResponse] = read(thisShimmer.bluetoothConn, 2);        % Read the 2 byte response from the realterm buffer
@@ -1737,7 +1849,7 @@ classdef ShimmerHandleClass < handle
                 flush(thisShimmer.bluetoothConn, "input");                                          % As a precaution always clear the read data buffer before a write
                 write(thisShimmer.bluetoothConn, thisShimmer.GET_MPU9150_SAMPLING_RATE_COMMAND); % Send the Get Gyro Rate Command to the Shimmer
                 
-                isAcknowledged = waitForAck(thisShimmer, thisShimmer.DEFAULT_TIMEOUT);      % Wait for Acknowledgment from Shimmer
+                isAcknowledged = waitforack(thisShimmer, thisShimmer.DEFAULT_TIMEOUT);      % Wait for Acknowledgment from Shimmer
                 
                 if (isAcknowledged == true)
                     [shimmerResponse] = read(thisShimmer.bluetoothConn, 2);         % Read the 2 byte response from the realterm buffer
@@ -1778,7 +1890,7 @@ classdef ShimmerHandleClass < handle
                 flush(thisShimmer.bluetoothConn, "input");                                                    % As a precaution always clear the read data buffer before a write
                 write(thisShimmer.bluetoothConn, thisShimmer.GET_LSM303DLHC_ACCEL_SAMPLING_RATE_COMMAND);  % Send the Get Accel Rate Command to the Shimmer
                 
-                isAcknowledged = waitForAck(thisShimmer, thisShimmer.DEFAULT_TIMEOUT);                % Wait for Acknowledgment from Shimmer
+                isAcknowledged = waitforack(thisShimmer, thisShimmer.DEFAULT_TIMEOUT);                % Wait for Acknowledgment from Shimmer
                 
                 if (isAcknowledged == true)
                     [shimmerResponse] = read(thisShimmer.bluetoothConn, 2);                   % Read the 2 byte response from the realterm buffer
@@ -2737,7 +2849,7 @@ classdef ShimmerHandleClass < handle
                 flush(thisShimmer.bluetoothConn, "input");                                         % As a precaution always clear the read data buffer before a write
                 write(thisShimmer.bluetoothConn, thisShimmer.INQUIRY_COMMAND);                 % Send the Inquiry Command to the Shimmer
                 
-                isAcknowledged = waitForAck(thisShimmer, thisShimmer.DEFAULT_TIMEOUT);    % Wait for Acknowledgment from Shimmer
+                isAcknowledged = waitforack(thisShimmer, thisShimmer.DEFAULT_TIMEOUT);    % Wait for Acknowledgment from Shimmer
                 
                 if (isAcknowledged == true)
                     [shimmerResponse] = read(thisShimmer.bluetoothConn, thisShimmer.bluetoothConn.NumBytesAvailable);     % Read Inquiry Command response from the bluetooth buffer
