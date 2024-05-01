@@ -290,7 +290,7 @@ classdef ShimmerHandleClass < handle
             %Update class properties
             thisShimmer.readexgconfiguration(1);
             thisShimmer.readexgconfiguration(2);
-            thisShimmer.determinehwcompcode(thisShimmer);
+            thisShimmer.determinehwcompcode;
 
             isConnected = thisShimmer.isConnected;
         end
@@ -437,7 +437,7 @@ classdef ShimmerHandleClass < handle
             if (thisShimmer.isConnected)                     % Shimmer must be in a Connected state
                 
                 isWritten = writeaccelrange(thisShimmer,accelRange);       % Write accelerometer range to the Shimmer
-                
+
                 if (isWritten)
                     isRead = readaccelrange(thisShimmer);                  % Following a succesful write, call the readaccelrange function which updates the accelRange property with the current Shimmer accel range setting
                     
@@ -1190,6 +1190,7 @@ classdef ShimmerHandleClass < handle
             % Shimmer3 this function writes the range for the
             % LSM303DLHC/LSM303AHTR accelerometer.
             if (thisShimmer.isConnected)
+                
                 if ((accelRange == 0) || (accelRange == 1)|| (accelRange == 2)|| (accelRange == 3))
                     validSetting = true;
                 else 
@@ -1199,16 +1200,14 @@ classdef ShimmerHandleClass < handle
                 if (validSetting == true)
                     
                     flush(thisShimmer.bluetoothConn, "input");                                  % As a precaution always clear the read data buffer before a write
-                    write(thisShimmer.bluetoothConn, thisShimmer.SET_ACCEL_RANGE_COMMAND);      % Send the Set accel range Command to the Shimmer
-                    waitforack(thisShimmer, thisShimmer.DEFAULT_TIMEOUT);
-                    
-                    write(thisShimmer.bluetoothConn, char(accelRange));                         % Write the accel range char value to the Shimmer
-                    isWritten = waitforack(thisShimmer, thisShimmer.DEFAULT_TIMEOUT);           % Wait for Acknowledgment from Shimmer
+
+                    write(thisShimmer.bluetoothConn, thisShimmer.SET_ACCEL_RANGE_COMMAND);  % Send the Set Sampling Rate Command to the Shimmer
+
+                    write(thisShimmer.bluetoothConn, char(accelRange));                     % Write the accel range char value to the Shimmer
+                    isWritten = waitforack(thisShimmer, thisShimmer.DEFAULT_TIMEOUT);  % Wait for Acknowledgment from Shimmer
                     
                     if (~isWritten)
                         fprintf(strcat('Warning: writeaccelrange - Set accel range response expected but not returned for Shimmer COM',thisShimmer.name,'.\n'));
-                    else
-                        disp("Wrote accel range of " + accelRange + " to " + thisShimmer.name);
                     end
                 else
                     isWritten = false;
