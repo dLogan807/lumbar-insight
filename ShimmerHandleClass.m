@@ -92,7 +92,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
     
     properties (SetAccess='protected', GetAccess='public')
         
-        ComPort='Nan';                                                     % String value defining the numerical identifier of the of the COM Port paired with the Shimmer
+        name='Nan';                                                        % String value defining the Shimmer's bluetooth identifier
         State='Disconnected';                                              % String value defining the state of the Shimmer
         InternalBoard={'None'};                                            % Cell value defining the internal daughter board attached to the Shimmer
         ExternalBoard={'None'};                                            % Cell value defining the external daughter board attached to the Shimmer
@@ -334,9 +334,8 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
     end
     
     properties (Access='protected')
-        
-        Hrealterm;                                                         % Handle to realterm server
-        FilePointer=0;                                                     % Pointer to current file read location in realterm buffer file
+
+        bluetoothConn bluetooth;                                           %Bluetooth connection to the Shimmer
         
         BufferSize=1;                                                      % Shimmer data buffersize, currently not used
         
@@ -542,7 +541,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
     
     methods
         
-        function thisShimmer = ShimmerHandleClass(comPort)
+        function thisShimmer = ShimmerHandleClass(name)
             
             %SHIMMERHANDLECLASS - Constructor for the class
             %
@@ -551,9 +550,9 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
             %   associated with the Shimmer that is paired with the com port
             %   defined in the input COMPORT.
             %
-            %   SYNOPSIS: thisShimmer = ShimmerHandleClass(comPort)
+            %   SYNOPSIS: thisShimmer = ShimmerHandleClass(name)
             %
-            %   INPUT: comPort - string value defining the numeric value of the
+            %   INPUT: name - string value defining the numeric value of the
             %                    desired Com Port
             %
             %   OUTPUT: thisShimmer - handle to the instance of the
@@ -563,7 +562,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
             %
             %            
             %
-            thisShimmer.ComPort = comPort;
+            thisShimmer.name = name;
             
         end % function ShimmerHandleClass  
         
@@ -597,7 +596,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
             if (thisShimmer.ShimmerVersion ~= thisShimmer.SHIMMER_3)
                 disp('Warning: resettodefaultconfiguration - Command only supported for Shimmer3.')
             elseif ~(strcmp(thisShimmer.State,'Connected'))                     % Shimmer must be in a Connected state
-                fprintf(strcat('Warning: resettodefaultconfiguration - Cannot set sampling range for COM ',thisShimmer.ComPort,' as Shimmer is not connected.\n'));
+                fprintf(strcat('Warning: resettodefaultconfiguration - Cannot set sampling range for COM ',thisShimmer.name,' as Shimmer is not connected.\n'));
             else
                 isSet = writeresettodefaultconfiguration(thisShimmer);
                 
@@ -826,7 +825,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                     samplingRate = thisShimmer.SamplingRate;               % Following a failed write, set the return value (samplingRate) to value stored in the SamplingRate property
                 end
             else
-                fprintf(strcat('Warning: setsamplingrate - Cannot set sampling range for COM ',thisShimmer.ComPort,' as Shimmer is not connected.\n'));
+                fprintf(strcat('Warning: setsamplingrate - Cannot set sampling range for COM ',thisShimmer.name,' as Shimmer is not connected.\n'));
                 samplingRate = 'Nan';
             end
             
@@ -853,7 +852,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
             %
             %   See also getbaudrate
             if ~(strcmp(thisShimmer.State,'Connected'))                % Shimmer must be in a Connected state
-                fprintf(strcat('Warning: setbaudrate - Cannot set Baud Rate for COM ',thisShimmer.ComPort,' as Shimmer is not connected.\n'));
+                fprintf(strcat('Warning: setbaudrate - Cannot set Baud Rate for COM ',thisShimmer.name,' as Shimmer is not connected.\n'));
                 isSet = false;
             elseif (thisShimmer.ShimmerVersion < thisShimmer.SHIMMER_3)
                 disp('Warning: setbaudrate - This function is only supported for Shimmer3.');
@@ -937,7 +936,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                     isSet = false;
                 end
             else
-                fprintf(strcat('Warning: setenabledsensors - Cannot set enabled sensors for COM ',thisShimmer.ComPort,' as Shimmer is not connected.\n'));
+                fprintf(strcat('Warning: setenabledsensors - Cannot set enabled sensors for COM ',thisShimmer.name,' as Shimmer is not connected.\n'));
                 isSet = false;
             end           
         end % function setenabledsensors
@@ -973,7 +972,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                     isDisabled = false;
                 end
             else
-                fprintf(strcat('Warning: disableallsensors - Cannot disable all sensors for COM ',thisShimmer.ComPort,' as Shimmer is not connected.\n'));
+                fprintf(strcat('Warning: disableallsensors - Cannot disable all sensors for COM ',thisShimmer.name,' as Shimmer is not connected.\n'));
                 isDisabled = false;
             end
         end % function disableallsensors
@@ -1019,7 +1018,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                 fprintf(strcat('Warning: setconfigbyte0 - This command is not valid for Shimmer3; please use setconfigbytes.\n'));
                 isSet = false;
             else
-                fprintf(strcat('Warning: setconfigbyte0 - Cannot set config byte0 for COM ',thisShimmer.ComPort,' as Shimmer is not connected.\n'));
+                fprintf(strcat('Warning: setconfigbyte0 - Cannot set config byte0 for COM ',thisShimmer.name,' as Shimmer is not connected.\n'));
                 isSet = false;
             end
             
@@ -1090,7 +1089,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                     isSet = false;
                 end
             else
-                fprintf(strcat('Warning: setconfigbytes - Cannot set config bytes for COM ',thisShimmer.ComPort,' as Shimmer is not connected.\n'));
+                fprintf(strcat('Warning: setconfigbytes - Cannot set config bytes for COM ',thisShimmer.name,' as Shimmer is not connected.\n'));
                 isSet = false;
             end
         end % function setconfigbytes
@@ -1141,7 +1140,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                 disp('Warning: setfivevoltreg - 5V regulator is not present on Shimmer3.');
             else
                 
-                fprintf(strcat('Warning: setfivevoltreg - Cannot set 5 volt regulator for COM ',thisShimmer.ComPort,' as Shimmer is not connected.\n'));
+                fprintf(strcat('Warning: setfivevoltreg - Cannot set 5 volt regulator for COM ',thisShimmer.name,' as Shimmer is not connected.\n'));
                 isSet = false;
                 
             end
@@ -1191,7 +1190,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                 disp('Warning: setpmux - PMUX is not present on Shimmer3.');
             else
                 
-                fprintf(strcat('Warning: setpmux - Cannot set PMux for COM ',thisShimmer.ComPort,' as Shimmer is not connected.\n'));
+                fprintf(strcat('Warning: setpmux - Cannot set PMux for COM ',thisShimmer.name,' as Shimmer is not connected.\n'));
                 isSet = false;
                 
             end
@@ -1238,7 +1237,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                     isSet = false;
                 end
             else
-                fprintf(strcat('Warning: setledblink - Cannot set led blink for COM ',thisShimmer.ComPort,' as Shimmer is not connected.\n'));
+                fprintf(strcat('Warning: setledblink - Cannot set led blink for COM ',thisShimmer.name,' as Shimmer is not connected.\n'));
                 isSet = false;
             end
         end % function setledblink
@@ -1283,7 +1282,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                     end
                 end
             else
-                fprintf(strcat('Warning: setaccelhrmode - Cannot set accel high resolution mode for COM ',thisShimmer.ComPort,' as Shimmer is not connected.\n'));
+                fprintf(strcat('Warning: setaccelhrmode - Cannot set accel high resolution mode for COM ',thisShimmer.name,' as Shimmer is not connected.\n'));
                 isSet = false;
             end
         end % function setaccelhrmode
@@ -1331,7 +1330,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                     end
                 end
             else
-                fprintf(strcat('Warning: setaccellpmode - Cannot set accel low power mode for COM ',thisShimmer.ComPort,' as Shimmer is not connected.\n'));
+                fprintf(strcat('Warning: setaccellpmode - Cannot set accel low power mode for COM ',thisShimmer.name,' as Shimmer is not connected.\n'));
                 isSet = false;
             end
         end % function setaccellpmode
@@ -1443,7 +1442,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                 end
                 
             else
-                fprintf(strcat('Warning: setaccelrange - Cannot set accel range for COM ',thisShimmer.ComPort,' as Shimmer is not connected.\n'));
+                fprintf(strcat('Warning: setaccelrange - Cannot set accel range for COM ',thisShimmer.name,' as Shimmer is not connected.\n'));
                 isSet = false;
             end
         end % function setaccelrange
@@ -1489,7 +1488,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                 end
                 
             else
-                fprintf(strcat('Warning: setgsrrange - Cannot set gsr range for COM ',thisShimmer.ComPort,' as Shimmer is not connected.\n'));
+                fprintf(strcat('Warning: setgsrrange - Cannot set gsr range for COM ',thisShimmer.name,' as Shimmer is not connected.\n'));
                 isSet = false;
             end
         end % function setgsrrange
@@ -1546,7 +1545,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                     end
                     
                 else
-                    fprintf(strcat('Warning: setmagrange - Cannot set mag range for COM ',thisShimmer.ComPort,' as Shimmer is not connected.\n'));
+                    fprintf(strcat('Warning: setmagrange - Cannot set mag range for COM ',thisShimmer.name,' as Shimmer is not connected.\n'));
                     isSet = false;
                 end
             end
@@ -1590,7 +1589,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                     fprintf(strcat('Warning: setinternalexppower - Command only supported on Shimmer3 with BTStream version 0.2 or LogAndStream version 0.1 and onwards.\n'));
                 end
             else
-                fprintf(strcat('Warning: setinternalexppower - Cannot set external  for COM ',thisShimmer.ComPort,' as Shimmer is not connected.\n'));
+                fprintf(strcat('Warning: setinternalexppower - Cannot set external  for COM ',thisShimmer.name,' as Shimmer is not connected.\n'));
                 isSet = false;
             end
         end % function setinternalexppower
@@ -1648,7 +1647,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                     fprintf(strcat('Warning: setgyrorange - Command only supported on Shimmer3.'));
                 end
             else
-                fprintf(strcat('Warning: setgyrorange - Cannot set gyro range for COM ',thisShimmer.ComPort,' as Shimmer is not connected.\n'));
+                fprintf(strcat('Warning: setgyrorange - Cannot set gyro range for COM ',thisShimmer.name,' as Shimmer is not connected.\n'));
                 isSet = false;
             end
         end % function setgyrorange
@@ -1700,7 +1699,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                     fprintf(strcat('Warning: setpressureresolution - Command only supported on Shimmer3.\n'));
                 end
             else
-                fprintf(strcat('Warning: setpressureresolution - Cannot set resolution for pressure sensor for COM ',thisShimmer.ComPort,' as Shimmer is not connected.\n'));
+                fprintf(strcat('Warning: setpressureresolution - Cannot set resolution for pressure sensor for COM ',thisShimmer.name,' as Shimmer is not connected.\n'));
                 isSet = false;
             end
         end % function setpressureresolution
@@ -1751,7 +1750,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                 end
                 
             else
-                fprintf(strcat('Warning: setmagrate - Cannot set mag rate for COM ',thisShimmer.ComPort,' as Shimmer is not connected.\n'));
+                fprintf(strcat('Warning: setmagrate - Cannot set mag rate for COM ',thisShimmer.name,' as Shimmer is not connected.\n'));
                 isSet = false;
             end
         end % function setmagrate
@@ -1804,7 +1803,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                     fprintf('Warning: setaccelrate - Only supported for Shimmer3');
                 end
             else
-                fprintf(strcat('Warning: setaccelrate - Cannot set accel rate for COM ',thisShimmer.ComPort,' as Shimmer is not connected.\n'));
+                fprintf(strcat('Warning: setaccelrate - Cannot set accel rate for COM ',thisShimmer.name,' as Shimmer is not connected.\n'));
                 isSet = false;
             end
         end % function setaccelrate
@@ -1851,7 +1850,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                     fprintf(strcat('Warning: setgyrorate - Command only supported on Shimmer3.'));
                 end
             else
-                fprintf(strcat('Warning: setgyrorate - Cannot set gyro rate for COM ',thisShimmer.ComPort,' as Shimmer is not connected.\n'));
+                fprintf(strcat('Warning: setgyrorate - Cannot set gyro rate for COM ',thisShimmer.name,' as Shimmer is not connected.\n'));
                 isSet = false;
             end
         end % function setgyrorate
@@ -2051,7 +2050,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                     isSet = false;                    
                 end                
             else
-                fprintf(strcat('Warning: setgyroinusecalibration - Cannot set gyro in-use calibration for COM ',thisShimmer.ComPort,' as Shimmer is not connected.\n'));
+                fprintf(strcat('Warning: setgyroinusecalibration - Cannot set gyro in-use calibration for COM ',thisShimmer.name,' as Shimmer is not connected.\n'));
                 isSet = false;
             end
                         
@@ -2104,7 +2103,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                     isSet = false;
                     disp('Warning: setbuffersize - Buffer size is currently not configurable for Shimmer3.');
                 else
-                    fprintf(strcat('Warning: setbuffersize - Cannot set buffer size for COM ',thisShimmer.ComPort,' as Shimmer is not connected.\n'));
+                    fprintf(strcat('Warning: setbuffersize - Cannot set buffer size for COM ',thisShimmer.name,' as Shimmer is not connected.\n'));
                     isSet = false;     
                 end
             end
@@ -2147,7 +2146,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                 end
                 
             else
-                fprintf(strcat('Warning: setemgcalibrationparameters - Cannot set EMG calibration parameters for COM ',thisShimmer.ComPort,' as Shimmer is not connected\n'));
+                fprintf(strcat('Warning: setemgcalibrationparameters - Cannot set EMG calibration parameters for COM ',thisShimmer.name,' as Shimmer is not connected\n'));
                 fprintf('or Shimmer is a Shimmer3. Set EMG calibration parameters is not supported for Shimmer3.\n');
                 isSet = false;
             end
@@ -2197,7 +2196,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                 end
                 
             else
-                fprintf(strcat('Warning: setecgcalibrationparameters - Cannot set ECG calibration parameters for COM ',thisShimmer.ComPort,' as Shimmer is not connected\n'));
+                fprintf(strcat('Warning: setecgcalibrationparameters - Cannot set ECG calibration parameters for COM ',thisShimmer.name,' as Shimmer is not connected\n'));
                 fprintf('or Shimmer is a Shimmer3. Set ECG calibration parameters is not supported for Shimmer3.\n');
                 isSet = false;
             end
@@ -2253,7 +2252,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                 disp('Warning: setexgrate - ExG rate is not supported for Shimmer2/2r.');
                 isSet = false;
             else
-                fprintf(strcat('Warning: setexgrate - Cannot set exg rate for COM ',thisShimmer.ComPort,' as Shimmer is not connected.\n'));
+                fprintf(strcat('Warning: setexgrate - Cannot set exg rate for COM ',thisShimmer.name,' as Shimmer is not connected.\n'));
                 isSet = false;
             end
         end % function setexgrate
@@ -2319,7 +2318,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                 disp('Warning: setexggain - ExG gain is not supported for Shimmer2/2r.');
                 isSet = false;
             else
-                fprintf(strcat('Warning: setexggain - Cannot set exg gain for COM ',thisShimmer.ComPort,' as Shimmer is not connected.\n'));
+                fprintf(strcat('Warning: setexggain - Cannot set exg gain for COM ',thisShimmer.name,' as Shimmer is not connected.\n'));
                 isSet = false;
             end
         end % function setexggain
@@ -2344,7 +2343,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
             %   See also getexgreferenceelectrodeconfiguration
             %
             if ~strcmp(thisShimmer.getstate,'Connected')
-                fprintf(strcat('Warning: setexgreferenceelectrodeconfiguration - Cannot set ExG reference electrode configuration for COM ',thisShimmer.ComPort,' as Shimmer is not connected.\n'));
+                fprintf(strcat('Warning: setexgreferenceelectrodeconfiguration - Cannot set ExG reference electrode configuration for COM ',thisShimmer.name,' as Shimmer is not connected.\n'));
                 isSet = false;
             elseif (thisShimmer.ShimmerVersion < thisShimmer.SHIMMER_3)
                 disp('Warning: setexgreferenceelectrodeconfiguration - Only supported on Shimmer3');
@@ -2405,7 +2404,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
             %   setexgleadoffdetectioncurrent getexgleadoffdetectioncurrent
             %
             if ~strcmp(thisShimmer.getstate,'Connected')
-                fprintf(strcat('Warning: setexgleadoffdetectionmode - Cannot set ExG lead-off detection mode for COM ',thisShimmer.ComPort,' as Shimmer is not connected.\n'));
+                fprintf(strcat('Warning: setexgleadoffdetectionmode - Cannot set ExG lead-off detection mode for COM ',thisShimmer.name,' as Shimmer is not connected.\n'));
                 isSet = false;
             elseif (thisShimmer.ShimmerVersion < thisShimmer.SHIMMER_3)
                 disp('Warning: setexgleadoffdetectionmode - Only supported on Shimmer3');
@@ -2460,7 +2459,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
             %   getexgleadoffdetectioncurrent
             %
             if ~strcmp(thisShimmer.getstate,'Connected')
-                fprintf(strcat('Warning: setexgleadoffdetectioncurrent - Cannot set ExG lead-off detection current for COM ',thisShimmer.ComPort,' as Shimmer is not connected.\n'));
+                fprintf(strcat('Warning: setexgleadoffdetectioncurrent - Cannot set ExG lead-off detection current for COM ',thisShimmer.name,' as Shimmer is not connected.\n'));
                 isSet = false;
             elseif (thisShimmer.ShimmerVersion < thisShimmer.SHIMMER_3)
                 disp('Warning: setexgleadoffdetectioncurrent - Only supported on Shimmer3.');
@@ -2528,7 +2527,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
             %   setexgleadoffdetectioncurrent
             %
             if ~strcmp(thisShimmer.getstate,'Connected')
-                fprintf(strcat('Warning: setexgleadoffcomparatorthreshold - Cannot set ExG lead-off comparator threshold for COM ',thisShimmer.ComPort,' as Shimmer is not connected.\n'));
+                fprintf(strcat('Warning: setexgleadoffcomparatorthreshold - Cannot set ExG lead-off comparator threshold for COM ',thisShimmer.name,' as Shimmer is not connected.\n'));
                 isSet = false;
             elseif (thisShimmer.ShimmerVersion < thisShimmer.SHIMMER_3)
                 disp('Warning: setexgleadoffcomparatorthreshold - Only supported on Shimmer3.');
@@ -2747,7 +2746,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                 disp('Warning: setexgconfiguration - ExG configuration is not available for Shimmer2/2r.');
                 isSet = false;
             else
-                fprintf(strcat('Warning: setexgconfiguration - Cannot set exgconfiguration for COM ',thisShimmer.ComPort,' as Shimmer is not connected.\n'));
+                fprintf(strcat('Warning: setexgconfiguration - Cannot set exgconfiguration for COM ',thisShimmer.name,' as Shimmer is not connected.\n'));
                 isSet = false;
             end
         end % function setexgconfiguration
@@ -2780,7 +2779,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                 fprintf('Warning: setrealtimeclock - Command not available for this firmware version.\n');
             elseif (~strcmp(thisShimmer.State,'Connected'))
                 isSet = false;
-                fprintf(strcat('Warning: setrealtimeclock - Cannot set Real Time Clock for COM ',thisShimmer.ComPort,' as Shimmer is not connected.\n'));
+                fprintf(strcat('Warning: setrealtimeclock - Cannot set Real Time Clock for COM ',thisShimmer.name,' as Shimmer is not connected.\n'));
             else
                 systemTimeMilliseconds = thisShimmer.convertMatlabTimeToUnixTimeMilliseconds(clock); % System Time in milliseconds
                 systemTimeTicks = uint64(systemTimeMilliseconds*32.768);                             % System Time in tick of 32768Hz clock
@@ -2815,21 +2814,21 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
     
     methods
                 
-        function comPort = getcomport(thisShimmer)
+        function name = getcomport(thisShimmer)
             %GETCOMPORT - Get the Com Port of the Shimmer
             %
             %   COMPORT = GETCOMPORT returns the Com Port setting
             %   of the Shimmer.
             %
-            %   SYNOPSIS: comPort = thisShimmer.getcomport()
+            %   SYNOPSIS: name = thisShimmer.getcomport()
             %
-            %   OUTPUT: comPort - String value defining the Com Port setting of
+            %   OUTPUT: name - String value defining the Com Port setting of
             %                     the shimmer
             %
-            %   EXAMPLE: comPort = shimmer1.getcomport;
+            %   EXAMPLE: name = shimmer1.getcomport;
             %
             
-            comPort = thisShimmer.ComPort;
+            name = thisShimmer.name;
         end
                 
         function state = getstate(thisShimmer)
@@ -2884,7 +2883,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                 samplingRate = thisShimmer.SamplingRate;
             else
                 samplingRate = 'Nan';
-                fprintf(strcat('Warning: getsamplingrate - Cannot determine sampling rate as COM ',thisShimmer.ComPort,' Shimmer is not Connected.\n'));
+                fprintf(strcat('Warning: getsamplingrate - Cannot determine sampling rate as COM ',thisShimmer.name,' Shimmer is not Connected.\n'));
             end
         end  % function getsamplingrate
         
@@ -2910,7 +2909,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                 disp('Warning: getbaudrate - This function is not supported for this firmware version, please update firmware.');
             elseif ~(strcmp(thisShimmer.State,'Connected'))                     % Shimmer must be in a Connected state
                 baudRate = 'Nan';
-                fprintf(strcat('Warning: getbaudrate - Cannot determine baud rate as COM ',thisShimmer.ComPort,' Shimmer is not Connected.\n'));
+                fprintf(strcat('Warning: getbaudrate - Cannot determine baud rate as COM ',thisShimmer.name,' Shimmer is not Connected.\n'));
             else
                 baudRate = thisShimmer.BaudRate;
             end
@@ -2926,7 +2925,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
             % meaningful when the device is actively logging.
             %
             if ~strcmp(thisShimmer.State,'Connected')
-                fprintf(strcat('Warning: getsdcarddirectoryname - Cannot read SD card directory name for COM ',thisShimmer.ComPort,' as Shimmer is not connected.\n'));
+                fprintf(strcat('Warning: getsdcarddirectoryname - Cannot read SD card directory name for COM ',thisShimmer.name,' as Shimmer is not connected.\n'));
                 isRead = false;
             elseif (thisShimmer.ShimmerVersion < thisShimmer.SHIMMER_3)
                 disp('Warning: getsdcarddirectoryname - This function is only supported for Shimmer3.');
@@ -2944,7 +2943,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                 isAcknowledged = waitforack(thisShimmer, thisShimmer.DEFAULT_TIMEOUT);  % Wait for Acknowledgment from Shimmer
                 if ~(isAcknowledged == true)
                     thisShimmer.SdCardDirectoryName = 'Nan';                            % Set the property to 'Nan' to indicate unknown
-                    fprintf(strcat('Warning: getsdcarddirectoryname - Dir response expected but not returned for Shimmer COM',thisShimmer.ComPort,'.\n'));
+                    fprintf(strcat('Warning: getsdcarddirectoryname - Dir response expected but not returned for Shimmer COM',thisShimmer.name,'.\n'));
                     isRead = false;
                 else
                     [shimmerResponse, isFileOpen] = readdatabuffer(thisShimmer, 3);     % Read the 3 bytes response from the realterm buffer
@@ -2957,7 +2956,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                         isRead = true;
                     else
                         thisShimmer.SdCardDirectoryName = 'Nan';                        % Set the  to 'Nan' to indicate unknown
-                        fprintf(strcat('Warning: getsdcarddirectoryname - Instream command response and Dir response expected but not returned for Shimmer COM',thisShimmer.ComPort,'.\n'));
+                        fprintf(strcat('Warning: getsdcarddirectoryname - Instream command response and Dir response expected but not returned for Shimmer COM',thisShimmer.name,'.\n'));
                         isRead = false;
                     end
                 end
@@ -2976,7 +2975,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
             %  remains in its previous state.
             %
             if ~(strcmp(thisShimmer.State,'Connected'))
-                fprintf(strcat('Warning: getbatteryvoltage - Cannot read battery voltage for COM ',thisShimmer.ComPort,' as Shimmer is not connected,\n'));
+                fprintf(strcat('Warning: getbatteryvoltage - Cannot read battery voltage for COM ',thisShimmer.name,' as Shimmer is not connected,\n'));
                 batteryVoltage = 'Nan';
             elseif (thisShimmer.ShimmerVersion < thisShimmer.SHIMMER_3)
                 disp('Warning: getbatteryvoltage - This function is only supported for Shimmer3.');
@@ -2996,7 +2995,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                     isAcknowledged = waitforack(thisShimmer, thisShimmer.DEFAULT_TIMEOUT);                       % Wait for Acknowledgment from Shimmer
                     if ~(isAcknowledged == true)
                         thisShimmer.LatestBatteryVoltageReading = 'Nan';                                         % Set the property to 'Nan' to indicate unknown
-                        fprintf(strcat('Warning: getbatteryvoltage - Dir response expected but not returned for Shimmer COM',thisShimmer.ComPort,'.\n'));
+                        fprintf(strcat('Warning: getbatteryvoltage - Dir response expected but not returned for Shimmer COM',thisShimmer.name,'.\n'));
                         batteryVoltage = 'Nan';
                     else
                         [shimmerResponse, ~] = readdatabuffer(thisShimmer, 5);                                   % Read the 5 bytes response from the realterm buffer
@@ -3008,7 +3007,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                             thisShimmer.LatestBatteryVoltageReading = batteryVoltage;
                         else
                             thisShimmer.LatestBatteryVoltageReading = 'Nan';                                     % Set the  to 'Nan' to indicate unknown
-                            fprintf(strcat('Warning: getbatteryvoltage - Instream command response and VBatt response expected but not returned for Shimmer COM',thisShimmer.ComPort,'.\n'));
+                            fprintf(strcat('Warning: getbatteryvoltage - Instream command response and VBatt response expected but not returned for Shimmer COM',thisShimmer.name,'.\n'));
                             batteryVoltage = 'Nan';
                         end
                     end
@@ -3026,7 +3025,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
             % actively sensing (1) / not actively sensing (0).
             %
             if ~strcmp(thisShimmer.State,'Connected')
-                fprintf(strcat('Warning: getstatus - Cannot get Status for COM ',thisShimmer.ComPort,' as Shimmer is not connected.\n'));
+                fprintf(strcat('Warning: getstatus - Cannot get Status for COM ',thisShimmer.name,' as Shimmer is not connected.\n'));
                 isRead = false;
             elseif (thisShimmer.ShimmerVersion < thisShimmer.SHIMMER_3)
                 disp('Warning: getstatus - This function is only supported for Shimmer3.');
@@ -3047,8 +3046,8 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                     thisShimmer.IsDocked = 'Nan';                                       % Set the property to 'Nan' to indicate unknown
                     thisShimmer.IsSDLogging = 'Nan';                                    % Set the property to 'Nan' to indicate unknown
                     thisShimmer.IsStreaming = 'Nan';                                    % Set the property to 'Nan' to indicate unknown
-                    fprintf(strcat('Warning: getstatus - Get Status command response expected but not returned for Shimmer COM',thisShimmer.ComPort,'.\n'));
-                    fprintf(strcat('Warning: getstatus - Connection has been lost for Shimmer COM',thisShimmer.ComPort,'.\n')); % Assume connection as has been lost as no status response has been returned
+                    fprintf(strcat('Warning: getstatus - Get Status command response expected but not returned for Shimmer COM',thisShimmer.name,'.\n'));
+                    fprintf(strcat('Warning: getstatus - Connection has been lost for Shimmer COM',thisShimmer.name,'.\n')); % Assume connection as has been lost as no status response has been returned
                     thisShimmer.disconnect;                                             % Disconnect to close serial port cleanly
                     isRead = false;
                 else
@@ -3071,7 +3070,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                         thisShimmer.IsSDLogging = 'Nan';                                % Set the property to 'Nan' to indicate unknown
                         thisShimmer.IsStreaming = 'Nan';                                % Set the property to 'Nan' to indicate unknown
                         isRead = false;
-                        fprintf(strcat('Warning: getstatus - Instream command response and Get Status  response expected but not returned for Shimmer COM',thisShimmer.ComPort,'.\n'));
+                        fprintf(strcat('Warning: getstatus - Instream command response and Get Status  response expected but not returned for Shimmer COM',thisShimmer.name,'.\n'));
                     end
                 end
             end
@@ -3097,7 +3096,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                 configByte0 = thisShimmer.ConfigByte0;
             else
                 configByte0 = 'Nan';
-                fprintf(strcat('Warning: getconfigbyte0 - Cannot determine config byte0 as COM ',thisShimmer.ComPort,' Shimmer is not Connected.\n'));
+                fprintf(strcat('Warning: getconfigbyte0 - Cannot determine config byte0 as COM ',thisShimmer.name,' Shimmer is not Connected.\n'));
             end
         end
         
@@ -3133,7 +3132,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                 configByte1 = 'Nan';
                 configByte2 = 'Nan';
                 configByte3 = 'Nan';
-                fprintf(strcat('Warning: getconfigbytes - Cannot determine config bytes as COM ',thisShimmer.ComPort,' Shimmer is not Connected.\n'));
+                fprintf(strcat('Warning: getconfigbytes - Cannot determine config bytes as COM ',thisShimmer.name,' Shimmer is not Connected.\n'));
             end
         end
         
@@ -3158,7 +3157,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                     fiveVoltReg = bitget(thisShimmer.ConfigByte0, 8);      % Isolate the 5V regulator setting, the MSB in the ConfigByte0 value
                     
                 else
-                    fprintf(strcat('Warning: getfivevoltreg - Cannot determine 5 volt Regulator setting as\n Config Byte0 for COM ',thisShimmer.ComPort,' is unknown.\n'));
+                    fprintf(strcat('Warning: getfivevoltreg - Cannot determine 5 volt Regulator setting as\n Config Byte0 for COM ',thisShimmer.name,' is unknown.\n'));
                     fiveVoltReg = 'Nan';
                 end
             elseif(thisShimmer.ShimmerVersion == thisShimmer.SHIMMER_3)  
@@ -3166,7 +3165,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                 disp('Warning: getfivevoltreg - 5V regulator is not present on Shimmer3.');
             else
                 fiveVoltReg = 'Nan';
-                fprintf(strcat('Warning: getfivevoltreg - Cannot determine 5 volt Regulator setting as COM ',thisShimmer.ComPort,' Shimmer is not Connected.\n'));
+                fprintf(strcat('Warning: getfivevoltreg - Cannot determine 5 volt Regulator setting as COM ',thisShimmer.name,' Shimmer is not Connected.\n'));
             end
         end
                        
@@ -3191,7 +3190,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                     pMux = bitget(thisShimmer.ConfigByte0, 7);             % Isolate the PMux setting, the 2nd MSB in the ConfigByte0 value
                     
                 else
-                    fprintf(strcat('Warning: getpmux - Cannot determiner PMux setting as\n Config Byte0 for COM ',thisShimmer.ComPort,' is unknown.\n'));
+                    fprintf(strcat('Warning: getpmux - Cannot determiner PMux setting as\n Config Byte0 for COM ',thisShimmer.name,' is unknown.\n'));
                     pMux = 'Nan';
                 end
             elseif(thisShimmer.ShimmerVersion == thisShimmer.SHIMMER_3) 
@@ -3199,7 +3198,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                 disp('Warning: getpmux - PMUX is not present on Shimmer3.');
             else
                 pMux = 'Nan';
-                fprintf(strcat('Warning: getpmux - Cannot determine PMux setting as COM ',thisShimmer.ComPort,' Shimmer is not Connected.\n'));
+                fprintf(strcat('Warning: getpmux - Cannot determine PMux setting as COM ',thisShimmer.name,' Shimmer is not Connected.\n'));
             end
         end
                       
@@ -3227,7 +3226,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                 accelRange = thisShimmer.AccelRange;
             else
                 accelRange = 'Nan';
-                fprintf(strcat('Warning: getaccelrange - Cannot determine accelerometer range as COM ',thisShimmer.ComPort,' Shimmer is not Connected.\n'));
+                fprintf(strcat('Warning: getaccelrange - Cannot determine accelerometer range as COM ',thisShimmer.name,' Shimmer is not Connected.\n'));
             end
         end
         
@@ -3255,7 +3254,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                 elseif (thisShimmer.ShimmerVersion == thisShimmer.SHIMMER_3)
                     disp('Warning: getpressureresolution - Pressure sensor is not supported for this firmware version, please update firmware.');
                 else
-                    fprintf(strcat('Warning: getpressureresolution - Cannot determine pressure resolution as COM ',thisShimmer.ComPort,' Shimmer is not Connected.\n'));
+                    fprintf(strcat('Warning: getpressureresolution - Cannot determine pressure resolution as COM ',thisShimmer.name,' Shimmer is not Connected.\n'));
                 end
             end
         end
@@ -3287,7 +3286,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                     magRange = thisShimmer.MagRange;
                 else
                     magRange = 'Nan';
-                    fprintf(strcat('Warning: getmagrange - Cannot determine mag range as COM ',thisShimmer.ComPort,' Shimmer is not Connected.\n'));
+                    fprintf(strcat('Warning: getmagrange - Cannot determine mag range as COM ',thisShimmer.name,' Shimmer is not Connected.\n'));
                 end
             end
         end
@@ -3311,7 +3310,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                 gyroRange = thisShimmer.GyroRange;
             else
                 gyroRange = 'Nan';
-                fprintf(strcat('Warning: getgyrorange - Cannot determine gyro range as COM ',thisShimmer.ComPort,' Shimmer is not connected\n'));
+                fprintf(strcat('Warning: getgyrorange - Cannot determine gyro range as COM ',thisShimmer.name,' Shimmer is not connected\n'));
                 fprintf('or Shimmer is not a Shimmer3.\n'); 
             end
         end
@@ -3339,7 +3338,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                 elseif (thisShimmer.ShimmerVersion == thisShimmer.SHIMMER_3)
                     disp('Warning: getinternalexppower - Internal Exp Power is not supported for this firmware version, please update firmware version.');
                 else
-                    fprintf(strcat('Warning: getinternalexppower - Cannot determine internal exp power setting as COM ',thisShimmer.ComPort,' Shimmer is not Connected.\n'));
+                    fprintf(strcat('Warning: getinternalexppower - Cannot determine internal exp power setting as COM ',thisShimmer.name,' Shimmer is not Connected.\n'));
                 end
             end
         end
@@ -3367,7 +3366,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                 if (thisShimmer.ShimmerVersion < thisShimmer.SHIMMER_3)
                     disp('Warning: getaccelhrmode - Accel HR mode is not supported on Shimmer2/2r.');
                 else
-                    fprintf(strcat('Warning: getaccelhrmode - Cannot determine Accel HR mode setting as COM ',thisShimmer.ComPort,' Shimmer is not Connected.\n'));
+                    fprintf(strcat('Warning: getaccelhrmode - Cannot determine Accel HR mode setting as COM ',thisShimmer.name,' Shimmer is not Connected.\n'));
                 end
             end
         end
@@ -3395,7 +3394,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                 if (thisShimmer.ShimmerVersion < thisShimmer.SHIMMER_3)
                     disp('Warning: getaccellpmode - Accel LP mode is not supported on Shimmer2/2r.');
                 else
-                    fprintf(strcat('Warning: getaccellpmode - Cannot determine Accel LP mode setting as COM ',thisShimmer.ComPort,' Shimmer is not Connected.\n'));
+                    fprintf(strcat('Warning: getaccellpmode - Cannot determine Accel LP mode setting as COM ',thisShimmer.name,' Shimmer is not Connected.\n'));
                 end
             end
         end
@@ -3542,7 +3541,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                             serialData(2:22)=[];
                             %Verify calibration parameters,
                             if SensitivityMatrix(1)== -1                     % Check for calibration parameters on Shimmer
-                                str = sprintf('Warning: getcalibrationparameters - Calibration parameters for accelerometer not found for Shimmer on Com Port %s, default values will be used', thisShimmer.ComPort);
+                                str = sprintf('Warning: getcalibrationparameters - Calibration parameters for accelerometer not found for Shimmer on Com Port %s, default values will be used', thisShimmer.name);
                                 thisShimmer.DefaultAccelCalibrationParameters=true;
                                 disp(str);
                                 if (thisShimmer.ShimmerVersion ~= thisShimmer.SHIMMER_3)
@@ -3596,7 +3595,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                             [OffsetVector,AlignmentMatrix,SensitivityMatrix]=retrievekinematicparameters(thisShimmer,serialData(2:22));
                             serialData(2:22)=[];
                             if SensitivityMatrix(1)== -1                       % Check for calibration parameters on Shimmer
-                                str = sprintf('Warning: getcalibrationparameters - Calibration parameters for gyroscope not found for Shimmer on Com Port %s, default values will be used', thisShimmer.ComPort);
+                                str = sprintf('Warning: getcalibrationparameters - Calibration parameters for gyroscope not found for Shimmer on Com Port %s, default values will be used', thisShimmer.name);
                                 disp(str);
                                 thisShimmer.DefaultGyroCalibrationParameters=true;
                                 if (thisShimmer.ShimmerVersion ~= thisShimmer.SHIMMER_3)
@@ -3636,7 +3635,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                             [OffsetVector,AlignmentMatrix,SensitivityMatrix]=retrievekinematicparameters(thisShimmer,serialData(2:22));
                             serialData(2:22)=[];
                             if SensitivityMatrix(1)== -1                        % Check for calibration parameters on Shimmer
-                                str = sprintf('Warning: getcalibrationparameters - Calibration parameters for magnetometer not found for Shimmer on Com Port %s, default values will be used', thisShimmer.ComPort);
+                                str = sprintf('Warning: getcalibrationparameters - Calibration parameters for magnetometer not found for Shimmer on Com Port %s, default values will be used', thisShimmer.name);
                                 disp(str);
                                 thisShimmer.DefaultMagneCalibrationParameters=true;
                                 if (thisShimmer.ShimmerVersion ~= thisShimmer.SHIMMER_3)
@@ -3691,7 +3690,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                             serialData(2:22)=[];
                             %Verify calibration parameters,
                             if SensitivityMatrix(1)== -1                     % Check for calibration parameters on Shimmer
-                                str = sprintf('Warning: getcalibrationparameters - Calibration parameters for (wide range) accelerometer not found for Shimmer on Com Port %s, default values will be used', thisShimmer.ComPort);
+                                str = sprintf('Warning: getcalibrationparameters - Calibration parameters for (wide range) accelerometer not found for Shimmer on Com Port %s, default values will be used', thisShimmer.name);
                                 thisShimmer.DefaultDAccelCalibrationParameters = true;
                                 disp(str);
                                 if thisShimmer.HardwareCompatibilityCode < 2
@@ -3749,7 +3748,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                                     thisShimmer.EMGOffset=double(bitshift(double(serialData(2)),8)+double(serialData(3)));
                                     thisShimmer.EMGGain=bitshift(double(serialData(4)),8)+double(serialData(5));
                                 else
-                                    str = sprintf('Warning: getcalibrationparameters - Calibration parameters for EMG not found for Shimmer on Com Port %s, default values will be used', thisShimmer.ComPort);
+                                    str = sprintf('Warning: getcalibrationparameters - Calibration parameters for EMG not found for Shimmer on Com Port %s, default values will be used', thisShimmer.name);
                                     disp(str);
                                     thisShimmer.DefaultEMGCalibrationParameters=true;
                                     thisShimmer.EMGOffset = 2060;
@@ -3772,7 +3771,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                                     thisShimmer.ECGRALLOffset=bitshift(double(serialData(6)),8)+double(serialData(7));
                                     thisShimmer.ECGRALLGain=bitshift(double(serialData(8)),8)+double(serialData(9));
                                 else
-                                    str = sprintf('Warning: getcalibrationparameters - Calibration parameters for ECG not found for Shimmer on Com Port %s, default values will be used', thisShimmer.ComPort);
+                                    str = sprintf('Warning: getcalibrationparameters - Calibration parameters for ECG not found for Shimmer on Com Port %s, default values will be used', thisShimmer.name);
                                     disp(str);
                                     thisShimmer.DefaultECGCalibrationParameters=true;
                                     thisShimmer.ECGLALLOffset = 2060;
@@ -3911,7 +3910,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                 uncalibratedData = parsedData;
             else
                 uncalibratedData = [];
-                fprintf(strcat('Warning: getuncalibrateddata - Cannot get data for COM ',thisShimmer.ComPort,' Shimmer is not Streaming'));
+                fprintf(strcat('Warning: getuncalibrateddata - Cannot get data for COM ',thisShimmer.name,' Shimmer is not Streaming'));
             end
         end
         
@@ -4454,7 +4453,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                 disp('Warning: getexgrate - ExG rate is not supported in Shimmer2/2r.');
             else
                 exgRate = 'Nan';
-                fprintf(strcat('Warning: getexgrate - Cannot determine exg rate as COM ',thisShimmer.ComPort,' Shimmer is not Connected.\n'));
+                fprintf(strcat('Warning: getexgrate - Cannot determine exg rate as COM ',thisShimmer.name,' Shimmer is not Connected.\n'));
             end
         end % function getexgrate
         
@@ -4507,7 +4506,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                 disp('Warning: getexggain - ExG gain is not supported in Shimmer2/2r.');
             else
                 exgGain = 'Nan';
-                fprintf(strcat('Warning: getexggain - Cannot determine exg gain as COM ',thisShimmer.ComPort,' Shimmer is not Connected.\n'));
+                fprintf(strcat('Warning: getexggain - Cannot determine exg gain as COM ',thisShimmer.name,' Shimmer is not Connected.\n'));
             end
         end % function getexggain
           
@@ -4534,7 +4533,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                 fprintf('Warning: getrealtimelock - Command not available for this firmware version.\n');
             elseif (~strcmp(thisShimmer.State,'Connected'))
                 realtimeClock = 'Nan';
-                fprintf(strcat('Warning: getrealtimeclock - Cannot set Real Time Clock for COM ',thisShimmer.ComPort,' as Shimmer is not connected.\n'));
+                fprintf(strcat('Warning: getrealtimeclock - Cannot set Real Time Clock for COM ',thisShimmer.name,' as Shimmer is not connected.\n'));
             else
                 if (strcmp(thisShimmer.RealTimeClockMilliseconds,'Nan'))
                     realtimeClock = 'Nan';
@@ -4566,7 +4565,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
             %   getexgleadoffcomparatorthreshold setexgleadoffcomparatorthreshold
             %
             if ~strcmp(thisShimmer.getstate,'Connected')
-                fprintf(strcat('Warning: getexgleadoffdetectionmode - Cannot get ExG lead-off detection mode for COM ',thisShimmer.ComPort,' as Shimmer is not connected.\n'));
+                fprintf(strcat('Warning: getexgleadoffdetectionmode - Cannot get ExG lead-off detection mode for COM ',thisShimmer.name,' as Shimmer is not connected.\n'));
                 leadOffDetectionMode = 'Unknown';
             elseif (thisShimmer.ShimmerVersion < thisShimmer.SHIMMER_3)
                 disp('Warning: getexgleadoffdetectionmode - Only supported on Shimmer3');
@@ -4610,7 +4609,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
             %   setexgleadoffdetectioncurrent 
             %
             if ~strcmp(thisShimmer.getstate,'Connected')
-                fprintf(strcat('Warning: getexgleadoffdetectioncurrent - Cannot get ExG lead-off detection current for COM ',thisShimmer.ComPort,' as Shimmer is not connected.\n'));
+                fprintf(strcat('Warning: getexgleadoffdetectioncurrent - Cannot get ExG lead-off detection current for COM ',thisShimmer.name,' as Shimmer is not connected.\n'));
                 leadOffDetectionCurrent = 'Unknown';
             elseif (thisShimmer.ShimmerVersion < thisShimmer.SHIMMER_3)
                 disp('Warning: getexgleadoffdetectioncurrent - Only supported on Shimmer3');
@@ -4668,7 +4667,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
             %   See also setexgreferenceelectrodeconfiguration
             %
             if ~strcmp(thisShimmer.getstate,'Connected')
-                fprintf(strcat('Warning: getexgreferenceelectrodeconfiguration - Cannot get ExG reference electrode configuration for COM ',thisShimmer.ComPort,' as Shimmer is not connected.\n'));
+                fprintf(strcat('Warning: getexgreferenceelectrodeconfiguration - Cannot get ExG reference electrode configuration for COM ',thisShimmer.name,' as Shimmer is not connected.\n'));
                 exgReferenceElectrodeConfiguration = 'Nan';
             elseif (thisShimmer.ShimmerVersion < thisShimmer.SHIMMER_3)
                 disp('Warning: getexgreferenceelectrodeconfiguration - Only supported on Shimmer3');
@@ -4716,7 +4715,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
             %   setexgleadoffdetectioncurrent 
             %
             if ~strcmp(thisShimmer.getstate,'Connected')
-                fprintf(strcat('Warning: getexgleadoffcomparatorthreshold - Cannot get ExG lead-off comparator threshold for COM ',thisShimmer.ComPort,' as Shimmer is not connected.\n'));
+                fprintf(strcat('Warning: getexgleadoffcomparatorthreshold - Cannot get ExG lead-off comparator threshold for COM ',thisShimmer.name,' as Shimmer is not connected.\n'));
                 leadOffComparatorThreshold = 'Unknown';
             elseif (thisShimmer.ShimmerVersion < thisShimmer.SHIMMER_3)
                 disp('Warning: getexgleadoffcomparatorthreshold - Only supported on Shimmer3');
@@ -4796,7 +4795,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
             BoardSpecialRev = 'Nan';
             
             if ~strcmp(thisShimmer.getstate,'Connected')
-                fprintf(strcat('Warning: getexpboardid - Cannot get Expansion Board ID bytes for COM ',thisShimmer.ComPort,' as Shimmer is not connected.\n'));
+                fprintf(strcat('Warning: getexpboardid - Cannot get Expansion Board ID bytes for COM ',thisShimmer.name,' as Shimmer is not connected.\n'));
             elseif (thisShimmer.ShimmerVersion < thisShimmer.SHIMMER_3)
                 disp('Warning: getexpboardid - Command only supported for Shimmer3.')
             elseif (thisShimmer.FirmwareCompatibilityCode < 5 ) 
@@ -4845,7 +4844,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
             %CONNECT - Connect to the Shimmer
             %
             %   CONNECT() establishes a bluetooth connection between the Shimmer
-            %   and host application using the com port defined in the ComPort
+            %   and host application using the com port defined in the name
             %   property of the object.
             %
             %   SYNOPSIS: isConnected = thisShimmer.connect()
@@ -4860,10 +4859,10 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
             %   stopdatalogandstream stoploggingonly startloggingonly 
             
             if (strcmp(thisShimmer.State,'Connected'))
-                fprintf(strcat('Warning: connect - Shimmer COM',thisShimmer.ComPort,', is already connected.\n'));
+                fprintf(strcat('Warning: connect - Shimmer COM',thisShimmer.name,', is already connected.\n'));
                 isConnected = true;
             elseif (strcmp(thisShimmer.State,'Streaming'))
-                fprintf(strcat('Warning: connect - Cannot connect Shimmer COM',thisShimmer.ComPort,', because it is already Streaming.\n'));
+                fprintf(strcat('Warning: connect - Cannot connect Shimmer COM',thisShimmer.name,', because it is already Streaming.\n'));
                 isConnected = true;
             elseif (strcmp(thisShimmer.State,'Disconnected'))
                 isOpen = opencomport(thisShimmer);                                      % Attempt to establish a connection by opening the comport
@@ -4879,7 +4878,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                     end
                     isConnected = inquiry(thisShimmer);
                     if (~isConnected)                                                   % the inquiry failed
-                        fprintf(strcat('Warning: connect - Failed to receive response from Shimmer inquiry for COM',thisShimmer.ComPort,'. Disconnecting Shimmer.\n'));
+                        fprintf(strcat('Warning: connect - Failed to receive response from Shimmer inquiry for COM',thisShimmer.name,'. Disconnecting Shimmer.\n'));
                         disconnect(thisShimmer);
                     else
                         if (thisShimmer.FirmwareIdentifier ~= 3)                        % not for LogAndStream
@@ -4931,7 +4930,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                         thisShimmer.WarningGetDeprecatedGetData = 0;                                % Set warning property to zero
                     end
                 else
-                    fprintf(strcat('Warning: connect - Serial port failed to open for COM',thisShimmer.ComPort,'. Disconnecting Shimmer.\n'));
+                    fprintf(strcat('Warning: connect - Serial port failed to open for COM',thisShimmer.name,'. Disconnecting Shimmer.\n'));
                     disconnect(thisShimmer);
                     isConnected=false;
                 end
@@ -4956,7 +4955,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
             %   stopdatalogandstream stoploggingonly startloggingonly 
             if (strcmp(thisShimmer.State,'Streaming'))                               % Check if Shimmer is already in Streaming state 
                 isStarted = false;
-                fprintf(strcat('Warning: start - Shimmer at COM ',thisShimmer.ComPort,' is already Streaming.\n'));
+                fprintf(strcat('Warning: start - Shimmer at COM ',thisShimmer.name,' is already Streaming.\n'));
             elseif (strcmp(thisShimmer.State,'Connected'))                           % Shimmer must be in a Connected state to start streaming
                 
                 resetstreaming(thisShimmer);                                         % Also clears the read data buffer 
@@ -4966,12 +4965,12 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                 if (isStarted == true)
                     thisShimmer.State = 'Streaming';
                 else
-                    fprintf(strcat('Warning: start - Start command response expected but not returned for Shimmer COM',thisShimmer.ComPort,'.\n'));
+                    fprintf(strcat('Warning: start - Start command response expected but not returned for Shimmer COM',thisShimmer.name,'.\n'));
                 end
                 
             else
                 isStarted = false;
-                fprintf(strcat('Warning: start - Cannot start streaming as COM ',thisShimmer.ComPort,' Shimmer is not Connected.\n'));
+                fprintf(strcat('Warning: start - Cannot start streaming as COM ',thisShimmer.name,' Shimmer is not Connected.\n'));
             end
             
         end % function start       
@@ -5001,7 +5000,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                 thisShimmer.State = 'Connected';
                 isStopped = true;
             else
-                fprintf(strcat('Warning: stop - COM ',thisShimmer.ComPort,' Shimmer is not Streaming.\n'));
+                fprintf(strcat('Warning: stop - COM ',thisShimmer.name,' Shimmer is not Streaming.\n'));
                 isStopped = false;
             end
             
@@ -5065,12 +5064,12 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                 isToggled = waitforack(thisShimmer, thisShimmer.DEFAULT_TIMEOUT);    % Wait for Acknowledgment from Shimmer
                 
                 if (~isToggled)
-                    fprintf(strcat('Warning: toggleLed - Toggle LED response expected but not returned for Shimmer COM',thisShimmer.ComPort,'.\n'));
+                    fprintf(strcat('Warning: toggleLed - Toggle LED response expected but not returned for Shimmer COM',thisShimmer.name,'.\n'));
                 end
                 
             else
                 isToggled = false;
-                fprintf(strcat('Warning: toggleLed - Cannot toggle LED as COM ',thisShimmer.ComPort,' Shimmer is not Connected.\n.\n'));
+                fprintf(strcat('Warning: toggleLed - Cannot toggle LED as COM ',thisShimmer.name,' Shimmer is not Connected.\n.\n'));
             end
             
         end % function toggleLed    
@@ -5099,11 +5098,11 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                 isStarted = false;
             elseif (strcmp(thisShimmer.State,'Streaming'))                               % Check if Shimmer is already in Streaming state
                 isStarted = false;
-                fprintf(strcat('Warning: startloggingonly - Shimmer at COM ',thisShimmer.ComPort,' is Streaming.\n'));
+                fprintf(strcat('Warning: startloggingonly - Shimmer at COM ',thisShimmer.name,' is Streaming.\n'));
                 fprintf('Stop streaming first.\n');
             elseif (thisShimmer.IsSDLogging == 1)
                 isStarted = false;
-                fprintf(strcat('Warning: startloggingonly - Shimmer at COM ',thisShimmer.ComPort,' is already Logging.\n'));
+                fprintf(strcat('Warning: startloggingonly - Shimmer at COM ',thisShimmer.name,' is already Logging.\n'));
             elseif (strcmp(thisShimmer.State,'Connected'))                           % Shimmer must be in a Connected state to start streaming
                 
                 resetstreaming(thisShimmer);                                         % Also clears the read data buffer
@@ -5113,12 +5112,12 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                 if (isStarted == true)
                     thisShimmer.IsSDLogging = 1;
                 else
-                    fprintf(strcat('Warning: startloggingonly - Start Logging Only command response expected but not returned for Shimmer COM',thisShimmer.ComPort,'.\n'));
+                    fprintf(strcat('Warning: startloggingonly - Start Logging Only command response expected but not returned for Shimmer COM',thisShimmer.name,'.\n'));
                 end
                 
             else
                 isStarted = false;
-                fprintf(strcat('Warning: startloggingonly - Cannot start Logging Only as COM ',thisShimmer.ComPort,' Shimmer is not Connected.\n'));
+                fprintf(strcat('Warning: startloggingonly - Cannot start Logging Only as COM ',thisShimmer.name,' Shimmer is not Connected.\n'));
             end
             
         end % function startloggingonly
@@ -5154,7 +5153,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                 thisShimmer.IsSDLogging = 0;
                 isStopped = true;
             else
-                fprintf(strcat('Warning: stoploggingonly - COM ',thisShimmer.ComPort,' Shimmer is not Logging.\n'));
+                fprintf(strcat('Warning: stoploggingonly - COM ',thisShimmer.name,' Shimmer is not Logging.\n'));
                 isStopped = false;
             end
             
@@ -5180,10 +5179,10 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
             
             if (strcmp(thisShimmer.State,'Streaming'))                               % Check if Shimmer is already in Streaming state
                 isStarted = false;
-                fprintf(strcat('Warning: startdatalogandstream - Shimmer at COM ',thisShimmer.ComPort,' is already Streaming.\n'));
+                fprintf(strcat('Warning: startdatalogandstream - Shimmer at COM ',thisShimmer.name,' is already Streaming.\n'));
             elseif ~(strcmp(thisShimmer.State,'Connected'))                               % Shimmer must be in a Connected state to start streaming
                 isStarted = false;
-                fprintf(strcat('Warning: startdatalogandstream - Cannot start streaming as COM ',thisShimmer.ComPort,' Shimmer is not Connected.\n.\n'));
+                fprintf(strcat('Warning: startdatalogandstream - Cannot start streaming as COM ',thisShimmer.name,' Shimmer is not Connected.\n.\n'));
             elseif ~(thisShimmer.FirmwareIdentifier == 3)
                 isStarted = false;
                 disp('Warning: startdatalogandstream - This function is only supported for LogAndStream firmware.');
@@ -5201,7 +5200,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                 if (isStarted == true)
                     
                     if(thisShimmer.IsDocked)
-                        fprintf(strcat('Warning: startdatalogandstream - Shimmer on COM',thisShimmer.ComPort,' is docked, therefore it is not logging, but only streaming.\n'));
+                        fprintf(strcat('Warning: startdatalogandstream - Shimmer on COM',thisShimmer.name,' is docked, therefore it is not logging, but only streaming.\n'));
                         thisShimmer.IsSDLogging = 0;
                     else
                         thisShimmer.IsSDLogging = 1;
@@ -5209,7 +5208,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                     
                     thisShimmer.State = 'Streaming';
                 else
-                    fprintf(strcat('Warning: startdatalogandstream - Start command response expected but not returned for Shimmer COM',thisShimmer.ComPort,'.\n'));
+                    fprintf(strcat('Warning: startdatalogandstream - Start command response expected but not returned for Shimmer COM',thisShimmer.name,'.\n'));
                 end
             end
             
@@ -5247,14 +5246,14 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                 thisShimmer.WriteLEDBLINKWAITFORACK=0;
                 
                 if (thisShimmer.IsSDLogging == 0)
-                    fprintf(strcat('Warning: stopdatalogandstream - COM ',thisShimmer.ComPort,' Shimmer was not Logging, only stopped Streaming.\n'));
+                    fprintf(strcat('Warning: stopdatalogandstream - COM ',thisShimmer.name,' Shimmer was not Logging, only stopped Streaming.\n'));
                 end
                 
                 thisShimmer.State = 'Connected';
                 thisShimmer.IsSDLogging = 0;
                 isStopped = true;
             else
-                fprintf(strcat('Warning: stopdatalogandstream - COM ',thisShimmer.ComPort,' Shimmer is not Streaming.\n'));
+                fprintf(strcat('Warning: stopdatalogandstream - COM ',thisShimmer.name,' Shimmer is not Streaming.\n'));
                 isStopped = false;
             end
             
@@ -5386,7 +5385,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                 isWritten = waitforack(thisShimmer, thisShimmer.DEFAULT_TIMEOUT);                    % Wait for Acknowledgment from Shimmer
                 
                 if (isWritten == false)
-                    fprintf(strcat('Warning: disablevbattfreq - Set VBatt Freq response expected but not returned for Shimmer COM',thisShimmer.ComPort,'.\n'));
+                    fprintf(strcat('Warning: disablevbattfreq - Set VBatt Freq response expected but not returned for Shimmer COM',thisShimmer.name,'.\n'));
                 end
             end
         end % function disablevbattfreq
@@ -5397,7 +5396,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
             if (thisShimmer.ShimmerVersion ~= thisShimmer.SHIMMER_3)
                 disp('Warning: writeresettodefaultconfiguration - Command only supported for Shimmer3.')
             elseif ~(strcmp(thisShimmer.State,'Connected'))                     % Shimmer must be in a Connected state
-                fprintf(strcat('Warning: writeresettodefaultconfiguration - Cannot set sampling range for COM ',thisShimmer.ComPort,' as Shimmer is not connected.\n'));
+                fprintf(strcat('Warning: writeresettodefaultconfiguration - Cannot set sampling range for COM ',thisShimmer.name,' as Shimmer is not connected.\n'));
             else
                 clearreaddatabuffer(thisShimmer);                                                    % As a precaution always clear the read data buffer before a write
                 writetocomport(thisShimmer, thisShimmer.RESET_TO_DEFAULT_CONFIGURATION_COMMAND);     % Send the RESET_TO_DEFAULT_CONFIGURATION_COMMAND to the Shimmer
@@ -5405,7 +5404,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                 isWritten = waitforack(thisShimmer, thisShimmer.DEFAULT_TIMEOUT);                    % Wait for Acknowledgment from Shimmer
                 
                 if (isWritten == false)
-                    fprintf(strcat('Warning: writeresettodefaultconfiguration - Reset Default Configuration response expected but not returned for Shimmer COM',thisShimmer.ComPort,'.\n'));
+                    fprintf(strcat('Warning: writeresettodefaultconfiguration - Reset Default Configuration response expected but not returned for Shimmer COM',thisShimmer.name,'.\n'));
                 end
             end
         end % function writeresettodefaultconfiguration
@@ -5426,7 +5425,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                 end
                 
             else
-                fprintf(strcat('Warning: setledblinkwhilestreaming - Cannot set led blink while streaming for COM ',thisShimmer.ComPort,' as Shimmer is not streaming.\n'));
+                fprintf(strcat('Warning: setledblinkwhilestreaming - Cannot set led blink while streaming for COM ',thisShimmer.name,' as Shimmer is not streaming.\n'));
                 isSet = false;
             end
         end % function setledblinkwhilestreaming
@@ -5458,12 +5457,12 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                 isWritten = waitforack(thisShimmer, thisShimmer.DEFAULT_TIMEOUT);   % Wait for Acknowledgment from Shimmer
 
                 if (isWritten == false)
-                    fprintf(strcat('Warning: writesamplingrate - Set sampling rate command response expected but not returned for Shimmer COM',thisShimmer.ComPort,'.\n'));
+                    fprintf(strcat('Warning: writesamplingrate - Set sampling rate command response expected but not returned for Shimmer COM',thisShimmer.name,'.\n'));
                 end
                 
             else
                 isWritten = false;
-                fprintf(strcat('Warning: writesamplingrate - Cannot set sampling rate for COM ',thisShimmer.ComPort,' as Shimmer is not connected.\n'));
+                fprintf(strcat('Warning: writesamplingrate - Cannot set sampling rate for COM ',thisShimmer.name,' as Shimmer is not connected.\n'));
             end
             
         end % function writesamplingrate
@@ -5474,7 +5473,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
             % Shimmer needs to Disconnect and (Re)Connect within this 
             % function for the baud rate actually be set.
             if ~strcmp(thisShimmer.State,'Connected')
-                fprintf(strcat('Warning: writebaudrate - Cannot set baud rate for COM ',thisShimmer.ComPort,' as Shimmer is not connected.\n'));
+                fprintf(strcat('Warning: writebaudrate - Cannot set baud rate for COM ',thisShimmer.name,' as Shimmer is not connected.\n'));
                 isWritten = false;
             elseif (thisShimmer.ShimmerVersion < thisShimmer.SHIMMER_3)
                 disp('Warning: writebaudrate - This function is only supported for Shimmer3.');
@@ -5490,7 +5489,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                 isWritten = waitforack(thisShimmer, thisShimmer.DEFAULT_TIMEOUT);       % Wait for Acknowledgment from Shimmer
                 
                 if (isWritten == false)
-                    fprintf(strcat('Warning: writebaudrate - Set baud rate command response expected but not returned for Shimmer COM',thisShimmer.ComPort,'.\n'));
+                    fprintf(strcat('Warning: writebaudrate - Set baud rate command response expected but not returned for Shimmer COM',thisShimmer.name,'.\n'));
                 end
                 
                 disp('Warning: writebaudrate - Shimmer will disconnect and reconnect now in order to set Baud Rate...');
@@ -5527,7 +5526,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                 isWritten = waitforack(thisShimmer, thisShimmer.DEFAULT_TIMEOUT);   % Wait for Acknowledgment from Shimmer
                 
                 if (isWritten == false)
-                    fprintf(strcat('Warning: writeemgcalibrationparameters - Set EMG calibration parameters command response expected but not returned for Shimmer COM',thisShimmer.ComPort,'.\n'));
+                    fprintf(strcat('Warning: writeemgcalibrationparameters - Set EMG calibration parameters command response expected but not returned for Shimmer COM',thisShimmer.name,'.\n'));
                 else
                     thisShimmer.DefaultEMGCalibrationParameters=false;
                 end
@@ -5536,7 +5535,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                 fprintf('Warning: writeemgcalibrationparameters - EMG Calibration is not supported for Shimmer3.\n');
             else
                 isWritten = false;
-                fprintf(strcat('Warning: writeemgcalibrationparameters - Cannot set EMG calibration parameters for COM',thisShimmer.ComPort,' as Shimmer is not connected.\n'));
+                fprintf(strcat('Warning: writeemgcalibrationparameters - Cannot set EMG calibration parameters for COM',thisShimmer.name,' as Shimmer is not connected.\n'));
             end
             
         end % function writeemgcalibrationparameters
@@ -5559,7 +5558,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                 isWritten = waitforack(thisShimmer, thisShimmer.DEFAULT_TIMEOUT);   % Wait for Acknowledgment from Shimmer
                 
                 if (isWritten == false)
-                    fprintf(strcat('Warning: writeecgcalibrationparameters - Set ECG calibration parameters command response expected but not returned for Shimmer COM',thisShimmer.ComPort,'.\n'));
+                    fprintf(strcat('Warning: writeecgcalibrationparameters - Set ECG calibration parameters command response expected but not returned for Shimmer COM',thisShimmer.name,'.\n'));
                 else
                     thisShimmer.DefaultECGCalibrationParameters=false;
                 end
@@ -5568,7 +5567,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                 fprintf(strcat('Warning: writeecgcalibrationparameters - ECG Calibration is not supported for Shimmer3.\n'));
             else
                 isWritten = false;
-                fprintf(strcat('Warning: writeecgcalibrationparameters - Cannot Cannot set ECG calibration parameters for COM',thisShimmer.ComPort,' as Shimmer is not connected.\n'));
+                fprintf(strcat('Warning: writeecgcalibrationparameters - Cannot Cannot set ECG calibration parameters for COM',thisShimmer.name,' as Shimmer is not connected.\n'));
             end
             
         end % function writeecgcalibrationparameters
@@ -5588,7 +5587,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                     isWritten = waitforack(thisShimmer, thisShimmer.DEFAULT_TIMEOUT);  % Wait for Acknowledgment from Shimmer
                     
                     if (~isWritten)
-                        fprintf(strcat('Warning: writeinternalexppower - Set exp power response expected but not returned for Shimmer COM',thisShimmer.ComPort,'.\n'));
+                        fprintf(strcat('Warning: writeinternalexppower - Set exp power response expected but not returned for Shimmer COM',thisShimmer.name,'.\n'));
                     end
                 elseif(thisShimmer.ShimmerVersion < thisShimmer.SHIMMER_3)
                     isWritten = false;
@@ -5599,12 +5598,12 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                 else
                     isWritten = false;
                     fprintf(strcat('Warning: writeinternalexppower - Attempt to set exp power failed, \n'));
-                    fprintf(strcat('invalid setting for Shimmer COM',thisShimmer.ComPort,'.\n'));
+                    fprintf(strcat('invalid setting for Shimmer COM',thisShimmer.name,'.\n'));
                 end
                 
             else
                 isWritten = false;
-                fprintf(strcat('Warning: writeinternalexppower - Cannot write exp power for COM ',thisShimmer.ComPort,' as Shimmer is not connected.\n'));
+                fprintf(strcat('Warning: writeinternalexppower - Cannot write exp power for COM ',thisShimmer.name,' as Shimmer is not connected.\n'));
             end
             
         end % function writeinternalexppower
@@ -5621,7 +5620,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                     isWritten = waitforack(thisShimmer, thisShimmer.DEFAULT_TIMEOUT);             % Wait for Acknowledgment from Shimmer
                     
                     if (~isWritten)
-                        fprintf(strcat('Warning: writeaccelhrmode - Set Accel HR mode command response expected but not returned for Shimmer COM',thisShimmer.ComPort,'.\n'));
+                        fprintf(strcat('Warning: writeaccelhrmode - Set Accel HR mode command response expected but not returned for Shimmer COM',thisShimmer.name,'.\n'));
                     end
                 elseif(thisShimmer.ShimmerVersion < thisShimmer.SHIMMER_3)
                     isWritten = false;
@@ -5629,11 +5628,11 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                 else
                     isWritten = false;
                     fprintf('Warning: writeaccelhrmode - Attempt to set Accel HR mode failed, \n');
-                    fprintf(strcat('invalid setting for Shimmer COM',thisShimmer.ComPort,'.\n'));
+                    fprintf(strcat('invalid setting for Shimmer COM',thisShimmer.name,'.\n'));
                 end
             else
                 isWritten = false;
-                fprintf(strcat('Warning: writeaccelhrmode - Cannot write Accel HR mode for COM ',thisShimmer.ComPort,' as Shimmer is not connected.\n'));
+                fprintf(strcat('Warning: writeaccelhrmode - Cannot write Accel HR mode for COM ',thisShimmer.name,' as Shimmer is not connected.\n'));
             end
             
         end % function writeaccelhrmode
@@ -5650,7 +5649,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                     isWritten = waitforack(thisShimmer, thisShimmer.DEFAULT_TIMEOUT);             % Wait for Acknowledgment from Shimmer
                     
                     if (~isWritten)
-                        fprintf(strcat('Warning: writeaccellpmode - Set Accel LP mode command response expected but not returned for Shimmer COM',thisShimmer.ComPort,'.\n'));
+                        fprintf(strcat('Warning: writeaccellpmode - Set Accel LP mode command response expected but not returned for Shimmer COM',thisShimmer.name,'.\n'));
                     end
                 elseif(thisShimmer.ShimmerVersion < thisShimmer.SHIMMER_3)
                     isWritten = false;
@@ -5658,11 +5657,11 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                 else
                     isWritten = false;
                     fprintf('Warning: writeaccellpmode - Attempt to set Accel LP mode failed, \n');
-                    fprintf(strcat('invalid setting for Shimmer COM',thisShimmer.ComPort,'.\n'));
+                    fprintf(strcat('invalid setting for Shimmer COM',thisShimmer.name,'.\n'));
                 end
             else
                 isWritten = false;
-                fprintf(strcat('Warning: writeaccellpmode - Cannot write Accel LP mode for COM ',thisShimmer.ComPort,' as Shimmer is not connected.\n'));
+                fprintf(strcat('Warning: writeaccellpmode - Cannot write Accel LP mode for COM ',thisShimmer.name,' as Shimmer is not connected.\n'));
             end
             
         end % function writeaccellpmode
@@ -5694,12 +5693,12 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                     isWritten = waitforack(thisShimmer, thisShimmer.DEFAULT_TIMEOUT);  % Wait for Acknowledgment from Shimmer
                     
                     if (~isWritten)
-                        fprintf(strcat('Warning: writeaccelrange - Set accel range response expected but not returned for Shimmer COM',thisShimmer.ComPort,'.\n'));
+                        fprintf(strcat('Warning: writeaccelrange - Set accel range response expected but not returned for Shimmer COM',thisShimmer.name,'.\n'));
                     end
                 else
                     isWritten = false;
                     fprintf(strcat('Warning: writeaccelrange - Attempt to set accel range failed due to a request to set the range to an \n'));
-                    fprintf(strcat('invalid setting for Shimmer COM',thisShimmer.ComPort,'.\n'));
+                    fprintf(strcat('invalid setting for Shimmer COM',thisShimmer.name,'.\n'));
                     fprintf('Valid range setting values for the Shimmer 2 are 0 (+/- 1.5g), 1 (+/- 2g), 2 (+/- 4g) and 3 (+/- 6g).\n');
                     fprintf('Valid range setting values for the Shimmer 2r are 0 (+/- 1.5g) and 3 (+/- 6g).\n');
                     fprintf('Valid range setting values for the Shimmer 3 are 0 (+/- 2g), 1 (+/- 4g), 2 (+/- 8g) and 3 (+/- 16g).\n');
@@ -5707,7 +5706,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                 
             else
                 isWritten = false;
-                fprintf(strcat('Warning: writeaccelrange - Cannot set accel range for COM ',thisShimmer.ComPort,' as Shimmer is not connected.\n'));
+                fprintf(strcat('Warning: writeaccelrange - Cannot set accel range for COM ',thisShimmer.name,' as Shimmer is not connected.\n'));
             end
             
         end % function writeaccelrange
@@ -5723,14 +5722,14 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                 isWritten = waitforack(thisShimmer, thisShimmer.DEFAULT_TIMEOUT);       % Wait for acknowledgment from Shimmer
                 
                 if (isWritten == false)
-                    fprintf(strcat('Warning: writeconfigbyte0 - Set config byte0 response expected but not returned for Shimmer COM',thisShimmer.ComPort,'.\n'));
+                    fprintf(strcat('Warning: writeconfigbyte0 - Set config byte0 response expected but not returned for Shimmer COM',thisShimmer.name,'.\n'));
                 end
             elseif(thisShimmer.ShimmerVersion == thisShimmer.SHIMMER_3)
                 isWritten = false;
                 fprintf(strcat('Warning: writeconfigbyte0 - This command is not available for Shimmer3; please use writeconfigbytes.\n'));
             else
                 isWritten = false;
-                fprintf(strcat('Warning: writeconfigbyte0 - Cannot set config byte0 for COM ',thisShimmer.ComPort,' as Shimmer is not connected.\n'));
+                fprintf(strcat('Warning: writeconfigbyte0 - Cannot set config byte0 for COM ',thisShimmer.name,' as Shimmer is not connected.\n'));
             end
             
         end % function writeconfigbyte0
@@ -5750,12 +5749,12 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                 isWritten = waitforack(thisShimmer, thisShimmer.DEFAULT_TIMEOUT);       % Wait for acknowledgment from Shimmer
                 
                 if (isWritten == false)
-                    fprintf(strcat('Warning: writeconfigbytes - Set config bytes response expected but not returned for Shimmer COM',thisShimmer.ComPort,'.\n'));
+                    fprintf(strcat('Warning: writeconfigbytes - Set config bytes response expected but not returned for Shimmer COM',thisShimmer.name,'.\n'));
                 end
                 
             else
                 isWritten = false;
-                fprintf(strcat('Warning: writeconfigbytes - Cannot set config bytes for COM ',thisShimmer.ComPort,' as Shimmer is not connected.\n'));
+                fprintf(strcat('Warning: writeconfigbytes - Cannot set config bytes for COM ',thisShimmer.name,' as Shimmer is not connected.\n'));
             end
             
         end % function writeconfigbytes
@@ -5772,14 +5771,14 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                 isWritten = waitforack(thisShimmer, thisShimmer.DEFAULT_TIMEOUT);       % Wait for acknowledgment from Shimmer
                 
                 if (isWritten == false)
-                    fprintf(strcat('Warning: writebuffersize - Set buffer size response expected but not returned for Shimmer COM',thisShimmer.ComPort,'.\n'));
+                    fprintf(strcat('Warning: writebuffersize - Set buffer size response expected but not returned for Shimmer COM',thisShimmer.name,'.\n'));
                 end
             elseif (thisShimmer.ShimmerVersion == thisShimmer.SHIMMER_3)
                 isWritten = false;
                 disp('Warning: writebuffersize - Buffer size is currently not configurable for Shimmer3.');
             else
                 isWritten = false;
-                fprintf(strcat('Warning: writebuffersize - Cannot set buffer size for COM ',thisShimmer.ComPort,' as Shimmer is not connected.\n'));
+                fprintf(strcat('Warning: writebuffersize - Cannot set buffer size for COM ',thisShimmer.name,' as Shimmer is not connected.\n'));
             end
             
         end % function writebuffersize
@@ -5797,18 +5796,18 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                     isWritten = waitforack(thisShimmer, thisShimmer.DEFAULT_TIMEOUT);    % Wait for acknowledgment from Shimmer
                     
                     if (isWritten == false)
-                        fprintf(strcat('Warning: writegsrrange - Set gsr range response expected but not returned for Shimmer COM',thisShimmer.ComPort,'.\n'));
+                        fprintf(strcat('Warning: writegsrrange - Set gsr range response expected but not returned for Shimmer COM',thisShimmer.name,'.\n'));
                     end
                 else
                     isWritten = false;
                     fprintf(strcat('Warning: writegsrrange - Attempt to set gsr range failed due to a request to set the range to an \n'));
-                    fprintf(strcat('invalid setting for Shimmer COM',thisShimmer.ComPort,'.\n'));
+                    fprintf(strcat('invalid setting for Shimmer COM',thisShimmer.name,'.\n'));
                     fprintf(strcat('Valid range settings are 0 (10kohm to 56kohm), 1 (56kohm to 220kohm), 2 (220kohm to 680kohm), 3 (680kohm to 4.7Mohm) and 4 (Auto Range).\n'));
                 end
                 
             else
                 isWritten = false;
-                fprintf(strcat('Warning: writegsrrange - Cannot set gsr range for COM ',thisShimmer.ComPort,' as Shimmer is not connected.\n'));
+                fprintf(strcat('Warning: writegsrrange - Cannot set gsr range for COM ',thisShimmer.name,' as Shimmer is not connected.\n'));
             end
             
         end % function writegsrrange        
@@ -5839,16 +5838,16 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                         isWritten = waitforack(thisShimmer, thisShimmer.DEFAULT_TIMEOUT);   % Wait for Acknowledgment from Shimmer
                         
                         if (isWritten == false)
-                            fprintf(strcat('Warning: writeexgconfiguration - Set ExG Regs response expected but not returned for Shimmer COM',thisShimmer.ComPort,'.\n'));
+                            fprintf(strcat('Warning: writeexgconfiguration - Set ExG Regs response expected but not returned for Shimmer COM',thisShimmer.name,'.\n'));
                         end
                     else
                         isWritten = false;
                         fprintf(strcat('Warning: writeexgconfiguration - Attempt to write ExG configuration failed due to a request to set an \n'));
-                        fprintf(strcat('invalid ExG configuration for Shimmer COM',thisShimmer.ComPort,'.\n'));
+                        fprintf(strcat('invalid ExG configuration for Shimmer COM',thisShimmer.name,'.\n'));
                     end
                 else
                     isWritten = false;
-                    fprintf(strcat('Warning: writeexgconfiguration - Cannot set exg rate for COM ',thisShimmer.ComPort,' as Shimmer is not connected.\n'));
+                    fprintf(strcat('Warning: writeexgconfiguration - Cannot set exg rate for COM ',thisShimmer.name,' as Shimmer is not connected.\n'));
                 end
             end
         end % function writeexgconfiguration
@@ -5886,17 +5885,17 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                             isWritten = waitforack(thisShimmer, thisShimmer.DEFAULT_TIMEOUT);   % Wait for Acknowledgment from Shimmer
 
                         if (isWritten == false)
-                            fprintf(strcat('Warning: writeexgrate - Set ExG Regs response expected but not returned for Shimmer COM',thisShimmer.ComPort,'.\n'));
+                            fprintf(strcat('Warning: writeexgrate - Set ExG Regs response expected but not returned for Shimmer COM',thisShimmer.name,'.\n'));
                         end
                
                     else
                         isWritten = false;
-                        fprintf(strcat('Warning: writeexgrate - Cannot set exg rate for COM ',thisShimmer.ComPort,' as Shimmer is not connected\n'));
+                        fprintf(strcat('Warning: writeexgrate - Cannot set exg rate for COM ',thisShimmer.name,' as Shimmer is not connected\n'));
                     end
                 else
                     isWritten = false;
                     fprintf(strcat('Warning: writeexgrate - Attempt to set exg rate failed due to a request to set the rate to an \n'));
-                    fprintf(strcat('invalid setting for Shimmer COM',thisShimmer.ComPort,'.\n'));
+                    fprintf(strcat('invalid setting for Shimmer COM',thisShimmer.name,'.\n'));
                     fprintf(strcat('Valid rate settings are 0 (125 Hz), 1 (250 Hz), 2 (500 Hz), 3 (1000 Hz), 4 (2000 Hz), 5 (4000 Hz) and 6 (8000 Hz).\n'));
                 end
              else
@@ -5942,17 +5941,17 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                             isWritten = waitforack(thisShimmer, thisShimmer.DEFAULT_TIMEOUT);   % Wait for Acknowledgment from Shimmer
                             
                             if (isWritten == false)
-                                fprintf(strcat('Warning: writeexggain - Set ExG Regs response expected but not returned for Shimmer COM',thisShimmer.ComPort,'.\n'));
+                                fprintf(strcat('Warning: writeexggain - Set ExG Regs response expected but not returned for Shimmer COM',thisShimmer.name,'.\n'));
                             end
                             
                         else
                             isWritten = false;
-                            fprintf(strcat('Warning: writeexggain - Cannot set exg gain for COM ',thisShimmer.ComPort,' as Shimmer is not connected.\n'));
+                            fprintf(strcat('Warning: writeexggain - Cannot set exg gain for COM ',thisShimmer.name,' as Shimmer is not connected.\n'));
                         end
                     else
                         isWritten = false;
                         fprintf(strcat('Warning: writeexggain - Attempt to set exg gain failed due to a request to set the rate to an \n'));
-                        fprintf(strcat('invalid setting for Shimmer COM',thisShimmer.ComPort,'.\n'));
+                        fprintf(strcat('invalid setting for Shimmer COM',thisShimmer.name,'.\n'));
                         fprintf(strcat('Valid gain settings are 0 (6x), 1 (1x), 2 (2x), 3 (3x), 4 (4x), 5 (8x) and 6 (12x).\n'));
                     end
                 end
@@ -5989,17 +5988,17 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                                 isWritten = waitforack(thisShimmer, thisShimmer.DEFAULT_TIMEOUT);   % Wait for Acknowledgment from Shimmer
 
                             if (isWritten == false)
-                                fprintf(strcat('Warning: writeexggain - Set ExG Regs response expected but not returned for Shimmer COM',thisShimmer.ComPort,'.\n'));
+                                fprintf(strcat('Warning: writeexggain - Set ExG Regs response expected but not returned for Shimmer COM',thisShimmer.name,'.\n'));
                             end
 
                         else
                             isWritten = false;
-                            fprintf(strcat('Warning: writeexggain - Cannot set exg gain for COM ',thisShimmer.ComPort,' as Shimmer is not connected.\n'));
+                            fprintf(strcat('Warning: writeexggain - Cannot set exg gain for COM ',thisShimmer.name,' as Shimmer is not connected.\n'));
                         end
                     else
                         isWritten = false;
                         fprintf(strcat('Warning: writeexggain - Attempt to set exg gain failed due to a request to set the gain to an \n'));
-                        fprintf(strcat('invalid setting for Shimmer COM',thisShimmer.ComPort,'.\n'));
+                        fprintf(strcat('invalid setting for Shimmer COM',thisShimmer.name,'.\n'));
                         fprintf(strcat('Valid gain settings are 0 (6x), 1 (1x), 2 (2x), 3 (3x), 4 (4x), 5 (8x) and 6 (12x).\n'));
                     end
                 else
@@ -6024,7 +6023,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
             %                       isWritten is false if writing has failed.
             if ~(strcmp(thisShimmer.State,'Connected'))
                 isWritten = false;
-                fprintf(strcat('Warning: writeexgreferenceelectrodeconfiguration - Cannot set exg rate for COM ',thisShimmer.ComPort,' as Shimmer is not connected.\n'));
+                fprintf(strcat('Warning: writeexgreferenceelectrodeconfiguration - Cannot set exg rate for COM ',thisShimmer.name,' as Shimmer is not connected.\n'));
             elseif(thisShimmer.ShimmerVersion < thisShimmer.SHIMMER_3)
                 disp('Warning: writeexgreferenceelectrodeconfiguration - Function only supported for Shimmer3.');
                 isWritten = false;
@@ -6046,12 +6045,12 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                     isWritten = waitforack(thisShimmer, thisShimmer.DEFAULT_TIMEOUT);                         % Wait for Acknowledgment from Shimmer
                     
                     if (isWritten == false)
-                        fprintf(strcat('Warning: writeexgreferenceelectrodeconfiguration - Set ExG Regs response expected but not returned for Shimmer COM',thisShimmer.ComPort,'.\n'));
+                        fprintf(strcat('Warning: writeexgreferenceelectrodeconfiguration - Set ExG Regs response expected but not returned for Shimmer COM',thisShimmer.name,'.\n'));
                     end
                 else
                     isWritten = false;
                     fprintf('Warning: writeexgreferenceelectrodeconfiguration - Attempt to write ExG reference electrode configuration failed due to a request to set an \n');
-                    fprintf(strcat('invalid ExG reference electrode configuration for Shimmer COM',thisShimmer.ComPort,'.\n'));
+                    fprintf(strcat('invalid ExG reference electrode configuration for Shimmer COM',thisShimmer.name,'.\n'));
                 end
             end
         end % function writeexgreferenceelectrodeconfiguration
@@ -6074,7 +6073,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
             %
             if ~(strcmp(thisShimmer.State,'Connected'))
                 isWritten = false;
-                fprintf(strcat('Warning: writeexgleadoffdetectioncurrent - Cannot set ExG lead-off detection current for COM ',thisShimmer.ComPort,' as Shimmer is not connected.\n'));
+                fprintf(strcat('Warning: writeexgleadoffdetectioncurrent - Cannot set ExG lead-off detection current for COM ',thisShimmer.name,' as Shimmer is not connected.\n'));
             elseif(thisShimmer.ShimmerVersion < thisShimmer.SHIMMER_3)
                 disp('Warning: writeexgleadoffdetectioncurrent - Function only supported for Shimmer3.');
                 isWritten = false;
@@ -6107,7 +6106,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                 isWritten = waitforack(thisShimmer, thisShimmer.DEFAULT_TIMEOUT);       % Wait for Acknowledgment from Shimmer
                 
                 if (isWritten == false)
-                    fprintf(strcat('Warning: writeexgleadoffdetectioncurrent - Set ExG Regs response expected but not returned for Shimmer COM',thisShimmer.ComPort,'.\n'));
+                    fprintf(strcat('Warning: writeexgleadoffdetectioncurrent - Set ExG Regs response expected but not returned for Shimmer COM',thisShimmer.name,'.\n'));
                 end
             end
         end % function writeexgleadoffdetectioncurrent
@@ -6131,7 +6130,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
             %
             if ~(strcmp(thisShimmer.State,'Connected'))
                 isWritten = false;
-                fprintf(strcat('Warning: writeexgleadoffcomparatorthreshold - Cannot set ExG lead-off comparator threshold for COM ',thisShimmer.ComPort,' as Shimmer is not connected.\n'));
+                fprintf(strcat('Warning: writeexgleadoffcomparatorthreshold - Cannot set ExG lead-off comparator threshold for COM ',thisShimmer.name,' as Shimmer is not connected.\n'));
             elseif(thisShimmer.ShimmerVersion < thisShimmer.SHIMMER_3)
                 disp('Warning: writeexgleadoffcomparatorthreshold - Function only supported for Shimmer3.');
                 isWritten = false;
@@ -6166,7 +6165,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                     isWritten = waitforack(thisShimmer, thisShimmer.DEFAULT_TIMEOUT);       % Wait for Acknowledgment from Shimmer
                     
                     if (isWritten == false)
-                        fprintf(strcat('Warning: writeexgleadoffcomparatorthreshold - Set ExG Regs response expected but not returned for Shimmer COM',thisShimmer.ComPort,'.\n'));
+                        fprintf(strcat('Warning: writeexgleadoffcomparatorthreshold - Set ExG Regs response expected but not returned for Shimmer COM',thisShimmer.name,'.\n'));
                     end
             end
         end % function writeexgleadoffcomparatorthreshold
@@ -6186,7 +6185,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
             %
             if ~(strcmp(thisShimmer.State,'Connected'))
                 isWritten = false;
-                fprintf(strcat('Warning: writeexgleadoffdetectionmode - Cannot set ExG lead-off detection mode for COM ',thisShimmer.ComPort,' as Shimmer is not connected.\n'));
+                fprintf(strcat('Warning: writeexgleadoffdetectionmode - Cannot set ExG lead-off detection mode for COM ',thisShimmer.name,' as Shimmer is not connected.\n'));
             elseif(thisShimmer.ShimmerVersion < thisShimmer.SHIMMER_3)
                 disp('Warning: writeexgleadoffdetectionmode - Function only supported for Shimmer3.');
                 isWritten = false;
@@ -6270,7 +6269,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                     
                     
                     if (isWritten == false)
-                        fprintf(strcat('Warning: writeexgleadoffdetectionmode - Set ExG Regs response expected but not returned for Shimmer COM',thisShimmer.ComPort,'.\n'));
+                        fprintf(strcat('Warning: writeexgleadoffdetectionmode - Set ExG Regs response expected but not returned for Shimmer COM',thisShimmer.name,'.\n'));
                     end
                     chipselect = chipselect + 1;
                 end
@@ -6317,7 +6316,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                 fprintf('Warning: writerealtimeclock - Command not available for this firmware version.\n');
             elseif (~strcmp(thisShimmer.State,'Connected'))
                 isWritten = false;              
-                fprintf(strcat('Warning: writerealtimeclock - Cannot set Real Time Clock for COM ',thisShimmer.ComPort,' as Shimmer is not connected.\n'));
+                fprintf(strcat('Warning: writerealtimeclock - Cannot set Real Time Clock for COM ',thisShimmer.name,' as Shimmer is not connected.\n'));
             else                       
 
                 clearreaddatabuffer(thisShimmer);                                                    % As a precaution always clear the read data buffer before a write
@@ -6353,12 +6352,12 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                         isWritten = waitforack(thisShimmer, thisShimmer.DEFAULT_TIMEOUT);    % Wait for Acknowledgment from Shimmer
                         
                         if (isWritten == false)
-                            fprintf(strcat('Warning: writemagrange - Set mag range response expected but not returned for Shimmer COM',thisShimmer.ComPort,'.\n'));
+                            fprintf(strcat('Warning: writemagrange - Set mag range response expected but not returned for Shimmer COM',thisShimmer.name,'.\n'));
                         end
                     else
                         isWritten = false;
                         fprintf(strcat('Warning: writemagrange - Attempt to set mag range failed due to a request to set the range to an \n'));
-                        fprintf(strcat('invalid setting for Shimmer COM',thisShimmer.ComPort,'.\n'));
+                        fprintf(strcat('invalid setting for Shimmer COM',thisShimmer.name,'.\n'));
                         fprintf(strcat('For Shimmer2r: Valid range settings are 0 (0.7 gauss), 1 (1.0 gauss), 2 (1.5 gauss), 3 (2.0 gauss), 4 (3.2 gauss), 5 (3.8 gauss) and 6 (4.5 gauss).\n'));
                         fprintf(strcat('For Shimmer3 with LSM303DLHC: Valid range settings are 1 (1.3 gauss), 2 (1.9 gauss), 3 (2.5 gauss), 4 (4.0 gauss), 5 (4.7 gauss), 6 (5.6 gauss) and 7 (8.1 gauss).\n'));
                         fprintf(strcat('For Shimmer3 with LSM303AHTR: Fixed ranges of 49.152 gauss.\n'));
@@ -6366,7 +6365,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                     
                 else
                     isWritten = false;
-                    fprintf(strcat('Warning: writemagrange - Cannot set mag range for COM ',thisShimmer.ComPort,' as Shimmer is not connected.\n'));
+                    fprintf(strcat('Warning: writemagrange - Cannot set mag range for COM ',thisShimmer.name,' as Shimmer is not connected.\n'));
                 end
             end
         end % function writemagrange
@@ -6384,18 +6383,18 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                     isWritten = waitforack(thisShimmer, thisShimmer.DEFAULT_TIMEOUT);             % Wait for Acknowledgment from Shimmer
                     
                     if (isWritten == false)
-                        fprintf(strcat('Warning: writegyrorange - Set gyro range response expected but not returned for Shimmer COM',thisShimmer.ComPort,'.\n'));
+                        fprintf(strcat('Warning: writegyrorange - Set gyro range response expected but not returned for Shimmer COM',thisShimmer.name,'.\n'));
                     end
                 else
                     isWritten = false;
                     fprintf(strcat('Warning: writegyrorange - Attempt to set gyro range failed due to a request to set the range to an \n'));
-                    fprintf(strcat('invalid setting for Shimmer COM',thisShimmer.ComPort,'.\n'));
+                    fprintf(strcat('invalid setting for Shimmer COM',thisShimmer.name,'.\n'));
                     fprintf(strcat('Valid range settings are 0 (250 dps), 1 (500 dps), 2 (1000 dps), 3 (2000 dps) \n'));
                 end
                 
             else
                 isWritten = false;
-                fprintf(strcat('Warning: writegyrorange - Cannot set gyro range for COM ',thisShimmer.ComPort,' as Shimmer is not connected\n'));
+                fprintf(strcat('Warning: writegyrorange - Cannot set gyro range for COM ',thisShimmer.name,' as Shimmer is not connected\n'));
                 fprintf('or Shimmer is not a Shimmer3.\n');
             end
             
@@ -6416,20 +6415,20 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                     isWritten = waitforack(thisShimmer, thisShimmer.DEFAULT_TIMEOUT);
                     
                     if (isWritten == false)
-                        fprintf(strcat('Warning: writepressureresolution - Set pressure resolution response expected but not returned for Shimmer COM',thisShimmer.ComPort,'.\n'));
+                        fprintf(strcat('Warning: writepressureresolution - Set pressure resolution response expected but not returned for Shimmer COM',thisShimmer.name,'.\n'));
                     else
                         thisShimmer.PressureResolution = pressureRes;
                     end
                 else
                     isWritten = false;
                     fprintf(strcat('Warning: writepressureresolution - Attempt to set pressure resolution failed due to a request to set the resolution to an \n'));
-                    fprintf(strcat('invalid setting for Shimmer COM',thisShimmer.ComPort,'.\n'));
+                    fprintf(strcat('invalid setting for Shimmer COM',thisShimmer.name,'.\n'));
                     fprintf(strcat('Valid resolution settings are 0 ("Low"), 1 ("Standard"), 2 ("High"), 3 ("Very High" / "Ultra High".\n'));
                 end
                 
             else
                 isWritten = false;
-                fprintf(strcat('Warning: writepressureresolution - Cannot set pressure resolution for COM ',thisShimmer.ComPort,' as Shimmer is not connected\n'));
+                fprintf(strcat('Warning: writepressureresolution - Cannot set pressure resolution for COM ',thisShimmer.name,' as Shimmer is not connected\n'));
                 fprintf('or Shimmer is not Shimmer3. Pressure resolution is only supported for Shimmer3.\n');
             end
             
@@ -6453,12 +6452,12 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                     isWritten = waitforack(thisShimmer, thisShimmer.DEFAULT_TIMEOUT);       % Wait for Acknowledgment from Shimmer
                     
                     if (isWritten == false)
-                        fprintf(strcat('Warning: writemagrate - Set mag rate response expected but not returned for Shimmer COM',thisShimmer.ComPort,'.\n'));
+                        fprintf(strcat('Warning: writemagrate - Set mag rate response expected but not returned for Shimmer COM',thisShimmer.name,'.\n'));
                     end
                 else
                     isWritten = false;
                     fprintf(strcat('Warning: writemagrate - Attempt to set mag rate failed due to a request to set the range to an \n'));
-                    fprintf(strcat('invalid setting for Shimmer COM',thisShimmer.ComPort,'.\n'));
+                    fprintf(strcat('invalid setting for Shimmer COM',thisShimmer.name,'.\n'));
                     fprintf('For Shimmer2r: Valid rate settings are 0 (0.5 Hz), 1 (1.0 Hz), 2 (2.0 Hz), 3 (5.0 Hz), 4 (10.0 Hz), 5 (20.0 Hz) and 6 (50.0 Hz).\n');
                     fprintf('For Shimmer3 with LSM303DLHC: Valid rate settings are 0 (0.75Hz), 1 (1.5Hz), 2 (3Hz), 3 (7.5Hz), 4 (15Hz), 5 (30Hz), 6 (75Hz), 7 (220Hz).\n');
                     fprintf('For Shimmer3 with LSM303AHTR: Valid rate settings are 0 (10.0Hz), 1 (20.0Hz)), 2 (50.0Hz), 3 (100.0Hz).\n');
@@ -6466,7 +6465,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                 
             else
                 isWritten = false;
-                fprintf(strcat('Warning: writemagrate - Cannot set mag rate for COM ',thisShimmer.ComPort,' as Shimmer is not connected.\n'));
+                fprintf(strcat('Warning: writemagrate - Cannot set mag rate for COM ',thisShimmer.name,' as Shimmer is not connected.\n'));
             end
             
         end % function writemagrate      
@@ -6486,12 +6485,12 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                     isWritten = waitforack(thisShimmer, thisShimmer.DEFAULT_TIMEOUT);                     % Wait for Acknowledgment from Shimmer
                     
                     if (isWritten == false)
-                        fprintf(strcat('Warning: writeaccelrate - Set acc rate response expected but not returned for Shimmer COM',thisShimmer.ComPort,'.\n'));
+                        fprintf(strcat('Warning: writeaccelrate - Set acc rate response expected but not returned for Shimmer COM',thisShimmer.name,'.\n'));
                     end
                 else
                     isWritten = false;
                     fprintf(strcat('Warning: writeaccelrate - Attempt to set acc rate failed due to a request to set the range to an \n'));
-                    fprintf(strcat('invalid setting for Shimmer COM',thisShimmer.ComPort,'.\n'));
+                    fprintf(strcat('invalid setting for Shimmer COM',thisShimmer.name,'.\n'));
                     if (thisShimmer.HardwareCompatibilityCode < 2)
                         fprintf(strcat('Valid rate settings are 1 (1.0 Hz), 2 (10.0 Hz), 3 (25.0 Hz), 4 (50.0 Hz), 5 (100.0 Hz), 6 (200.0 Hz), 7 (400.0 Hz), 9 (1344.0 Hz).\n'));
                     elseif (thisShimmer.HardwareCompatibilityCode >= 2)
@@ -6501,7 +6500,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                 
             else
                 isWritten = false;
-                fprintf(strcat('Warning: writeaccelrate - Cannot set accel rate for COM ',thisShimmer.ComPort,' as Shimmer is not connected.\n'));
+                fprintf(strcat('Warning: writeaccelrate - Cannot set accel rate for COM ',thisShimmer.name,' as Shimmer is not connected.\n'));
             end
             
         end % function writeaccelrate
@@ -6519,18 +6518,18 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                     isWritten = waitforack(thisShimmer, thisShimmer.DEFAULT_TIMEOUT);           % Wait for acknowledgment from Shimmer
                     
                     if (isWritten == false)
-                        fprintf(strcat('Warning: writegyrorate - Set gyro rate response expected but not returned for Shimmer COM',thisShimmer.ComPort,'.\n'));
+                        fprintf(strcat('Warning: writegyrorate - Set gyro rate response expected but not returned for Shimmer COM',thisShimmer.name,'.\n'));
                     end
                 else
                     isWritten = false;
                     fprintf(strcat('Warning: writegyrorate - Attempt to set gyro rate failed due to a request to set the range to an \n'));
-                    fprintf(strcat('invalid setting for Shimmer COM',thisShimmer.ComPort,'.\n'));
+                    fprintf(strcat('invalid setting for Shimmer COM',thisShimmer.name,'.\n'));
                     fprintf(strcat('Valid range settings are 0 - 255, see datasheet of MPU9150 for further info'));
                 end
                 
             else
                 isWritten = false;
-                fprintf(strcat('Warning: writegyrorate - Cannot set gyro rate for COM ',thisShimmer.ComPort,' as Shimmer is not connected\n'));
+                fprintf(strcat('Warning: writegyrorate - Cannot set gyro rate for COM ',thisShimmer.name,' as Shimmer is not connected\n'));
                 fprintf('or Shimmer is not a Shimmer3. Gyro rate is only supported for Shimmer3.\n');
             end
             
@@ -6549,13 +6548,13 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                 isWritten = waitforack(thisShimmer, thisShimmer.DEFAULT_TIMEOUT); % Wait for Acknowledgment from Shimmer
                 
                 if (isWritten == false)
-                    fprintf(strcat('Warning: writeledblink - Set led blink response expected but not returned for Shimmer COM',thisShimmer.ComPort,'.\n'));
+                    fprintf(strcat('Warning: writeledblink - Set led blink response expected but not returned for Shimmer COM',thisShimmer.name,'.\n'));
                 end
                 
                 isWritten = true;
             else
                 isWritten = false;
-                fprintf(strcat('Warning: writeledblink - Cannot set LED blink command for COM ',thisShimmer.ComPort,' as Shimmer is not connected.\n'));
+                fprintf(strcat('Warning: writeledblink - Cannot set LED blink command for COM ',thisShimmer.name,' as Shimmer is not connected.\n'));
             end
             
         end % function writeledblink
@@ -6578,11 +6577,11 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                     isWritten = true;
                 else
                     isWritten = false;
-                    fprintf(strcat('Warning: writeledblinkwhilestreaming - Cannot set LED blink command for COM ',thisShimmer.ComPort,' as Shimmer is not connected.\n'));
+                    fprintf(strcat('Warning: writeledblinkwhilestreaming - Cannot set LED blink command for COM ',thisShimmer.name,' as Shimmer is not connected.\n'));
                 end
             else
                 isWritten = false;
-                fprintf(strcat('Warning: writeledblinkwhilestreaming - Cannot set LED blink command for COM ',thisShimmer.ComPort,' Shimmer as still awaiting ACK of last command.\n'));
+                fprintf(strcat('Warning: writeledblinkwhilestreaming - Cannot set LED blink command for COM ',thisShimmer.name,' Shimmer as still awaiting ACK of last command.\n'));
             end
         end % function writeledblink while streaming
   
@@ -6652,7 +6651,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                             enabledSensors = bitset(uint32(enabledSensors), thisShimmer.SENSOR_GYRO, enableBit);        % set the Gyro enabled setting to the value in enable bit
                         else
                             if(enableBit)
-                                fprintf(strcat('Warning: determineenabledsensorsbytes - To enable the Gyro sensor on Shimmer COM', thisShimmer.ComPort, ' the internal board must be set to Gyro or 9DOF.\n'));
+                                fprintf(strcat('Warning: determineenabledsensorsbytes - To enable the Gyro sensor on Shimmer COM', thisShimmer.name, ' the internal board must be set to Gyro or 9DOF.\n'));
                             end
                         end
                         
@@ -6669,7 +6668,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                             enabledSensors = bitset(uint32(enabledSensors), thisShimmer.SENSOR_MAG, enableBit);         % set the Gyro enabled setting to the value in enable bit
                         else
                             if(enableBit)
-                                fprintf(strcat('Warning: determineenabledsensorsbytes - To enable the Mag sensor on Shimmer COM', thisShimmer.ComPort, ' the internal board must be set to Mag or 9DOF.\n'));
+                                fprintf(strcat('Warning: determineenabledsensorsbytes - To enable the Mag sensor on Shimmer COM', thisShimmer.name, ' the internal board must be set to Mag or 9DOF.\n'));
                             end
                         end
                         
@@ -6715,7 +6714,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                             end
                         else
                             if(enableBit)
-                                fprintf(strcat('Warning: determineenabledsensorsbytes - To enable the ECG sensor on Shimmer COM', thisShimmer.ComPort, ' the internal board must be set to ECG or EXG.\n'));
+                                fprintf(strcat('Warning: determineenabledsensorsbytes - To enable the ECG sensor on Shimmer COM', thisShimmer.name, ' the internal board must be set to ECG or EXG.\n'));
                             end
                         end
                         
@@ -6749,7 +6748,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                             end
                         else
                             if(enableBit)
-                                fprintf(strcat('Warning: determineenabledsensorsbytes - To enable the EMG sensor on Shimmer COM', thisShimmer.ComPort, ' the internal board must be set to EMG or EXG.\n'));
+                                fprintf(strcat('Warning: determineenabledsensorsbytes - To enable the EMG sensor on Shimmer COM', thisShimmer.name, ' the internal board must be set to EMG or EXG.\n'));
                             end
                         end
                         
@@ -6772,7 +6771,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                             end
                         else
                             if(enableBit)
-                                fprintf(strcat('Warning: determineenabledsensorsbytes - To enable the ECG 16BIT sensor on Shimmer COM', thisShimmer.ComPort, ' the internal board must be set to ECG or EXG.\n'));
+                                fprintf(strcat('Warning: determineenabledsensorsbytes - To enable the ECG 16BIT sensor on Shimmer COM', thisShimmer.name, ' the internal board must be set to ECG or EXG.\n'));
                                 fprintf(strcat('Warning: determineenabledsensorsbytes - ECG 16BIT is only supported on Shimmer3.\n'));
                             end
                         end
@@ -6796,7 +6795,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                             thisShimmer.ECGflag = false;
                         else
                             if(enableBit)
-                                fprintf(strcat('Warning: determineenabledsensorsbytes - To enable the EMG 16BIT sensor on Shimmer COM', thisShimmer.ComPort, ' the internal board must be set to EMG or EXG.\n'));
+                                fprintf(strcat('Warning: determineenabledsensorsbytes - To enable the EMG 16BIT sensor on Shimmer COM', thisShimmer.name, ' the internal board must be set to EMG or EXG.\n'));
                                 fprintf(strcat('Warning: determineenabledsensorsbytes - EMG 16BIT is only supported on Shimmer3.\n'));
                             end
                         end
@@ -6824,7 +6823,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                             fprintf(strcat('Warning: determineenabledsensorsbytes - EXG1 (24BIT) is only supported on Shimmer3.\n'));
                         else
                             if(enableBit)
-                                fprintf(strcat('Warning: determineenabledsensorsbytes - To enable the EXG1 sensor on Shimmer COM', thisShimmer.ComPort, ' the internal board must be set to EXG, ECG or EMG.\n'));
+                                fprintf(strcat('Warning: determineenabledsensorsbytes - To enable the EXG1 sensor on Shimmer COM', thisShimmer.name, ' the internal board must be set to EXG, ECG or EMG.\n'));
                             end
                         end
                         
@@ -6851,7 +6850,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                             fprintf(strcat('Warning: determineenabledsensorsbytes - EXG2 (24BIT) is only supported on Shimmer3.\n'));
                         else
                             if(enableBit)
-                                fprintf(strcat('Warning: determineenabledsensorsbytes - To enable the EXG2 sensor on Shimmer COM', thisShimmer.ComPort, ' the internal board must be set to EXG, ECG or EMG.\n'));
+                                fprintf(strcat('Warning: determineenabledsensorsbytes - To enable the EXG2 sensor on Shimmer COM', thisShimmer.name, ' the internal board must be set to EXG, ECG or EMG.\n'));
                             end
                         end
                         
@@ -6878,7 +6877,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                             fprintf(strcat('Warning: determineenabledsensorsbytes - EXG1 16BIT is only supported on Shimmer3.\n'));
                         else
                             if(enableBit)
-                                fprintf(strcat('Warning: determineenabledsensorsbytes - To enable the EXG1 16BIT sensor on Shimmer COM', thisShimmer.ComPort, ' the internal board must be set to EXG, ECG or EMG.\n'));
+                                fprintf(strcat('Warning: determineenabledsensorsbytes - To enable the EXG1 16BIT sensor on Shimmer COM', thisShimmer.name, ' the internal board must be set to EXG, ECG or EMG.\n'));
                             end
                         end
                         
@@ -6905,7 +6904,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                             fprintf(strcat('Warning: determineenabledsensorsbytes - EXG2 16BIT is only supported on Shimmer3.\n'));
                         else
                             if(enableBit)
-                                fprintf(strcat('Warning: determineenabledsensorsbytes - To enable the EXG2 16BIT sensor on Shimmer COM', thisShimmer.ComPort, ' the internal board must be set to EXG, ECG or EMG.\n'));
+                                fprintf(strcat('Warning: determineenabledsensorsbytes - To enable the EXG2 16BIT sensor on Shimmer COM', thisShimmer.name, ' the internal board must be set to EXG, ECG or EMG.\n'));
                             end
                         end
                         
@@ -6932,7 +6931,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                             end
                         else
                             if(enableBit)
-                                fprintf(strcat('Warning: determineenabledsensorsbytes - To enable the GSR sensor on Shimmer COM', thisShimmer.ComPort, ' the internal board must be set to GSR.\n'));
+                                fprintf(strcat('Warning: determineenabledsensorsbytes - To enable the GSR sensor on Shimmer COM', thisShimmer.name, ' the internal board must be set to GSR.\n'));
                             end
                         end
                         
@@ -6944,7 +6943,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                             end
                         else
                             if(enableBit)
-                                fprintf(strcat('Warning: determineenabledsensorsbytes - To enable the EXT A7 sensor on Shimmer COM', thisShimmer.ComPort, ' the external board must be set to ExpBoard or External.\n'));
+                                fprintf(strcat('Warning: determineenabledsensorsbytes - To enable the EXT A7 sensor on Shimmer COM', thisShimmer.name, ' the external board must be set to ExpBoard or External.\n'));
                             end
                         end
                         
@@ -6958,7 +6957,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                             fprintf(strcat('Warning: determineenabledsensorsbytes - EXT A0 channel is not available on Shimmer3; use EXT A6.\n'));
                         else
                             if(enableBit)
-                                fprintf(strcat('Warning: determineenabledsensorsbytes - To enable the EXT A0 sensor on Shimmer COM', thisShimmer.ComPort, ' the external board must be set to ExpBoard or External.\n'));
+                                fprintf(strcat('Warning: determineenabledsensorsbytes - To enable the EXT A0 sensor on Shimmer COM', thisShimmer.name, ' the external board must be set to ExpBoard or External.\n'));
                             end
                         end
 
@@ -6969,7 +6968,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                             fprintf(strcat('Warning: determineenabledsensorsbytes - EXT A6 channel is not available on Shimmer2/2r; use EXT A0.\n'));
                         else
                             if(enableBit)
-                                fprintf(strcat('Warning: determineenabledsensorsbytes - To enable the EXT A6 sensor on Shimmer COM', thisShimmer.ComPort, ' the external board must be set to ExpBoard or External.\n'));
+                                fprintf(strcat('Warning: determineenabledsensorsbytes - To enable the EXT A6 sensor on Shimmer COM', thisShimmer.name, ' the external board must be set to ExpBoard or External.\n'));
                             end
                         end
                         
@@ -6980,7 +6979,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                             fprintf(strcat('Warning: determineenabledsensorsbytes - EXT A15 channel is not available on Shimmer2/2r.\n'));
                         else
                             if(enableBit)
-                                fprintf(strcat('Warning: determineenabledsensorsbytes - To enable the EXT A15 sensor on Shimmer COM', thisShimmer.ComPort, ' the external board must be set to ExpBoard or External.\n'));
+                                fprintf(strcat('Warning: determineenabledsensorsbytes - To enable the EXT A15 sensor on Shimmer COM', thisShimmer.name, ' the external board must be set to ExpBoard or External.\n'));
                             end
                         end
                         
@@ -6998,7 +6997,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                             fprintf(strcat('Warning: determineenabledsensorsbytes - Strain Gauge is not available on Shimmer3, use Bridge Amplifier instead.\n'));
                         else
                             if(enableBit)
-                                fprintf(strcat('Warning: determineenabledsensorsbytes - To enable the Strain Gauge sensor on Shimmer COM', thisShimmer.ComPort, ' the internal board must be set to Strain Gauge.\n'));
+                                fprintf(strcat('Warning: determineenabledsensorsbytes - To enable the Strain Gauge sensor on Shimmer COM', thisShimmer.name, ' the internal board must be set to Strain Gauge.\n'));
                             end
                         end
                         
@@ -7021,7 +7020,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                             fprintf('Warning: determineenabledsensorsbytes - Bridge Amplifier is not available for Shimmer2/2r, use Strain Gauge instead.\n');
                         else
                             if(enableBit)
-                                fprintf(strcat('Warning: determineenabledsensorsbytes - To enable the Bridge Amplifier sensor on Shimmer COM', thisShimmer.ComPort, ' the internal board must be set to Bridge Amplifier.\n'));
+                                fprintf(strcat('Warning: determineenabledsensorsbytes - To enable the Bridge Amplifier sensor on Shimmer COM', thisShimmer.name, ' the internal board must be set to Bridge Amplifier.\n'));
                             end
                         end
                         
@@ -7036,7 +7035,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                             fprintf(strcat('Warning: determineenabledsensorsbytes - Heart Rate is not available on Shimmer3.\n'));
                         else
                             if(enableBit)
-                                fprintf(strcat('Warning: determineenabledsensorsbytes - To enable the HR sensor on Shimmer COM', thisShimmer.ComPort, ' the external board must be set to Heart Rate.\n'));
+                                fprintf(strcat('Warning: determineenabledsensorsbytes - To enable the HR sensor on Shimmer COM', thisShimmer.name, ' the external board must be set to Heart Rate.\n'));
                             end
                         end
                         
@@ -7059,12 +7058,12 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                                     end
                                 else
                                     if(enableBit)
-                                        fprintf(strcat('Warning: determineenabledsensorsbytes - To enable the Battery Voltage sensor on Shimmer COM', thisShimmer.ComPort, ' setpmux commmand failed.\n'));
+                                        fprintf(strcat('Warning: determineenabledsensorsbytes - To enable the Battery Voltage sensor on Shimmer COM', thisShimmer.name, ' setpmux commmand failed.\n'));
                                     end
                                 end
                             else
                                 if(enableBit)
-                                    fprintf(strcat('Warning: determineenabledsensorsbytes - To enable the Battery Voltage sensor on Shimmer COM', thisShimmer.ComPort, ' the external board must be set to None.\n'));
+                                    fprintf(strcat('Warning: determineenabledsensorsbytes - To enable the Battery Voltage sensor on Shimmer COM', thisShimmer.name, ' the external board must be set to None.\n'));
                                 end
                             end
                         end
@@ -7130,7 +7129,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                         
                     otherwise
                         if(enableBit)
-                            fprintf(strcat('Warning: determineenabledsensorsbytes - Attempt to enable unrecognised sensor on Shimmer COM', thisShimmer.ComPort, '.\n'));
+                            fprintf(strcat('Warning: determineenabledsensorsbytes - Attempt to enable unrecognised sensor on Shimmer COM', thisShimmer.name, '.\n'));
                         end
                         
                 end
@@ -7319,12 +7318,12 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                   inquiry(thisShimmer);                                             % get inquiry response of the Shimmer
                 end
                 if (isWritten == false)
-                    fprintf(strcat('Warning: writeenabledsensors - Set enabled sensors response expected but not returned for Shimmer COM',thisShimmer.ComPort,'.\n'));
+                    fprintf(strcat('Warning: writeenabledsensors - Set enabled sensors response expected but not returned for Shimmer COM',thisShimmer.name,'.\n'));
                 end
                 
             else
                 isWritten = false;
-                fprintf(strcat('Warning: writeenabledsensors - Cannot set enabled sensors for COM ',thisShimmer.ComPort,' as Shimmer is not connected.\n'));
+                fprintf(strcat('Warning: writeenabledsensors - Cannot set enabled sensors for COM ',thisShimmer.name,' as Shimmer is not connected.\n'));
             end
          
         end % function writeenabledsensors
@@ -7370,23 +7369,23 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                             isRead = true;
                         else
                             thisShimmer.SamplingRate = 'Nan';              % Set the SamplingRate to 'Nan' to indicate unknown
-                            fprintf(strcat('Warning: readsamplingrate - Get sampling rate command response expected but not returned for Shimmer COM',thisShimmer.ComPort,'.\n'));
+                            fprintf(strcat('Warning: readsamplingrate - Get sampling rate command response expected but not returned for Shimmer COM',thisShimmer.name,'.\n'));
                             isRead = false;
                         end
                     else
                         thisShimmer.SamplingRate = 'Nan';              % Set the SamplingRate to 'Nan' to indicate unknown
-                        fprintf(strcat('Warning: readsamplingrate - Get sampling rate command response expected but not returned for Shimmer COM',thisShimmer.ComPort,'.\n'));
+                        fprintf(strcat('Warning: readsamplingrate - Get sampling rate command response expected but not returned for Shimmer COM',thisShimmer.name,'.\n'));
                         isRead = false;
                     end
                 else
                     thisShimmer.SamplingRate = 'Nan';                      % Set the SamplingRate to 'Nan' to indicate unknown
-                    fprintf(strcat('Warning: readsamplingrate - Get sampling rate command response expected but not returned for Shimmer COM',thisShimmer.ComPort,'.\n'));
+                    fprintf(strcat('Warning: readsamplingrate - Get sampling rate command response expected but not returned for Shimmer COM',thisShimmer.name,'.\n'));
                     isRead = false;
                 end
                 
             else
                 isRead = false;
-                fprintf(strcat('Warning: readsamplingrate - Cannot get sampling rate for COM ',thisShimmer.ComPort,' as Shimmer is not connected.\n'));
+                fprintf(strcat('Warning: readsamplingrate - Cannot get sampling rate for COM ',thisShimmer.name,' as Shimmer is not connected.\n'));
             end
             
         end % function readsamplingrate
@@ -7395,7 +7394,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
             % Sends the GET_BT_COMMS_BAUD_RATE to Shimmer - in Connected state 
             % Receives the baud rate and updates the BaudRate property.
             if ~strcmp(thisShimmer.State,'Connected')
-                fprintf(strcat('Warning: readbaudrate - Cannot set baud rate for COM ',thisShimmer.ComPort,' as Shimmer is not connected.\n'));
+                fprintf(strcat('Warning: readbaudrate - Cannot set baud rate for COM ',thisShimmer.name,' as Shimmer is not connected.\n'));
                 isRead = false;
             elseif (thisShimmer.ShimmerVersion < thisShimmer.SHIMMER_3)
                 disp('Warning: readbaudrate - This function is only supported for Shimmer3.');
@@ -7410,7 +7409,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                 isAcknowledged = waitforack(thisShimmer, thisShimmer.DEFAULT_TIMEOUT);  % Wait for Acknowledgment from Shimmer
                 if ~(isAcknowledged == true)
                     thisShimmer.BaudRate = 'Nan';                                       % Set the property to 'Nan' to indicate unknown
-                    fprintf(strcat('Warning: readbaudrate - Get Baud Rate command response expected but not returned for Shimmer COM',thisShimmer.ComPort,'.\n'));
+                    fprintf(strcat('Warning: readbaudrate - Get Baud Rate command response expected but not returned for Shimmer COM',thisShimmer.name,'.\n'));
                     isRead = false;
                 else
                     [shimmerResponse, isFileOpen] = readdatabuffer(thisShimmer, 2);     % Read the 2 bytes response from the realterm buffer
@@ -7420,7 +7419,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                         isRead = true;
                     else
                         thisShimmer.BaudRate = 'Nan';                                   % Set the  to 'Nan' to indicate unknown
-                        fprintf(strcat('Warning: readbaudrate - Get Baud Rate command response expected but not returned for Shimmer COM',thisShimmer.ComPort,'.\n'));
+                        fprintf(strcat('Warning: readbaudrate - Get Baud Rate command response expected but not returned for Shimmer COM',thisShimmer.name,'.\n'));
                         isRead = false;
                     end
                 end
@@ -7451,7 +7450,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                             
                             if(thisShimmer.FirmwareIdentifier == 1)        % BtStream firmware identified
                                 thisShimmer.FullFirmwareName = ['BtStream v', num2str(thisShimmer.FirmwareMajorVersion),'.',num2str(thisShimmer.FirmwareMinorVersion),'.', num2str(thisShimmer.FirmwareInternal)];
-                                disp(['Firmware version ' thisShimmer.FullFirmwareName ' Detected for Shimmer COM' thisShimmer.ComPort]);
+                                disp(['Firmware version ' thisShimmer.FullFirmwareName ' Detected for Shimmer COM' thisShimmer.name]);
                                 if(thisShimmer.ShimmerVersion == thisShimmer.SHIMMER_3 && thisShimmer.FirmwareMajorVersion == 0 && thisShimmer.FirmwareMinorVersion == 1)
                                     thisShimmer.FirmwareCompatibilityCode = 1;
                                 elseif(thisShimmer.ShimmerVersion == thisShimmer.SHIMMER_3 && thisShimmer.FirmwareMajorVersion == 0 && thisShimmer.FirmwareMinorVersion == 2)
@@ -7472,7 +7471,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                                 
                             elseif(thisShimmer.FirmwareIdentifier == 3)    % LogAndStream firmware identified
                                 thisShimmer.FullFirmwareName = ['LogAndStream v', num2str(thisShimmer.FirmwareMajorVersion),'.',num2str(thisShimmer.FirmwareMinorVersion),'.', num2str(thisShimmer.FirmwareInternal)];
-                                disp(['Firmware version ' thisShimmer.FullFirmwareName ' Detected for Shimmer COM' thisShimmer.ComPort]);
+                                disp(['Firmware version ' thisShimmer.FullFirmwareName ' Detected for Shimmer COM' thisShimmer.name]);
                                 if(thisShimmer.ShimmerVersion == thisShimmer.SHIMMER_3 && thisShimmer.FirmwareMajorVersion == 0 && thisShimmer.FirmwareMinorVersion == 1)
                                     thisShimmer.FirmwareCompatibilityCode = 3;
                                 elseif(thisShimmer.ShimmerVersion == thisShimmer.SHIMMER_3 && thisShimmer.FirmwareMajorVersion == 0 && thisShimmer.FirmwareMinorVersion >= 6)
@@ -7487,7 +7486,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                                 
                             else
                                 thisShimmer.FullFirmwareName = 'Unknown';
-                                disp(['Warning: readfirmwareversion - Firmware version unknown for Shimmer COM' thisShimmer.ComPort]);
+                                disp(['Warning: readfirmwareversion - Firmware version unknown for Shimmer COM' thisShimmer.name]);
                                 thisShimmer.FirmwareCompatibilityCode = 0;
                             end
                             isRead = true;
@@ -7495,17 +7494,17 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                         else
                             thisShimmer.FirmwareMajorVersion = 'Nan';                % Set the FirmwareMajorVersion to 'Nan' to indicate unknown
                             thisShimmer.FirmwareMinorVersion = 'Nan';                % Set the FirmwareMinorVersion to 'Nan' to indicate unknown
-                            fprintf(strcat('Warning: readfirmwareversion - Get firmware version command response expected but not returned for Shimmer COM',thisShimmer.ComPort,'.\n'));
+                            fprintf(strcat('Warning: readfirmwareversion - Get firmware version command response expected but not returned for Shimmer COM',thisShimmer.name,'.\n'));
                             isRead = false;
                         end
                     else
                         thisShimmer.FirmwareMajorVersion = 'Nan';                % Set the FirmwareMajorVersion to 'Nan' to indicate unknown
                         thisShimmer.FirmwareMinorVersion = 'Nan';                % Set the FirmwareMinorVersion to 'Nan' to indicate unknown
-                        fprintf(strcat('Warning: readfirmwareversion - Get firmware version command response expected but not returned for Shimmer COM',thisShimmer.ComPort,'.\n'));
+                        fprintf(strcat('Warning: readfirmwareversion - Get firmware version command response expected but not returned for Shimmer COM',thisShimmer.name,'.\n'));
                         isRead = false;
                     end
                 elseif (thisShimmer.ShimmerVersion == thisShimmer.SHIMMER_3)
-                       fprintf(strcat('Warning: readfirmwareversion - Get firmware version command response expected but not returned for Shimmer COM',thisShimmer.ComPort,'.\n'));
+                       fprintf(strcat('Warning: readfirmwareversion - Get firmware version command response expected but not returned for Shimmer COM',thisShimmer.name,'.\n'));
                        isRead = false;
                 else % if no ack means that the Shimmer is running an old firmware
                     thisShimmer.FirmwareIdentifier = 0;
@@ -7514,13 +7513,13 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                     thisShimmer.FirmwareInternal = 0;
                     thisShimmer.FullFirmwareName = 'BoilerPlate v0.1.0';
                     thisShimmer.FirmwareCompatibilityCode = 0;
-                    fprintf(strcat('Warning: readfirmwareversion - Unknown Firmware version; assuming BoilerPlate 0.1.0 for Shimmer Com',thisShimmer.ComPort,'.\n'));
+                    fprintf(strcat('Warning: readfirmwareversion - Unknown Firmware version; assuming BoilerPlate 0.1.0 for Shimmer Com',thisShimmer.name,'.\n'));
                     isRead = false;
                 end
                 
             else
                 isRead = false;
-                fprintf(strcat('Warning: readfirmwareversion - Cannot get firmware version for COM ',thisShimmer.ComPort,' as Shimmer is not connected.\n'));
+                fprintf(strcat('Warning: readfirmwareversion - Cannot get firmware version for COM ',thisShimmer.name,' as Shimmer is not connected.\n'));
             end
             
         end % function readfirmwareversion       
@@ -7564,23 +7563,23 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                             isRead = true;
                         else
                             thisShimmer.AccelRange = 'Nan';                % Set the AccelRange to 'Nan' to indicate unknown
-                            fprintf(strcat('Warning: readaccelrange - Get accel range command response expected but not returned for Shimmer COM',thisShimmer.ComPort,'.\n'));
+                            fprintf(strcat('Warning: readaccelrange - Get accel range command response expected but not returned for Shimmer COM',thisShimmer.name,'.\n'));
                             isRead = false;
                         end
                     else
                         thisShimmer.AccelRange = 'Nan';                % Set the AccelRange to 'Nan' to indicate unknown
-                        fprintf(strcat('Warning: readaccelrange - Get accel range command response expected but not returned for Shimmer COM',thisShimmer.ComPort,'.\n'));
+                        fprintf(strcat('Warning: readaccelrange - Get accel range command response expected but not returned for Shimmer COM',thisShimmer.name,'.\n'));
                         isRead = false;
                     end
                 else
                     thisShimmer.AccelRange = 'Nan';                        % Set the AccelRange to 'Nan' to indicate unknown
-                    fprintf(strcat('Warning: readaccelrange - Get accel range command response expected but not returned for Shimmer COM',thisShimmer.ComPort,'.\n'));
+                    fprintf(strcat('Warning: readaccelrange - Get accel range command response expected but not returned for Shimmer COM',thisShimmer.name,'.\n'));
                     isRead = false;
                 end
                 
             else
                 isRead = false;
-                fprintf(strcat('Warning: readaccelrange - Cannot get accel range for COM ',thisShimmer.ComPort,' as Shimmer is not connected.\n'));
+                fprintf(strcat('Warning: readaccelrange - Cannot get accel range for COM ',thisShimmer.name,' as Shimmer is not connected.\n'));
             end
             
         end % function readaccelrange
@@ -7603,19 +7602,19 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                         isRead = true;
                     else
                         thisShimmer.AccelWideRangeHRMode = 'Nan';                               % Set the AccelWideRangeHRMode to 'Nan' to indicate unknown
-                        fprintf(strcat('Warning: readaccelhrmode - Get Accel HR mode command response expected but not returned for Shimmer COM',thisShimmer.ComPort,'.\n'));
+                        fprintf(strcat('Warning: readaccelhrmode - Get Accel HR mode command response expected but not returned for Shimmer COM',thisShimmer.name,'.\n'));
                         isRead = false;
                     end
                 else
                     thisShimmer.AccelWideRangeHRMode = 'Nan';                                   % Set the AccelWideRangeHRMode to 'Nan' to indicate unknown
-                    fprintf(strcat('Warning: readaccelhrmode - Get Accel HR mode command response expected but not returned for Shimmer COM',thisShimmer.ComPort,'.\n'));
+                    fprintf(strcat('Warning: readaccelhrmode - Get Accel HR mode command response expected but not returned for Shimmer COM',thisShimmer.name,'.\n'));
                     isRead = false;
                 end
             elseif (thisShimmer.ShimmerVersion < thisShimmer.SHIMMER_3)
                 disp('Warning: readaccelhrmode - Accel HR mode is not available for Shimmer2/2r.');
             else
                 isRead = false;
-                fprintf(strcat('Warning: readaccelhrmode - Cannot get Accel HR mode for COM ',thisShimmer.ComPort,' as Shimmer is not connected.\n'));
+                fprintf(strcat('Warning: readaccelhrmode - Cannot get Accel HR mode for COM ',thisShimmer.name,' as Shimmer is not connected.\n'));
             end
             
         end % function readaccelhrmode
@@ -7645,19 +7644,19 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                     else
                         thisShimmer.AccelWideRangeLPMode = 'Nan';                             % Set the AccelWideRangeLPMode to 'Nan' to indicate unknown
                         thisShimmer.AccelWideRangeDataRate = 'Nan';
-                        fprintf(strcat('Warning: readaccellpmode - Get Accel LP mode command response expected but not returned for Shimmer COM',thisShimmer.ComPort,'.\n'));
+                        fprintf(strcat('Warning: readaccellpmode - Get Accel LP mode command response expected but not returned for Shimmer COM',thisShimmer.name,'.\n'));
                         isRead = false;
                     end
                 else
                     thisShimmer.AccelWideRangeLPMode = 'Nan';                        % Set the AccelWideRangeLPMode to 'Nan' to indicate unknown
-                    fprintf(strcat('Warning: readaccellpmode - Get Accel LP mode command response expected but not returned for Shimmer COM',thisShimmer.ComPort,'.\n'));
+                    fprintf(strcat('Warning: readaccellpmode - Get Accel LP mode command response expected but not returned for Shimmer COM',thisShimmer.name,'.\n'));
                     isRead = false;
                 end
             elseif (thisShimmer.ShimmerVersion < thisShimmer.SHIMMER_3)
                 disp('Warning: readaccellpmode - Accel LP mode is not available for Shimmer2/2r.');
             else
                 isRead = false;
-                fprintf(strcat('Warning: readaccellpmode - Cannot get Accel LP mode for COM ',thisShimmer.ComPort,' as Shimmer is not connected.\n'));
+                fprintf(strcat('Warning: readaccellpmode - Cannot get Accel LP mode for COM ',thisShimmer.name,' as Shimmer is not connected.\n'));
             end
             
         end % function readaccellpmode
@@ -7677,17 +7676,17 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                             isRead = true;
                         else
                             thisShimmer.ConfigByte0 = 'Nan';                                % Set the ConfigByte0 to 'Nan' to indicate unknown
-                            fprintf(strcat('Warning: readconfigbyte0 - Get config byte0 command response expected but not returned for Shimmer COM',thisShimmer.ComPort,'.\n'));
+                            fprintf(strcat('Warning: readconfigbyte0 - Get config byte0 command response expected but not returned for Shimmer COM',thisShimmer.name,'.\n'));
                             isRead = false;
                         end
                     else
                         thisShimmer.ConfigByte0 = 'Nan';                                    % Set the ConfigByte0 to 'Nan' to indicate unknown
-                        fprintf(strcat('Warning: readconfigbyte0 - Config byte 0 command response not returned for Shimmer COM',thisShimmer.ComPort,'.\n'));
+                        fprintf(strcat('Warning: readconfigbyte0 - Config byte 0 command response not returned for Shimmer COM',thisShimmer.name,'.\n'));
                         isRead = false;
                     end
                 else
                     thisShimmer.ConfigByte0 = 'Nan';                                        % Set the ConfigByte0 to 'Nan' to indicate unknown
-                    fprintf(strcat('Warning: readconfigbyte0 - Config byte 0 command response not returned for Shimmer COM',thisShimmer.ComPort,'.\n'));
+                    fprintf(strcat('Warning: readconfigbyte0 - Config byte 0 command response not returned for Shimmer COM',thisShimmer.name,'.\n'));
                     isRead = false;
                 end
             elseif(thisShimmer.ShimmerVersion == thisShimmer.SHIMMER_3)
@@ -7695,7 +7694,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                 fprintf(strcat('Warning: readconfigbyte0 - This command is not available for Shimmer3; please use readconfigbytes.\n'));
             else
                 isRead = false;
-                fprintf(strcat('Warning: readconfigbyte0 - Cannot get config byte0 for COM ',thisShimmer.ComPort,' as Shimmer is not connected.\n'));
+                fprintf(strcat('Warning: readconfigbyte0 - Cannot get config byte0 for COM ',thisShimmer.name,' as Shimmer is not connected.\n'));
             end
         end % function readconfigbyte0
                
@@ -7727,7 +7726,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                             thisShimmer.ConfigByte1 = 'Nan';                                % Set the ConfigByte1 to 'Nan' to indicate unknown
                             thisShimmer.ConfigByte2 = 'Nan';                                % Set the ConfigByte2 to 'Nan' to indicate unknown
                             thisShimmer.ConfigByte3 = 'Nan';                                % Set the ConfigByte3 to 'Nan' to indicate unknown
-                            fprintf(strcat('Warning: readconfigbytes - Get config byte0 command response expected but not returned for Shimmer COM',thisShimmer.ComPort,'.\n'));
+                            fprintf(strcat('Warning: readconfigbytes - Get config byte0 command response expected but not returned for Shimmer COM',thisShimmer.name,'.\n'));
                             isRead = false;
                         end
                     else
@@ -7735,7 +7734,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                         thisShimmer.ConfigByte1 = 'Nan';                                    % Set the ConfigByte1 to 'Nan' to indicate unknown
                         thisShimmer.ConfigByte2 = 'Nan';                                    % Set the ConfigByte2 to 'Nan' to indicate unknown
                         thisShimmer.ConfigByte3 = 'Nan';                                    % Set the ConfigByte3 to 'Nan' to indicate unknown
-                        fprintf(strcat('Warning: readconfigbytes - Get config byte0 command response expected but not returned for Shimmer COM',thisShimmer.ComPort,'.\n'));
+                        fprintf(strcat('Warning: readconfigbytes - Get config byte0 command response expected but not returned for Shimmer COM',thisShimmer.name,'.\n'));
                         isRead = false;
                     end
                 else
@@ -7743,12 +7742,12 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                     thisShimmer.ConfigByte1 = 'Nan';                                        % Set the ConfigByte1 to 'Nan' to indicate unknown
                     thisShimmer.ConfigByte2 = 'Nan';                                        % Set the ConfigByte2 to 'Nan' to indicate unknown
                     thisShimmer.ConfigByte3 = 'Nan';                                        % Set the ConfigByte3 to 'Nan' to indicate unknown
-                    fprintf(strcat('Warning: readconfigbytes - Get config byte0 command response expected but not returned for Shimmer COM',thisShimmer.ComPort,'.\n'));
+                    fprintf(strcat('Warning: readconfigbytes - Get config byte0 command response expected but not returned for Shimmer COM',thisShimmer.name,'.\n'));
                     isRead = false;
                 end
             else
                 isRead = false;
-                fprintf(strcat('Warning: readconfigbytes - Cannot get config byte0 for COM ',thisShimmer.ComPort,' as Shimmer is not connected.\n'));
+                fprintf(strcat('Warning: readconfigbytes - Cannot get config byte0 for COM ',thisShimmer.name,' as Shimmer is not connected.\n'));
             end
         end % function readconfigbytes
                
@@ -7774,17 +7773,17 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                             isRead = true;
                         else
                             thisShimmer.BufferSize = 'Nan';               % Set the Buffer Size to 'Nan' to indicate unknown
-                            fprintf(strcat('Warning: readbuffersize - Get buffer size command response expected but not returned for Shimmer COM',thisShimmer.ComPort,'.\n'));
+                            fprintf(strcat('Warning: readbuffersize - Get buffer size command response expected but not returned for Shimmer COM',thisShimmer.name,'.\n'));
                             isRead = false;
                         end
                     else
                         thisShimmer.BufferSize = 'Nan';               % Set the Buffer Size to 'Nan' to indicate unknown
-                        fprintf(strcat('Warning: readbuffersize - Get buffer size command response expected but not returned for Shimmer COM',thisShimmer.ComPort,'.\n'));
+                        fprintf(strcat('Warning: readbuffersize - Get buffer size command response expected but not returned for Shimmer COM',thisShimmer.name,'.\n'));
                         isRead = false;
                     end
                 else
                     thisShimmer.BufferSize = 'Nan';                       % Set the Buffer Size to 'Nan' to indicate unknown
-                    fprintf(strcat('Warning: readbuffersize - Get buffer size command response expected but not returned for Shimmer COM',thisShimmer.ComPort,'.\n'));
+                    fprintf(strcat('Warning: readbuffersize - Get buffer size command response expected but not returned for Shimmer COM',thisShimmer.name,'.\n'));
                     isRead = false;
                 end
             elseif (thisShimmer.ShimmerVersion == thisShimmer.SHIMMER_3)
@@ -7792,7 +7791,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                 disp('Warning: readbuffersize - Buffer size is currently not configurable for Shimmer3.');
             else
                 isRead = false;
-                fprintf(strcat('Warning: readbuffersize - Cannot get buffer size for COM ',thisShimmer.ComPort,' as Shimmer is not connected.\n'));
+                fprintf(strcat('Warning: readbuffersize - Cannot get buffer size for COM ',thisShimmer.name,' as Shimmer is not connected.\n'));
             end
             
         end % function readbuffersize
@@ -7817,23 +7816,23 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                             isRead = true;
                         else
                             thisShimmer.GsrRange = 'Nan';                  % Set the GsrRange to 'Nan' to indicate unknown
-                            fprintf(strcat('Warning: readgsrrange - Get gsr range command response expected but not returned for Shimmer COM',thisShimmer.ComPort,'.\n'));
+                            fprintf(strcat('Warning: readgsrrange - Get gsr range command response expected but not returned for Shimmer COM',thisShimmer.name,'.\n'));
                             isRead = false;
                         end
                     else
                         thisShimmer.GsrRange = 'Nan';                  % Set the GsrRange to 'Nan' to indicate unknown
-                        fprintf(strcat('Warning: readgsrrange - Get gsr range command response expected but not returned for Shimmer COM',thisShimmer.ComPort,'.\n'));
+                        fprintf(strcat('Warning: readgsrrange - Get gsr range command response expected but not returned for Shimmer COM',thisShimmer.name,'.\n'));
                         isRead = false;
                     end
                 else
                     thisShimmer.GsrRange = 'Nan';                        % Set the GsrRange to 'Nan' to indicate unknown
-                    fprintf(strcat('Warning: readgsrrange - Get gsr range command response expected but not returned for Shimmer COM',thisShimmer.ComPort,'.\n'));
+                    fprintf(strcat('Warning: readgsrrange - Get gsr range command response expected but not returned for Shimmer COM',thisShimmer.name,'.\n'));
                     isRead = false;
                 end
                 
             else
                 isRead = false;
-                fprintf(strcat('Warning: readgsrrange - Cannot get gsr range for COM ',thisShimmer.ComPort,' as Shimmer is not connected.\n'));
+                fprintf(strcat('Warning: readgsrrange - Cannot get gsr range for COM ',thisShimmer.name,' as Shimmer is not connected.\n'));
             end
             
         end % function readgsrrange
@@ -7863,23 +7862,23 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                                 isRead = true;
                             else
                                 thisShimmer.MagRange = 'Nan';                  % Set the MagRange to 'Nan' to indicate unknown
-                                fprintf(strcat('Warning: readmagrange - Get mag range command response expected but not returned for Shimmer COM',thisShimmer.ComPort,'.\n'));
+                                fprintf(strcat('Warning: readmagrange - Get mag range command response expected but not returned for Shimmer COM',thisShimmer.name,'.\n'));
                                 isRead = false;
                             end
                         else
                             thisShimmer.MagRange = 'Nan';                  % Set the MagRange to 'Nan' to indicate unknown
-                            fprintf(strcat('Warning: readmagrange - Get mag range command response expected but not returned for Shimmer COM',thisShimmer.ComPort,'.\n'));
+                            fprintf(strcat('Warning: readmagrange - Get mag range command response expected but not returned for Shimmer COM',thisShimmer.name,'.\n'));
                             isRead = false;
                         end
                     else
                         thisShimmer.MagRange = 'Nan';                        % Set the MagRange to 'Nan' to indicate unknown
-                        fprintf(strcat('Warning: readmagrange - Get mag range command response expected but not returned for Shimmer COM',thisShimmer.ComPort,'.\n'));
+                        fprintf(strcat('Warning: readmagrange - Get mag range command response expected but not returned for Shimmer COM',thisShimmer.name,'.\n'));
                         isRead = false;
                     end
                     
                 else
                     isRead = false;
-                    fprintf(strcat('Warning: readmagrange - Cannot get mag range for COM ',thisShimmer.ComPort,' as Shimmer is not connected.\n'));
+                    fprintf(strcat('Warning: readmagrange - Cannot get mag range for COM ',thisShimmer.name,' as Shimmer is not connected.\n'));
                 end
             end
         end % function readmagrange
@@ -7904,23 +7903,23 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                             isRead = true;
                         else
                             thisShimmer.GyroRange = 'Nan';                  % Set the GyroRange to 'Nan' to indicate unknown
-                            fprintf(strcat('Warning: readgyrorange - Get gyro range command response expected but not returned for Shimmer COM',thisShimmer.ComPort,'.\n'));
+                            fprintf(strcat('Warning: readgyrorange - Get gyro range command response expected but not returned for Shimmer COM',thisShimmer.name,'.\n'));
                             isRead = false;
                         end
                     else
                         thisShimmer.GyroRange = 'Nan';                  % Set the GyroRange to 'Nan' to indicate unknown
-                        fprintf(strcat('Warning: readgyrorange - Get gyro range command response expected but not returned for Shimmer COM',thisShimmer.ComPort,'.\n'));
+                        fprintf(strcat('Warning: readgyrorange - Get gyro range command response expected but not returned for Shimmer COM',thisShimmer.name,'.\n'));
                         isRead = false;
                     end
                 else
                     thisShimmer.GyroRange = 'Nan';                        % Set the GyroRange to 'Nan' to indicate unknown
-                    fprintf(strcat('Warning: readgyrorange - Get gyro range command response expected but not returned for Shimmer COM',thisShimmer.ComPort,'.\n'));
+                    fprintf(strcat('Warning: readgyrorange - Get gyro range command response expected but not returned for Shimmer COM',thisShimmer.name,'.\n'));
                     isRead = false;
                 end
                 
             else
                 isRead = false;
-                fprintf(strcat('Warning: readgyrorange - Cannot get gyro range for COM ',thisShimmer.ComPort,' as Shimmer is not connected\n'));
+                fprintf(strcat('Warning: readgyrorange - Cannot get gyro range for COM ',thisShimmer.name,' as Shimmer is not connected\n'));
                 fprintf('or Shimmer is not a Shimmer3.\n')
             end
             
@@ -7947,12 +7946,12 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                         
                     else
                         thisShimmer.PressureResolution = 'Nan';                  % Set the Pressure Resolution to 'Nan' to indicate unknown
-                        fprintf(strcat('Warning: readpressureresolution - Get pressure resolution command response expected but not returned for Shimmer COM',thisShimmer.ComPort,'.\n'));
+                        fprintf(strcat('Warning: readpressureresolution - Get pressure resolution command response expected but not returned for Shimmer COM',thisShimmer.name,'.\n'));
                         isRead = false;
                     end
                 else
                     thisShimmer.PressureResolution = 'Nan';                        % Set the Pressure Resolution to 'Nan' to indicate unknown
-                    fprintf(strcat('Warning: readpressureresolution - Get pressure resolution command response expected but not returned for Shimmer COM',thisShimmer.ComPort,'.\n'));
+                    fprintf(strcat('Warning: readpressureresolution - Get pressure resolution command response expected but not returned for Shimmer COM',thisShimmer.name,'.\n'));
                     isRead = false;
                 end
             elseif(thisShimmer.ShimmerVersion < thisShimmer.SHIMMER_3)
@@ -7960,7 +7959,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                 disp('Warning: readpressureresolution - Pressure sensor is not available on Shimmer2/2r.');
             else
                 isRead = false;
-                fprintf(strcat('Warning: readpressureresolution - Cannot get pressure resolution for COM ',thisShimmer.ComPort,' as Shimmer is not connected.\n'));
+                fprintf(strcat('Warning: readpressureresolution - Cannot get pressure resolution for COM ',thisShimmer.name,' as Shimmer is not connected.\n'));
             end
             
         end % function readpressureresolution
@@ -8006,7 +8005,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                     isStarted = waitforack(thisShimmer, thisShimmer.DEFAULT_TIMEOUT);                       % Wait for Acknowledgment from Shimmer
                     
                     if(~isStarted)
-                        fprintf(strcat('Warning: readpressuresensorcalibrationcoefficients - Get calibration coefficients command response expected but not returned for Shimmer COM',thisShimmer.ComPort,'.\n'));
+                        fprintf(strcat('Warning: readpressuresensorcalibrationcoefficients - Get calibration coefficients command response expected but not returned for Shimmer COM',thisShimmer.name,'.\n'));
                         isRead = false;
                     else
                         serialData = [];
@@ -8045,7 +8044,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                             thisShimmer.DIG_P9 = calculatetwoscomplement(thisShimmer,bitshift(double(serialData(25)),8)+double(serialData(24)),16);
                             isRead = true;
                         else
-                            fprintf(strcat('Warning: readpressuresensorcalibrationcoefficients - Get calibration coefficients command response expected but not returned for Shimmer COM',thisShimmer.ComPort,'.\n'));
+                            fprintf(strcat('Warning: readpressuresensorcalibrationcoefficients - Get calibration coefficients command response expected but not returned for Shimmer COM',thisShimmer.name,'.\n'));
                             isRead = false;
                         end
                     end
@@ -8055,7 +8054,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                 end
             else
                 isRead = false;
-                fprintf(strcat('Warning: readpressuresensorcalibrationcoefficients - Cannot get pressure sensor calibaration coefficients for COM ',thisShimmer.ComPort,' as Shimmer is not connected.\n'));
+                fprintf(strcat('Warning: readpressuresensorcalibrationcoefficients - Cannot get pressure sensor calibaration coefficients for COM ',thisShimmer.name,' as Shimmer is not connected.\n'));
             end
         end    % read pressure sensor calibration coefficients
         
@@ -8079,7 +8078,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
             %   EXAMPLE: isRead = shimmer1.readexpansionboardidbytes()
             %
             if ~strcmp(thisShimmer.getstate,'Connected')
-                fprintf(strcat('Warning: readexpansionboardidbytes - Cannot get Expansion Board ID bytes for COM ',thisShimmer.ComPort,' as Shimmer is not connected.\n'));
+                fprintf(strcat('Warning: readexpansionboardidbytes - Cannot get Expansion Board ID bytes for COM ',thisShimmer.name,' as Shimmer is not connected.\n'));
                 IDByteArray = 'Nan';
             elseif (thisShimmer.ShimmerVersion < thisShimmer.SHIMMER_3)
                 disp('Warning: readexpansionboardidbytes - Only supported on Shimmer3');
@@ -8095,7 +8094,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                 isAcknowledged = waitforack(thisShimmer, thisShimmer.DEFAULT_TIMEOUT);   % Wait for Acknowledgment from Shimmer
                 
                 if(~isAcknowledged)
-                    fprintf(strcat('Warning: readexpansionboardidbytes - Get Expansion Board ID bytes command response expected but not returned for Shimmer COM',thisShimmer.ComPort,'.\n'));
+                    fprintf(strcat('Warning: readexpansionboardidbytes - Get Expansion Board ID bytes command response expected but not returned for Shimmer COM',thisShimmer.name,'.\n'));
                     IDByteArray = 'Nan';
                 else
                     serialData = [];
@@ -8105,7 +8104,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                             IDByteArray(numByte) = serialData(numByte+2);                % First two bytes are DAUGHTER_CARD_ID_RESPONSE and numBytes.
                         end
                     else
-                        fprintf(strcat('Warning: readexpansionboardidbytes - Get Expansion Board ID bytes command response expected but not returned for Shimmer COM',thisShimmer.ComPort,'.\n'));
+                        fprintf(strcat('Warning: readexpansionboardidbytes - Get Expansion Board ID bytes command response expected but not returned for Shimmer COM',thisShimmer.name,'.\n'));
                         IDByteArray = 'Nan';
                     end
                 end
@@ -8193,7 +8192,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                     elseif (chipIdentifier == 2)
                         ExG2Failed = true;
                     end
-                    fprintf(strcat('Warning: readexgconfiguration - Get EXG settings command response expected but not returned for Shimmer COM',thisShimmer.ComPort,'.\n'));
+                    fprintf(strcat('Warning: readexgconfiguration - Get EXG settings command response expected but not returned for Shimmer COM',thisShimmer.name,'.\n'));
                     isRead = false;
                 end
                 if(ExG1Failed == true)
@@ -8210,7 +8209,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                     thisShimmer.EXG1CH1Gain = 'Nan';
                     thisShimmer.EXG1CH2Gain = 'Nan';
                     thisShimmer.EXG1Rate = 'Nan';
-                    fprintf(strcat('Warning: readexgconfiguration - Get EXG settings command response expected but not returned for Shimmer COM',thisShimmer.ComPort,'.\n'));
+                    fprintf(strcat('Warning: readexgconfiguration - Get EXG settings command response expected but not returned for Shimmer COM',thisShimmer.name,'.\n'));
                     isRead = false;
                 end
                 if(ExG2Failed == true)
@@ -8227,7 +8226,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                     thisShimmer.EXG2CH1Gain = 'Nan';
                     thisShimmer.EXG2CH2Gain = 'Nan';
                     thisShimmer.EXG2Rate = 'Nan';
-                    fprintf(strcat('Warning: readexgconfiguration - Get EXG settings command response expected but not returned for Shimmer COM',thisShimmer.ComPort,'.\n'));
+                    fprintf(strcat('Warning: readexgconfiguration - Get EXG settings command response expected but not returned for Shimmer COM',thisShimmer.name,'.\n'));
                     isRead = false;
                 end
             elseif (thisShimmer.ShimmerVersion < thisShimmer.SHIMMER_3)
@@ -8238,7 +8237,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                 disp('Warning: readexgconfiguration - Invalid chip identifier (please use 1 (Chip1) or 2 (Chip2).');
             else
                 isRead = false;
-                fprintf(strcat('Warning: readexgconfiguration - Cannot get EXG settings for COM ',thisShimmer.ComPort,' as Shimmer is not connected.\n'));
+                fprintf(strcat('Warning: readexgconfiguration - Cannot get EXG settings for COM ',thisShimmer.name,' as Shimmer is not connected.\n'));
             end
             
         end % function readEXGconfiguration
@@ -8263,23 +8262,23 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                             isRead = true;
                         else
                             thisShimmer.MagRate = 'Nan';                  % Set the MagRate to 'Nan' to indicate unknown
-                            fprintf(strcat('Warning: readmagrate - Get mag rate command response expected but not returned for Shimmer COM',thisShimmer.ComPort,'.\n'));
+                            fprintf(strcat('Warning: readmagrate - Get mag rate command response expected but not returned for Shimmer COM',thisShimmer.name,'.\n'));
                             isRead = false;
                         end
                     else
                         thisShimmer.MagRate = 'Nan';                  % Set the MagRate to 'Nan' to indicate unknown
-                        fprintf(strcat('Warning: readmagrate - Get mag rate command response expected but not returned for Shimmer COM',thisShimmer.ComPort,'.\n'));
+                        fprintf(strcat('Warning: readmagrate - Get mag rate command response expected but not returned for Shimmer COM',thisShimmer.name,'.\n'));
                         isRead = false;
                     end
                 else
                     thisShimmer.MagRate = 'Nan';                        % Set the MagRate to 'Nan' to indicate unknown
-                    fprintf(strcat('Warning: readmagrate - Get mag rate command response expected but not returned for Shimmer COM',thisShimmer.ComPort,'.\n'));
+                    fprintf(strcat('Warning: readmagrate - Get mag rate command response expected but not returned for Shimmer COM',thisShimmer.name,'.\n'));
                     isRead = false;
                 end
                 
             else
                 isRead = false;
-                fprintf(strcat('Warning: readmagrate - Cannot get mag rate for COM ',thisShimmer.ComPort,' as Shimmer is not connected.\n'));
+                fprintf(strcat('Warning: readmagrate - Cannot get mag rate for COM ',thisShimmer.name,' as Shimmer is not connected.\n'));
             end
             
         end % function readmagrate
@@ -8302,12 +8301,12 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                             isRead = true;
                     else
                         thisShimmer.InternalExpPower = 'Nan';                  % Set the InternalExpPower to 'Nan' to indicate unknown
-                        fprintf(strcat('Warning: readinternalexppower - Get internal exp power command response expected but not returned for Shimmer COM',thisShimmer.ComPort,'.\n'));
+                        fprintf(strcat('Warning: readinternalexppower - Get internal exp power command response expected but not returned for Shimmer COM',thisShimmer.name,'.\n'));
                         isRead = false;
                     end
                 else
                     thisShimmer.InternalExpPower = 'Nan';                        % Set the InternalExpPower to 'Nan' to indicate unknown
-                    fprintf(strcat('Warning: readinternalexppower - Get internal exp power command response expected but not returned for Shimmer COM',thisShimmer.ComPort,'.\n'));
+                    fprintf(strcat('Warning: readinternalexppower - Get internal exp power command response expected but not returned for Shimmer COM',thisShimmer.name,'.\n'));
                     isRead = false;
                 end
             elseif (thisShimmer.ShimmerVersion < thisShimmer.SHIMMER_3)    
@@ -8316,7 +8315,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                 disp('Warning: readinternalexppower - Internal exp power is not supported for this firmware version, please update firmware.');
             else
                 isRead = false;
-                fprintf(strcat('Warning: readinternalexppower - Cannot get internal exp power for COM ',thisShimmer.ComPort,' as Shimmer is not connected.\n'));
+                fprintf(strcat('Warning: readinternalexppower - Cannot get internal exp power for COM ',thisShimmer.name,' as Shimmer is not connected.\n'));
             end
             
         end % function readinternalexppower
@@ -8341,23 +8340,23 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                             isRead = true;
                         else
                             thisShimmer.GyroRate = 'Nan';                  % Set the GyroRate to 'Nan' to indicate unknown
-                            fprintf(strcat('Warning: readgyrorate - Get gyro rate command response expected but not returned for Shimmer COM',thisShimmer.ComPort,'.\n'));
+                            fprintf(strcat('Warning: readgyrorate - Get gyro rate command response expected but not returned for Shimmer COM',thisShimmer.name,'.\n'));
                             isRead = false;
                         end
                     else
                         thisShimmer.GyroRate = 'Nan';                  % Set the GyroRate to 'Nan' to indicate unknown
-                        fprintf(strcat('Warning: readgyrorate - Get gyro rate command response expected but not returned for Shimmer COM',thisShimmer.ComPort,'.\n'));
+                        fprintf(strcat('Warning: readgyrorate - Get gyro rate command response expected but not returned for Shimmer COM',thisShimmer.name,'.\n'));
                         isRead = false;
                     end
                 else
                     thisShimmer.GyroRate = 'Nan';                        % Set the GyroRate to 'Nan' to indicate unknown
-                    fprintf(strcat('Warning: readgyrorate - Get gyro rate command response expected but not returned for Shimmer COM',thisShimmer.ComPort,'.\n'));
+                    fprintf(strcat('Warning: readgyrorate - Get gyro rate command response expected but not returned for Shimmer COM',thisShimmer.name,'.\n'));
                     isRead = false;
                 end
                 
             else
                 isRead = false;
-                fprintf(strcat('Warning: readgyrorate - Cannot get gyro rate for COM ',thisShimmer.ComPort,' as Shimmer is not connected\n'));
+                fprintf(strcat('Warning: readgyrorate - Cannot get gyro rate for COM ',thisShimmer.name,' as Shimmer is not connected\n'));
                 fprintf('or Shimmer is not a Shimmer3. Gyro rate is only supported for Shimmer3.\n');
             end
             
@@ -8383,23 +8382,23 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                             isRead = true;
                         else
                             thisShimmer.AccelWideRangeDataRate = 'Nan';                  % Set the AccelWideRangeDataRate to 'Nan' to indicate unknown
-                            fprintf(strcat('Warning: readaccelrate - Get accel rate command response expected but not returned for Shimmer COM',thisShimmer.ComPort,'.\n'));
+                            fprintf(strcat('Warning: readaccelrate - Get accel rate command response expected but not returned for Shimmer COM',thisShimmer.name,'.\n'));
                             isRead = false;
                         end
                     else
                         thisShimmer.AccelWideRangeDataRate = 'Nan';                  % Set the AccelWideRangeDataRate to 'Nan' to indicate unknown
-                        fprintf(strcat('Warning: readaccelrate - Get accel rate command response expected but not returned for Shimmer COM',thisShimmer.ComPort,'.\n'));
+                        fprintf(strcat('Warning: readaccelrate - Get accel rate command response expected but not returned for Shimmer COM',thisShimmer.name,'.\n'));
                         isRead = false;
                     end
                 else
                     thisShimmer.AccelWideRangeDataRate = 'Nan';                        % Set the AccelWideRangeDataRate to 'Nan' to indicate unknown
-                    fprintf(strcat('Warning: readaccelrate - Get accel rate command response expected but not returned for Shimmer COM',thisShimmer.ComPort,'.\n'));
+                    fprintf(strcat('Warning: readaccelrate - Get accel rate command response expected but not returned for Shimmer COM',thisShimmer.name,'.\n'));
                     isRead = false;
                 end
                 
             else
                 isRead = false;
-                fprintf(strcat('Warning: readaccelrate - Cannot get accel rate for COM ',thisShimmer.ComPort,' as Shimmer is not connected.\n'));
+                fprintf(strcat('Warning: readaccelrate - Cannot get accel rate for COM ',thisShimmer.name,' as Shimmer is not connected.\n'));
                 fprintf('or Shimmer is not a Shimmer3. Read accel rate is only supported for Shimmer3.\n');
             end
             
@@ -8434,12 +8433,12 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                                     isRead = true;
                             else
                                 thisShimmer.EXG1Config1 = 'Nan';                  % Set the  to 'Nan' to indicate unknown
-                                fprintf(strcat('Warning: readexgrate - Get exg regs command response expected but not returned for Shimmer COM',thisShimmer.ComPort,'.\n'));
+                                fprintf(strcat('Warning: readexgrate - Get exg regs command response expected but not returned for Shimmer COM',thisShimmer.name,'.\n'));
                                 isRead = false;
                             end
                         else
                             thisShimmer.EXG1Config1 = 'Nan';                  % Set the  to 'Nan' to indicate unknown
-                            fprintf(strcat('Warning: readexgrate - Get exg regs command response expected but not returned for Shimmer COM',thisShimmer.ComPort,'.\n'));
+                            fprintf(strcat('Warning: readexgrate - Get exg regs command response expected but not returned for Shimmer COM',thisShimmer.name,'.\n'));
                             isRead = false;
                         end
                     else
@@ -8453,18 +8452,18 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                                     isRead = true;
                             else
                                 thisShimmer.EXG2Config1 = 'Nan';                  % Set the  to 'Nan' to indicate unknown
-                                fprintf(strcat('Warning: readexgrate - Get exg regs command response expected but not returned for Shimmer COM',thisShimmer.ComPort,'.\n'));
+                                fprintf(strcat('Warning: readexgrate - Get exg regs command response expected but not returned for Shimmer COM',thisShimmer.name,'.\n'));
                                 isRead = false;
                             end
                         else
                             thisShimmer.EXG2Config1 = 'Nan';                  % Set the  to 'Nan' to indicate unknown
-                            fprintf(strcat('Warning: readexgrate - Get exg regs command response expected but not returned for Shimmer COM',thisShimmer.ComPort,'.\n'));
+                            fprintf(strcat('Warning: readexgrate - Get exg regs command response expected but not returned for Shimmer COM',thisShimmer.name,'.\n'));
                             isRead = false;
                         end
                     end
                 else
                     isRead = false;
-                    fprintf(strcat('Warning: readexgrate - Cannot get exg rate for COM ',thisShimmer.ComPort,' as Shimmer is not connected.\n'));
+                    fprintf(strcat('Warning: readexgrate - Cannot get exg rate for COM ',thisShimmer.name,' as Shimmer is not connected.\n'));
                 end
             else
                 isRead = false;
@@ -8501,13 +8500,13 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                                     else
                                         thisShimmer.EXG1CH1Gain = 'Nan';                  % Set the  to 'Nan' to indicate unknown
                                         thisShimmer.EXG1Ch1Set = 'Nan';
-                                        fprintf(strcat('Warning: readexggain - Get exg regs command response expected but not returned for Shimmer COM',thisShimmer.ComPort,'.\n'));
+                                        fprintf(strcat('Warning: readexggain - Get exg regs command response expected but not returned for Shimmer COM',thisShimmer.name,'.\n'));
                                         isRead = false;
                                     end
                                 else
                                     thisShimmer.EXG1CH1Gain = 'Nan';                  % Set the  to 'Nan' to indicate unknown
                                     thisShimmer.EXG1Ch1Set = 'Nan';
-                                    fprintf(strcat('Warning: readexggain - Get exg regs command response expected but not returned for Shimmer COM',thisShimmer.ComPort,'.\n'));
+                                    fprintf(strcat('Warning: readexggain - Get exg regs command response expected but not returned for Shimmer COM',thisShimmer.name,'.\n'));
                                     isRead = false;
                                 end
                             else
@@ -8522,19 +8521,19 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                                     else
                                         thisShimmer.EXG2CH1Gain = 'Nan';                  % Set the  to 'Nan' to indicate unknown
                                         thisShimmer.EXG2Ch1Set = 'Nan';
-                                        fprintf(strcat('Warning: readexggain - Get exg regs command response expected but not returned for Shimmer COM',thisShimmer.ComPort,'.\n'));
+                                        fprintf(strcat('Warning: readexggain - Get exg regs command response expected but not returned for Shimmer COM',thisShimmer.name,'.\n'));
                                         isRead = false;
                                     end
                                 else
                                     thisShimmer.EXG2CH1Gain = 'Nan';                  % Set the  to 'Nan' to indicate unknown
                                     thisShimmer.EXG2Ch1Set = 'Nan';
-                                    fprintf(strcat('Warning: readexggain - Get exg regs command response expected but not returned for Shimmer COM',thisShimmer.ComPort,'.\n'));
+                                    fprintf(strcat('Warning: readexggain - Get exg regs command response expected but not returned for Shimmer COM',thisShimmer.name,'.\n'));
                                     isRead = false;
                                 end
                             end
                         else
                             isRead = false;
-                            fprintf(strcat('Warning: readexggain - Cannot get exg gain for COM ',thisShimmer.ComPort,' as Shimmer is not connected.\n'));
+                            fprintf(strcat('Warning: readexggain - Cannot get exg gain for COM ',thisShimmer.name,' as Shimmer is not connected.\n'));
                         end
                     else
                         isRead = false;
@@ -8562,13 +8561,13 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                                     else
                                         thisShimmer.EXG1CH2Gain = 'Nan';                  % Set the  to 'Nan' to indicate unknown
                                         thisShimmer.EXG1Ch2Set = 'Nan';
-                                        fprintf(strcat('Warning: readexggain - Get exg regs command response expected but not returned for Shimmer COM',thisShimmer.ComPort,'.\n'));
+                                        fprintf(strcat('Warning: readexggain - Get exg regs command response expected but not returned for Shimmer COM',thisShimmer.name,'.\n'));
                                         isRead = false;
                                     end
                                 else
                                     thisShimmer.EXG1CH2Gain = 'Nan';                  % Set the  to 'Nan' to indicate unknown
                                     thisShimmer.EXG1Ch2Set = 'Nan';
-                                    fprintf(strcat('Warning: readexggain - Get exg regs command response expected but not returned for Shimmer COM',thisShimmer.ComPort,'.\n'));
+                                    fprintf(strcat('Warning: readexggain - Get exg regs command response expected but not returned for Shimmer COM',thisShimmer.name,'.\n'));
                                     isRead = false;
                                 end
                             else
@@ -8583,19 +8582,19 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                                     else
                                         thisShimmer.EXG2CH2Gain = 'Nan';                  % Set the  to 'Nan' to indicate unknown
                                         thisShimmer.EXG2Ch2Set = 'Nan';
-                                        fprintf(strcat('Warning: readexggain - Get exg regs command response expected but not returned for Shimmer COM',thisShimmer.ComPort,'.\n'));
+                                        fprintf(strcat('Warning: readexggain - Get exg regs command response expected but not returned for Shimmer COM',thisShimmer.name,'.\n'));
                                         isRead = false;
                                     end
                                 else
                                     thisShimmer.EXG2CH2Gain = 'Nan';                  % Set the  to 'Nan' to indicate unknown
                                     thisShimmer.EXG2Ch2Set = 'Nan';
-                                    fprintf(strcat('Warning: readexggain - Get exg regs command response expected but not returned for Shimmer COM',thisShimmer.ComPort,'.\n'));
+                                    fprintf(strcat('Warning: readexggain - Get exg regs command response expected but not returned for Shimmer COM',thisShimmer.name,'.\n'));
                                     isRead = false;
                                 end
                             end
                         else
                             isRead = false;
-                            fprintf(strcat('Warning: readexggain - Cannot get exg gain for COM ',thisShimmer.ComPort,' as Shimmer is not connected.\n'));
+                            fprintf(strcat('Warning: readexggain - Cannot get exg gain for COM ',thisShimmer.name,' as Shimmer is not connected.\n'));
                         end
                     else
                         isRead = false;
@@ -8621,7 +8620,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
             %                    successful.
             %
             if ~strcmp(thisShimmer.getstate,'Connected')
-                fprintf(strcat('Warning: readexgreferenceelectrodeconfiguration - Cannot get ExG reference electrode configuration for COM ',thisShimmer.ComPort,' as Shimmer is not connected.\n'));
+                fprintf(strcat('Warning: readexgreferenceelectrodeconfiguration - Cannot get ExG reference electrode configuration for COM ',thisShimmer.name,' as Shimmer is not connected.\n'));
                 thisShimmer.EXG1RLD_Sens = 'Nan';
                 thisShimmer.EXGReferenceElectrodeConfiguration = 'Nan';
                 isRead = false;
@@ -8644,7 +8643,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                 isAcknowledged = waitforack(thisShimmer, thisShimmer.DEFAULT_TIMEOUT);   % Wait for Acknowledgment from Shimmer
                 
                 if(~isAcknowledged)
-                    fprintf(strcat('Warning: readexgreferenceelectrodeconfiguration - Get ExG registers command response expected but not returned for Shimmer COM',thisShimmer.ComPort,'.\n'));
+                    fprintf(strcat('Warning: readexgreferenceelectrodeconfiguration - Get ExG registers command response expected but not returned for Shimmer COM',thisShimmer.name,'.\n'));
                     thisShimmer.EXG1RLD_Sens = 'Nan';
                     thisShimmer.EXGReferenceElectrodeConfiguration = 'Nan';
                     isRead = false;
@@ -8657,7 +8656,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                         thisShimmer.EXGReferenceElectrodeConfiguration = bitand(thisShimmer.EXG1RLD_Sens,15);
                         isRead = true;
                     else
-                        fprintf(strcat('Warning: readexgreferenceelectrodeconfiguration - Get ExG registers command response expected but not returned for Shimmer COM',thisShimmer.ComPort,'.\n'));
+                        fprintf(strcat('Warning: readexgreferenceelectrodeconfiguration - Get ExG registers command response expected but not returned for Shimmer COM',thisShimmer.name,'.\n'));
                         thisShimmer.EXG1RLD_Sens = 'Nan';
                         thisShimmer.EXGReferenceElectrodeConfiguration = 'Nan';
                         isRead = false;
@@ -8706,7 +8705,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
             end
             
             if ~strcmp(thisShimmer.getstate,'Connected')
-                fprintf(strcat('Warning: readexgleadoffdetectionmode - Cannot get ExG lead-off detection mode for COM ',thisShimmer.ComPort,' as Shimmer is not connected.\n'));
+                fprintf(strcat('Warning: readexgleadoffdetectionmode - Cannot get ExG lead-off detection mode for COM ',thisShimmer.name,' as Shimmer is not connected.\n'));
             elseif (thisShimmer.ShimmerVersion < thisShimmer.SHIMMER_3)
                 disp('Warning: readexgleadoffdetectionmode - Only supported on Shimmer3');
             elseif (thisShimmer.FirmwareCompatibilityCode < 3)
@@ -8722,7 +8721,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                     isAcknowledged = waitforack(thisShimmer, thisShimmer.DEFAULT_TIMEOUT);   % Wait for Acknowledgment from Shimmer
                     
                     if(~isAcknowledged)
-                        fprintf(strcat('Warning: readexgleadoffdetectionmode - Get ExG registers command response expected but not returned for Shimmer COM',thisShimmer.ComPort,'.\n'));
+                        fprintf(strcat('Warning: readexgleadoffdetectionmode - Get ExG registers command response expected but not returned for Shimmer COM',thisShimmer.name,'.\n'));
                         if chipselect == 0  %SENSOR_EXG1
                             thisShimmer.EXG1Loff = 'Nan';
                             thisShimmer.EXG1FLEAD_OFF = 'Nan'; % Lead-off frequency
@@ -8806,7 +8805,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                                 thisShimmer.EXGLeadOffDetectionMode = 'Nan';
                             end
                         else
-                            fprintf(strcat('Warning: readexgleadoffdetectionmode - Get ExG registers command response expected but not returned for Shimmer COM',thisShimmer.ComPort,'.\n'));
+                            fprintf(strcat('Warning: readexgleadoffdetectionmode - Get ExG registers command response expected but not returned for Shimmer COM',thisShimmer.name,'.\n'));
                             if chipselect == 0 %SENSOR_EXG1
                                 thisShimmer.EXG1Loff = 'Nan';
                                 thisShimmer.EXG1FLEAD_OFF = 'Nan'; % Lead-off frequency
@@ -8872,7 +8871,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                 end
             end
             if ~strcmp(thisShimmer.getstate,'Connected')
-                fprintf(strcat('Warning: readexgleadoffdetectioncurrent - Cannot get ExG lead-off detection current for COM ',thisShimmer.ComPort,' as Shimmer is not connected.\n'));
+                fprintf(strcat('Warning: readexgleadoffdetectioncurrent - Cannot get ExG lead-off detection current for COM ',thisShimmer.name,' as Shimmer is not connected.\n'));
             elseif (thisShimmer.ShimmerVersion < thisShimmer.SHIMMER_3)
                 disp('Warning: readexgleadoffdetectioncurrent - Only supported on Shimmer3');
             elseif (thisShimmer.FirmwareCompatibilityCode < 3)
@@ -8888,7 +8887,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                 isAcknowledged = waitforack(thisShimmer, thisShimmer.DEFAULT_TIMEOUT);   % Wait for Acknowledgment from Shimmer
                 
                 if(~isAcknowledged)
-                    fprintf(strcat('Warning: readexgleadoffdetectioncurrent - Get ExG registers command response expected but not returned for Shimmer COM',thisShimmer.ComPort,'.\n'));
+                    fprintf(strcat('Warning: readexgleadoffdetectioncurrent - Get ExG registers command response expected but not returned for Shimmer COM',thisShimmer.name,'.\n'));
                     if (chipIdentifier == 1)
                         thisShimmer.EXG1Loff = 'Nan';
                         thisShimmer.EXG1ILEAD_OFF = 'Nan';
@@ -8913,7 +8912,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                             isRead = true;
                         end
                     else
-                        fprintf(strcat('Warning: readexgleadoffdetectioncurrent - Get ExG registers command response expected but not returned for Shimmer COM',thisShimmer.ComPort,'.\n'));
+                        fprintf(strcat('Warning: readexgleadoffdetectioncurrent - Get ExG registers command response expected but not returned for Shimmer COM',thisShimmer.name,'.\n'));
                         if (chipIdentifier == 1)
                             thisShimmer.EXG1Loff = 'Nan';
                             thisShimmer.EXG1ILEAD_OFF = 'Nan';
@@ -8958,7 +8957,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                 end
             end
             if ~strcmp(thisShimmer.getstate,'Connected')
-                fprintf(strcat('Warning: readexgleadoffcomparatorthreshold - Cannot get ExG lead-off comparator threshold for COM ',thisShimmer.ComPort,' as Shimmer is not connected.\n'));
+                fprintf(strcat('Warning: readexgleadoffcomparatorthreshold - Cannot get ExG lead-off comparator threshold for COM ',thisShimmer.name,' as Shimmer is not connected.\n'));
             elseif (thisShimmer.ShimmerVersion < thisShimmer.SHIMMER_3)
                 disp('Warning: readexgleadoffcomparatorthreshold - Only supported on Shimmer3');
             elseif (thisShimmer.FirmwareCompatibilityCode < 3)
@@ -8974,7 +8973,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                 isAcknowledged = waitforack(thisShimmer, thisShimmer.DEFAULT_TIMEOUT);   % Wait for Acknowledgment from Shimmer
                 
                 if(~isAcknowledged)
-                    fprintf(strcat('Warning: readexgleadoffcomparatorthreshold - Get ExG registers command response expected but not returned for Shimmer COM',thisShimmer.ComPort,'.\n'));
+                    fprintf(strcat('Warning: readexgleadoffcomparatorthreshold - Get ExG registers command response expected but not returned for Shimmer COM',thisShimmer.name,'.\n'));
                     if (chipIdentifier == 1)
                         thisShimmer.EXG1Loff = 'Nan';
                         thisShimmer.EXG1COMP_TH = 'Nan';
@@ -8999,7 +8998,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                             isRead = true;
                         end
                     else
-                        fprintf(strcat('Warning: readexgleadoffcomparatorthreshold - Get ExG registers command response expected but not returned for Shimmer COM',thisShimmer.ComPort,'.\n'));
+                        fprintf(strcat('Warning: readexgleadoffcomparatorthreshold - Get ExG registers command response expected but not returned for Shimmer COM',thisShimmer.name,'.\n'));
                         if (chipIdentifier == 1)
                             thisShimmer.EXG1Loff = 'Nan';
                             thisShimmer.EXG1COMP_TH = 'Nan';
@@ -9028,7 +9027,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
             %                    successful.
             %
             if ~strcmp(thisShimmer.getstate,'Connected')
-                fprintf(strcat('Warning: readrealtimeclock - Cannot get Real Time Clock setting for COM',thisShimmer.ComPort,' as Shimmer is not connected.\n'));
+                fprintf(strcat('Warning: readrealtimeclock - Cannot get Real Time Clock setting for COM',thisShimmer.name,' as Shimmer is not connected.\n'));
                 thisShimmer.RealTimeClockMilliseconds = 'Nan';
                 thisShimmer.RealTimeClockTicks = 'Nan';
                 isRead = 'false';
@@ -9049,7 +9048,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                 isAcknowledged = waitforack(thisShimmer, thisShimmer.DEFAULT_TIMEOUT);   % Wait for Acknowledgment from Shimmer
                 
                 if(~isAcknowledged)
-                    fprintf(strcat('Warning: readrealtimeclock - Get Real Time Clock command response expected but not returned for Shimmer COM',thisShimmer.ComPort,'.\n'));
+                    fprintf(strcat('Warning: readrealtimeclock - Get Real Time Clock command response expected but not returned for Shimmer COM',thisShimmer.name,'.\n'));
                     thisShimmer.RealTimeClockMilliseconds = 'Nan';
                     thisShimmer.RealTimeClockTicks = 'Nan';
                     isRead = 'false';
@@ -9063,7 +9062,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                         thisShimmer.RealTimeClockMilliseconds = double(thisShimmer.RealTimeClockTicks)/32.768;
                         isRead = 'true';
                     else
-                        fprintf(strcat('Warning: readrealtimeclock - Get Real Time Clock command response expected but not returned for Shimmer COM',thisShimmer.ComPort,'.\n'));
+                        fprintf(strcat('Warning: readrealtimeclock - Get Real Time Clock command response expected but not returned for Shimmer COM',thisShimmer.name,'.\n'));
                         thisShimmer.RealTimeClockMilliseconds = 'Nan';
                         thisShimmer.RealTimeClockTicks = 'Nan';
                         isRead = 'false';
@@ -9097,23 +9096,23 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                             isRead = true;
                         else
                             thisShimmer.BlinkLED = 'Nan';                  % Set the BlinkLED to 'Nan' to indicate unknown
-                            fprintf(strcat('Warning: readledblink - Get LED Blink command response expected but not returned for Shimmer COM',thisShimmer.ComPort,'.\n'));
+                            fprintf(strcat('Warning: readledblink - Get LED Blink command response expected but not returned for Shimmer COM',thisShimmer.name,'.\n'));
                             isRead = false;
                         end
                     else
                         thisShimmer.BlinkLED = 'Nan';                  % Set the BlinkLED to 'Nan' to indicate unknown
-                        fprintf(strcat('Warning: readledblink - Get LED Blink command response expected but not returned for Shimmer COM',thisShimmer.ComPort,'.\n'));
+                        fprintf(strcat('Warning: readledblink - Get LED Blink command response expected but not returned for Shimmer COM',thisShimmer.name,'.\n'));
                         isRead = false;
                     end
                 else
                     thisShimmer.BlinkLED = 'Nan';                        % Set the BlinkLED to 'Nan' to indicate unknown
-                    fprintf(strcat('Warning: readledblink - Get LED Blink command response expected but not returned for Shimmer COM',thisShimmer.ComPort,'.\n'));
+                    fprintf(strcat('Warning: readledblink - Get LED Blink command response expected but not returned for Shimmer COM',thisShimmer.name,'.\n'));
                     isRead = false;
                 end
                 
             else
                 isRead = false;
-                fprintf(strcat('Warning: readledblink - Cannot get LED Blink for COM ',thisShimmer.ComPort,' as Shimmer is not connected.\n'));
+                fprintf(strcat('Warning: readledblink - Cannot get LED Blink for COM ',thisShimmer.name,' as Shimmer is not connected.\n'));
             end
             
         end % function readledblink
@@ -9140,7 +9139,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                                 thisShimmer.EMGGain=bitshift(double(shimmerResponse(4)),8)+double(shimmerResponse(5));
                                 
                             else
-                                str = sprintf('Warning: reademgcalibrationparameters - Calibration parameters for EMG not found for Shimmer on Com Port %s, default values will be used', thisShimmer.ComPort);
+                                str = sprintf('Warning: reademgcalibrationparameters - Calibration parameters for EMG not found for Shimmer on Com Port %s, default values will be used', thisShimmer.name);
                                 disp(str);
                                 
                                 thisShimmer.EMGOffset = 2060;
@@ -9150,19 +9149,19 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                         else
                             thisShimmer.EMGOffset = 2060;
                             thisShimmer.EMGGain = 750;
-                            fprintf(strcat('Warning: reademgcalibrationparameters - Get EMG calibration parameters command response expected but not returned for Shimmer COM',thisShimmer.ComPort,'. default values will be used.\n'));
+                            fprintf(strcat('Warning: reademgcalibrationparameters - Get EMG calibration parameters command response expected but not returned for Shimmer COM',thisShimmer.name,'. default values will be used.\n'));
                             isRead = false;
                         end
                     else
                         thisShimmer.EMGOffset = 2060;
                         thisShimmer.EMGGain = 750;
-                        fprintf(strcat('Warning: reademgcalibrationparameters - Get EMG calibration parameters command response expected but not returned for Shimmer COM',thisShimmer.ComPort,'. default values will be used.\n'));
+                        fprintf(strcat('Warning: reademgcalibrationparameters - Get EMG calibration parameters command response expected but not returned for Shimmer COM',thisShimmer.name,'. default values will be used.\n'));
                         isRead = false;
                     end
                 else
                     thisShimmer.EMGOffset = 2060;
                     thisShimmer.EMGGain = 750;
-                    fprintf(strcat('Warning: reademgcalibrationparameters - Get EMG calibration parameters command response expected but not returned for Shimmer COM',thisShimmer.ComPort,'. default values will be used.\n'));
+                    fprintf(strcat('Warning: reademgcalibrationparameters - Get EMG calibration parameters command response expected but not returned for Shimmer COM',thisShimmer.name,'. default values will be used.\n'));
                     isRead = false;
                 end
                 
@@ -9171,7 +9170,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                 disp('Warning: reademgcalibrationparameters - EMG calibration parameters not currently available for Shimmer3.');
            else
                 isRead = false;
-                fprintf(strcat('Warning: reademgcalibrationparameters - Cannot get EMG calibration parameters for COM ',thisShimmer.ComPort,' as Shimmer is not connected.\n'));
+                fprintf(strcat('Warning: reademgcalibrationparameters - Cannot get EMG calibration parameters for COM ',thisShimmer.name,' as Shimmer is not connected.\n'));
             end
             
         end % function reademgcalibrationparameters
@@ -9200,7 +9199,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                                 thisShimmer.ECGRALLGain=bitshift(double(shimmerResponse(8)),8)+double(shimmerResponse(9));
                                 
                             else
-                                str = sprintf('Warning: readecgcalibrationparameters - Calibration parameters for ECG not found for Shimmer on Com Port %s, default values will be used', thisShimmer.ComPort);
+                                str = sprintf('Warning: readecgcalibrationparameters - Calibration parameters for ECG not found for Shimmer on Com Port %s, default values will be used', thisShimmer.name);
                                 disp(str);
                                 
                                 thisShimmer.ECGLALLOffset = 2060;
@@ -9214,7 +9213,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                             thisShimmer.ECGLALLGain = 175;
                             thisShimmer.ECGRALLOffset = 2060;
                             thisShimmer.ECGRALLGain = 175;
-                            fprintf(strcat('Warning: readecgcalibrationparameters - Get ECG calibration parameters command response expected but not returned for Shimmer COM',thisShimmer.ComPort,'. default values will be used.\n'));
+                            fprintf(strcat('Warning: readecgcalibrationparameters - Get ECG calibration parameters command response expected but not returned for Shimmer COM',thisShimmer.name,'. default values will be used.\n'));
                             isRead = false;
                         end
                     else
@@ -9222,7 +9221,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                         thisShimmer.ECGLALLGain = 175;
                         thisShimmer.ECGRALLOffset = 2060;
                         thisShimmer.ECGRALLGain = 175;
-                        fprintf(strcat('Warning: readecgcalibrationparameters - Get ECG calibration parameters command response expected but not returned for Shimmer COM',thisShimmer.ComPort,'. default values will be used.\n'));
+                        fprintf(strcat('Warning: readecgcalibrationparameters - Get ECG calibration parameters command response expected but not returned for Shimmer COM',thisShimmer.name,'. default values will be used.\n'));
                         isRead = false;
                     end
                 else
@@ -9230,7 +9229,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                     thisShimmer.ECGLALLGain = 175;
                     thisShimmer.ECGRALLOffset = 2060;
                     thisShimmer.ECGRALLGain = 175;
-                    fprintf(strcat('Warning: readecgcalibrationparameters - Get ECG calibration parameters command response expected but not returned for Shimmer COM',thisShimmer.ComPort,'. default values will be used.\n'));
+                    fprintf(strcat('Warning: readecgcalibrationparameters - Get ECG calibration parameters command response expected but not returned for Shimmer COM',thisShimmer.name,'. default values will be used.\n'));
                     isRead = false;
                 end
             elseif(thisShimmer.ShimmerVersion == thisShimmer.SHIMMER_3) 
@@ -9238,7 +9237,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                 disp('Warning: readecgcalibrationparameters - ECG calibration parameters not currently available for Shimmer3.');
             else
                 isRead = false;
-                fprintf(strcat('Warning: readecgcalibrationparameters - Cannot get ECG calibration parameters for COM ',thisShimmer.ComPort,' as Shimmer is not connected.\n'));
+                fprintf(strcat('Warning: readecgcalibrationparameters - Cannot get ECG calibration parameters for COM ',thisShimmer.name,' as Shimmer is not connected.\n'));
             end
             
         end % function readecgcalibrationparameters
@@ -9252,13 +9251,13 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                                                 
                 if (~isRead)
                     thisShimmer.EnabledSensors = 'Nan';                    % Set the EnabledSensors to 'Nan' to indicate unknown
-                    fprintf(strcat('Warning: readenabledsensors - inquiry command response expected but not returned for Shimmer COM',thisShimmer.ComPort,'.\n'));
+                    fprintf(strcat('Warning: readenabledsensors - inquiry command response expected but not returned for Shimmer COM',thisShimmer.name,'.\n'));
                     isRead = false;
                 end
                 
             else
                 isRead = false;
-                fprintf(strcat('Warning: readenabledsensors - Cannot get enabled sensors for COM ',thisShimmer.ComPort,' as Shimmer is not connected.\n'));
+                fprintf(strcat('Warning: readenabledsensors - Cannot get enabled sensors for COM ',thisShimmer.name,' as Shimmer is not connected.\n'));
             end
             
         end % function readenabledsensors
@@ -9283,18 +9282,18 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                             thisShimmer.ShimmerVersion = shimmerResponse(2);
                         else
                             thisShimmer.ShimmerVersion = 'NaN';
-                            fprintf(strcat('Warning: readshimmerversion - Shimmer version command response expected but not returned for Shimmer COM',thisShimmer.ComPort,'.\n'));
+                            fprintf(strcat('Warning: readshimmerversion - Shimmer version command response expected but not returned for Shimmer COM',thisShimmer.name,'.\n'));
                             isRead = false;
                         end
                     else
                         thisShimmer.ShimmerVersion = 'NaN';
-                        fprintf(strcat('Warning: readshimmerversion - Shimmer version command response expected but not returned for Shimmer COM',thisShimmer.ComPort,'.\n'));
+                        fprintf(strcat('Warning: readshimmerversion - Shimmer version command response expected but not returned for Shimmer COM',thisShimmer.name,'.\n'));
                         isRead = false;
                     end
             else
                 thisShimmer.ShimmerVersion = 'NaN';
                 isRead = false;
-                fprintf(strcat('Warning: readshimmerversion - Cannot get Shimmer version reponse for COM ',thisShimmer.ComPort,' as Shimmer is not connected.\n'));
+                fprintf(strcat('Warning: readshimmerversion - Cannot get Shimmer version reponse for COM ',thisShimmer.name,' as Shimmer is not connected.\n'));
             end
             
         end % function readshimmerversion
@@ -9319,21 +9318,21 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                             parseinquiryresponse(thisShimmer, shimmerResponse);
                             isRead = true;
                         else
-                            fprintf(strcat('Warning: inquiry - Inquiry command response expected but not returned for Shimmer COM',thisShimmer.ComPort,'.\n'));
+                            fprintf(strcat('Warning: inquiry - Inquiry command response expected but not returned for Shimmer COM',thisShimmer.name,'.\n'));
                             isRead = false;
                         end
                     else
-                        fprintf(strcat('Warning: inquiry - Inquiry command response expected but not returned for Shimmer COM',thisShimmer.ComPort,'.\n'));
+                        fprintf(strcat('Warning: inquiry - Inquiry command response expected but not returned for Shimmer COM',thisShimmer.name,'.\n'));
                         isRead = false;
                     end
                     
                 else
-                    fprintf(strcat('Warning: inquiry - Inquiry command response expected but not returned for Shimmer COM',thisShimmer.ComPort,'.\n'));
+                    fprintf(strcat('Warning: inquiry - Inquiry command response expected but not returned for Shimmer COM',thisShimmer.name,'.\n'));
                     isRead = false;
                 end
             else
                 isRead = false;
-                fprintf(strcat('Warning: inquiry - Cannot get inquiry reponse for COM ',thisShimmer.ComPort,' as Shimmer is not connected.\n'));
+                fprintf(strcat('Warning: inquiry - Cannot get inquiry reponse for COM ',thisShimmer.name,' as Shimmer is not connected.\n'));
             end
         end % function inquiry
                 
@@ -9949,7 +9948,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                 end
             else
                 accelData = [];
-                fprintf(strcat('Warning: getacceldata - Cannot get data as COM ',thisShimmer.ComPort,' Shimmer is not Streaming'));
+                fprintf(strcat('Warning: getacceldata - Cannot get data as COM ',thisShimmer.name,' Shimmer is not Streaming'));
             end
         end
         
@@ -10038,7 +10037,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                 end
             else
                 accelData = [];
-                fprintf(strcat('Warning: getlownoiseacceldata - Cannot get data as COM ',thisShimmer.ComPort,' Shimmer is not Streaming or not a Shimmer3'));
+                fprintf(strcat('Warning: getlownoiseacceldata - Cannot get data as COM ',thisShimmer.name,' Shimmer is not Streaming or not a Shimmer3'));
             end
         end
         
@@ -10127,7 +10126,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                 end
             else
                 accelData = [];
-                fprintf(strcat('Warning: getwiderangeacceldata - Cannot get data as COM ',thisShimmer.ComPort,' Shimmer is not Streaming or not a Shimmer3'));
+                fprintf(strcat('Warning: getwiderangeacceldata - Cannot get data as COM ',thisShimmer.name,' Shimmer is not Streaming or not a Shimmer3'));
             end
         end
         
@@ -10218,7 +10217,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                 end
             else
                 magData = [];
-                fprintf(strcat('Warning: getmagdata - Cannot get data as COM ',thisShimmer.ComPort,' Shimmer is not Streaming'));
+                fprintf(strcat('Warning: getmagdata - Cannot get data as COM ',thisShimmer.name,' Shimmer is not Streaming'));
             end
         end
                         
@@ -10306,7 +10305,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                 end
             else
                 gyroData = [];
-                fprintf(strcat('Warning: getgyrodata - Cannot get data as COM ',thisShimmer.ComPort,' Shimmer is not Streaming'));
+                fprintf(strcat('Warning: getgyrodata - Cannot get data as COM ',thisShimmer.name,' Shimmer is not Streaming'));
             end
         end
         
@@ -10334,7 +10333,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                 end
             else
                 quaternionData = [];
-                fprintf(strcat('Warning: getquaterniondata - Cannot get data as COM ',thisShimmer.ComPort,' Shimmer is not Streaming'));
+                fprintf(strcat('Warning: getquaterniondata - Cannot get data as COM ',thisShimmer.name,' Shimmer is not Streaming'));
             end
         end % function getquaterniondata
         
@@ -10405,7 +10404,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                     signalName = [];
                     signalFormat = [];
                     signalUnit = [];
-                    fprintf(strcat('Warning: getecgdata - Cannot get data as COM ',thisShimmer.ComPort,' Shimmer is not Streaming'));
+                    fprintf(strcat('Warning: getecgdata - Cannot get data as COM ',thisShimmer.name,' Shimmer is not Streaming'));
                 end
             else % Shimmer3
                 disp('Warning: getecgdata - getecgdata() is not a valid method for Shimmer3. Please use getexgdata().')
@@ -10456,7 +10455,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                     end
                 else
                     emgData = [];
-                    fprintf(strcat('Warning: getemgdata - Cannot get data as COM ',thisShimmer.ComPort,' Shimmer is not Streaming'));
+                    fprintf(strcat('Warning: getemgdata - Cannot get data as COM ',thisShimmer.name,' Shimmer is not Streaming'));
                 end
             else % Shimmer3
                 disp('Warning: getemgdata - getemgdata() is not a valid method for Shimmer3. Please use getexgdata().')
@@ -10475,7 +10474,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                     signalName = [];
                     signalFormat = [];
                     signalUnit = [];
-                    fprintf(strcat('Warning: getexgdata - Cannot get data as COM ',thisShimmer.ComPort,' Shimmer is not Streaming.'));
+                    fprintf(strcat('Warning: getexgdata - Cannot get data as COM ',thisShimmer.name,' Shimmer is not Streaming.'));
                 else
                     if ~(bitand(thisShimmer.EnabledSensors, hex2dec('08')) || ...
                             bitand(thisShimmer.EnabledSensors, hex2dec('10')) || ... 
@@ -11015,7 +11014,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                 signalFormat = [];
                 signalUnit = [];
                 if ~thisShimmer.GetADCFlag         % Do not show warnings if getadcdata flag is set.
-                    fprintf(strcat('Warning: getadcdata - Cannot get data as COM ',thisShimmer.ComPort,' Shimmer is not Streaming\n'));
+                    fprintf(strcat('Warning: getadcdata - Cannot get data as COM ',thisShimmer.name,' Shimmer is not Streaming\n'));
                     fprintf('or Shimmer is not Shimmer3. Currently only supported for Shimmer3.\n');
                 end
             end
@@ -11140,7 +11139,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                 end
             else
                 expBoardData = [];
-                fprintf(strcat('Warning: getexpboarddata - Cannot get data as COM ',thisShimmer.ComPort,' Shimmer is not Streaming'));
+                fprintf(strcat('Warning: getexpboarddata - Cannot get data as COM ',thisShimmer.name,' Shimmer is not Streaming'));
             end
         end
         
@@ -11278,7 +11277,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                 end
             else
                 battVoltData = [];
-                fprintf(strcat('Warning: getbattvoltdata - Cannot get battery voltage data as COM ',thisShimmer.ComPort,' Shimmer is not Streaming'));
+                fprintf(strcat('Warning: getbattvoltdata - Cannot get battery voltage data as COM ',thisShimmer.name,' Shimmer is not Streaming'));
             end
         end
                             
@@ -11342,7 +11341,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                 end
             else
                 pressureData = [];
-                fprintf(strcat('Warning: getpressuredata - Cannot get data as COM ',thisShimmer.ComPort,' Shimmer is not Streaming,\n'));
+                fprintf(strcat('Warning: getpressuredata - Cannot get data as COM ',thisShimmer.name,' Shimmer is not Streaming,\n'));
                 fprintf('or Shimmer is not a Shimmer3. Pressure is only supported on Shimmmer3.\n');
             end
         end
@@ -11405,7 +11404,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                 end
             else
                 strainGaugeData = [];
-                fprintf(strcat('Warning: getstraingaugedata - Cannot get data as COM ',thisShimmer.ComPort,' Shimmer is not Streaming.\n'));
+                fprintf(strcat('Warning: getstraingaugedata - Cannot get data as COM ',thisShimmer.name,' Shimmer is not Streaming.\n'));
             end
         end
         
@@ -11469,7 +11468,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                 end
             else
                 bridgeAmplifierData = [];
-                fprintf(strcat('Warning: getbridgeamplifierdata - Cannot get data as COM ',thisShimmer.ComPort,' Shimmer is not Streaming.\n'));
+                fprintf(strcat('Warning: getbridgeamplifierdata - Cannot get data as COM ',thisShimmer.name,' Shimmer is not Streaming.\n'));
             end
         end
 
@@ -11495,7 +11494,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                 signalUnit{1}='BPM';
             else
                 heartRateData = [];
-                fprintf(strcat('Warning: getheartratedata - Cannot get data as COM ',thisShimmer.ComPort,' Shimmer is not Streaming,\n'));
+                fprintf(strcat('Warning: getheartratedata - Cannot get data as COM ',thisShimmer.name,' Shimmer is not Streaming,\n'));
                 fprintf('or Shimmer is a Shimmer3. Heartrate is not supported on Shimmmer3.\n');
             end
         end
@@ -11584,7 +11583,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                 end
             else
                 gsrData = [];
-                fprintf(strcat('Warning: getgsrdata - Cannot get data as COM ',thisShimmer.ComPort,' Shimmer is not Streaming'));
+                fprintf(strcat('Warning: getgsrdata - Cannot get data as COM ',thisShimmer.name,' Shimmer is not Streaming'));
             end
         end
         
@@ -11772,7 +11771,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                 end
             else
                 timeStampData = [];
-                fprintf(strcat('Warning: gettimestampdata - Cannot get data as COM ',thisShimmer.ComPort,' Shimmer is not Streaming'));
+                fprintf(strcat('Warning: gettimestampdata - Cannot get data as COM ',thisShimmer.name,' Shimmer is not Streaming'));
             end
         end
         
@@ -11937,7 +11936,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
          
                 end
             else
-                fprintf(strcat('Warning: capturedata - Cannot capture data as COM ',thisShimmer.ComPort,' Shimmer is not Streaming'));
+                fprintf(strcat('Warning: capturedata - Cannot capture data as COM ',thisShimmer.name,' Shimmer is not Streaming'));
             end
             
         end %function captureData
@@ -12220,7 +12219,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                 end
             else
                 isAcknowledged = false;
-                fprintf(strcat('Warning: waitforack - Timed-out on wait for acknowledgement byte on Shimmer COM',thisShimmer.ComPort,'.\n'));
+                fprintf(strcat('Warning: waitforack - Timed-out on wait for acknowledgement byte on Shimmer COM',thisShimmer.name,'.\n'));
             end
             
         end %function waitforack
