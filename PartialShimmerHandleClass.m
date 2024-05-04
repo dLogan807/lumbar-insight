@@ -3,7 +3,7 @@
 % No Shimmer 2/2r support. Only supports 9DOF (IMU) daughter board and assumes latest Shimmer3 firmware.
 % Reduced functionality due to time constraints and project goals.
 
-classdef ShimmerHandleClass < handle
+classdef PartialShimmerHandleClass < handle
     %Class to interface with a Shimmer3 device over bluetooth
     
     properties (Constant = true, Access = private)

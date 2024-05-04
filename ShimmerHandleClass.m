@@ -3489,20 +3489,16 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
             else
                 flush(thisShimmer.bluetoothConn, "input");
                 if strcmp('Accelerometer',sensorName)
-                    write(thisShimmer.bluetoothConn,thisShimmer.GET_ACCEL_CALIBRATION_PARAMETERS_COMMAND);    % Send command to get Accelerometer Calibration Data
+                    write(thisShimmer.bluetoothConn, thisShimmer.GET_ACCEL_CALIBRATION_PARAMETERS_COMMAND);    % Send command to get Accelerometer Calibration Data
                 elseif strcmp('Gyroscope',sensorName)
-                    write(thisShimmer.bluetoothConn,thisShimmer.GET_GYRO_CALIBRATION_PARAMETERS_COMMAND);    % Send command to get Gyroscope Calibration Data
+                    write(thisShimmer.bluetoothConn, thisShimmer.GET_GYRO_CALIBRATION_PARAMETERS_COMMAND);    % Send command to get Gyroscope Calibration Data
                 elseif strcmp('Magnetometer',sensorName)
-                    write(thisShimmer.bluetoothConn,thisShimmer.GET_MAGNE_CALIBRATION_PARAMETERS_COMMAND);    % Send command to get Magnetometer Calibration Data
+                    write(thisShimmer.bluetoothConn, thisShimmer.GET_MAGNE_CALIBRATION_PARAMETERS_COMMAND);    % Send command to get Magnetometer Calibration Data
                 elseif strcmp('All',sensorName)
-                    if (thisShimmer.ShimmerVersion == thisShimmer.SHIMMER_3)
-                        write(thisShimmer.bluetoothConn,thisShimmer.GET_ALL_CALIBRATION_COMMAND);    % Send command to get ALL Calibration Data
-                    else
-                        write(thisShimmer.bluetoothConn,thisShimmer.GET_ALL_CALIBRATION_COMMAND);    % Send command to get ALL Calibration Data
-                    end
+                    write(thisShimmer.bluetoothConn, thisShimmer.GET_ALL_CALIBRATION_COMMAND);    % Send command to get ALL Calibration Data
                 elseif strcmp('ECG',sensorName)
                     if (thisShimmer.ShimmerVersion < thisShimmer.SHIMMER_3)
-                        write(thisShimmer.bluetoothConn,thisShimmer.GET_ECG_CALIBRATION_COMMAND);    % Send command to get ECG Calibration Data
+                        write(thisShimmer.bluetoothConn, thisShimmer.GET_ECG_CALIBRATION_COMMAND);    % Send command to get ECG Calibration Data
                     else
                         disp('Warning: getcalibrationparameters - ECG calibration parameters not yet supported for Shimmer3.');
                         skip=1;
@@ -3510,7 +3506,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                     end
                 elseif strcmp('EMG',sensorName)
                     if (thisShimmer.ShimmerVersion < thisShimmer.SHIMMER_3)
-                        write(thisShimmer.bluetoothConn,thisShimmer.GET_EMG_CALIBRATION_COMMAND);    % Send command to get EMG Calibration Data
+                        write(thisShimmer.bluetoothConn, thisShimmer.GET_EMG_CALIBRATION_COMMAND);    % Send command to get EMG Calibration Data
                     else
                         disp('Warning: getcalibrationparameters - EMG calibration parameters not yet supported for Shimmer3.');
                         skip=1;
@@ -8095,7 +8091,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                 IDByteArray = 'Nan';
             else
                 flush(thisShimmer.bluetoothConn, "input");                                        % As a precaution always clear the read data buffer before a write
-                write(thisShimmer.bluetoothConn,thisShimmer.GET_DAUGHTER_CARD_ID_COMMAND);    % Send command to get expansion board ID bytes
+                write(thisShimmer.bluetoothConn, thisShimmer.GET_DAUGHTER_CARD_ID_COMMAND);    % Send command to get expansion board ID bytes
                 write(thisShimmer.bluetoothConn, char(numBytes));                             % Send numBytes value
                 write(thisShimmer.bluetoothConn, char(offset));                               % Send offset value
                 isAcknowledged = waitforack(thisShimmer, thisShimmer.DEFAULT_TIMEOUT);   % Wait for Acknowledgment from Shimmer
@@ -8643,7 +8639,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                 isRead = false;
             else
                 flush(thisShimmer.bluetoothConn, "input");                                        % As a precaution always clear the read data buffer before a write
-                write(thisShimmer.bluetoothConn,thisShimmer.GET_EXG_REGS_COMMAND);            % Send command to get ExG register values
+                write(thisShimmer.bluetoothConn, thisShimmer.GET_EXG_REGS_COMMAND);            % Send command to get ExG register values
                 write(thisShimmer.bluetoothConn, char(0));                                    % char(0) selects SENSOR_EXG1
                 write(thisShimmer.bluetoothConn, char(5));                                    % Start at byte 7.
                 write(thisShimmer.bluetoothConn, char(1));                                    % Read 1 byte.
@@ -8721,7 +8717,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                 chipselect = 0;
                 while chipselect < 2;                                                        % Get ExG register values for both SENSOR_EXG1 and SENSOR_EXG2
                     flush(thisShimmer.bluetoothConn, "input");                                        % As a precaution always clear the read data buffer before a write
-                    write(thisShimmer.bluetoothConn,thisShimmer.GET_EXG_REGS_COMMAND);            % Send command to get ExG register values
+                    write(thisShimmer.bluetoothConn, thisShimmer.GET_EXG_REGS_COMMAND);            % Send command to get ExG register values
                     write(thisShimmer.bluetoothConn, char(chipselect));                           % chipselect = 0/1 selects SENSOR_EXG1/SENSOR_EXG2
                     write(thisShimmer.bluetoothConn, char(0));                                    % Start at byte 0.
                     write(thisShimmer.bluetoothConn, char(10));                                   % Read 10 bytes
@@ -8887,7 +8883,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                 disp('Warning: readexgleadoffdetectioncurrent - Invalid value for chipIdentifier.')
             else
                 flush(thisShimmer.bluetoothConn, "input");                                        % As a precaution always clear the read data buffer before a write
-                write(thisShimmer.bluetoothConn,thisShimmer.GET_EXG_REGS_COMMAND);            % Send command to get ExG register values
+                write(thisShimmer.bluetoothConn, thisShimmer.GET_EXG_REGS_COMMAND);            % Send command to get ExG register values
                 write(thisShimmer.bluetoothConn, char(chipIdentifier-1));                     % Selects SENSOR_EXG1/SENSOR_EXG2
                 write(thisShimmer.bluetoothConn, char(2));                                    % Start at byte 2.
                 write(thisShimmer.bluetoothConn, char(1));                                    % Read 1 byte.
@@ -8973,7 +8969,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                 disp('Warning: readexgleadoffcomparatorthreshold - Invalid value for chipIdentifier.')
             else
                 flush(thisShimmer.bluetoothConn, "input");                                        % As a precaution always clear the read data buffer before a write
-                write(thisShimmer.bluetoothConn,thisShimmer.GET_EXG_REGS_COMMAND);            % Send command to get ExG register values
+                write(thisShimmer.bluetoothConn, thisShimmer.GET_EXG_REGS_COMMAND);            % Send command to get ExG register values
                 write(thisShimmer.bluetoothConn, char(chipIdentifier-1));                     % Selects SENSOR_EXG1/SENSOR_EXG2
                 write(thisShimmer.bluetoothConn, char(2));                                    % Start at byte 2.
                 write(thisShimmer.bluetoothConn, char(1));                                    % Read 1 byte.
@@ -9050,7 +9046,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                 isRead = 'false';
             else
                 flush(thisShimmer.bluetoothConn, "input");                                        % As a precaution always clear the read data buffer before a write
-                write(thisShimmer.bluetoothConn,thisShimmer.GET_RWC_COMMAND);                 % Send command to get Real Time Clock value
+                write(thisShimmer.bluetoothConn, thisShimmer.GET_RWC_COMMAND);                 % Send command to get Real Time Clock value
   
                 isAcknowledged = waitforack(thisShimmer, thisShimmer.DEFAULT_TIMEOUT);   % Wait for Acknowledgment from Shimmer
                 
@@ -11929,8 +11925,19 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
             if (strcmp(thisShimmer.State,'Streaming'))                        % TRUE if the Shimmer is in a Streaming state
                 
                 serialData = [];
+
+                numBytes = thisShimmer.bluetoothConn.NumBytesAvailable;
+                if (numBytes == 0)
+                    numBytes = 1;
+                end
                 
                 [serialData] = read(thisShimmer.bluetoothConn, thisShimmer.bluetoothConn.NumBytesAvailable);  % Read all available serial data from the com port
+
+                %Change columns to rows
+                swappedData = zeros(numBytes,1);
+                for dataSample = 1:1:numBytes
+                    swappedData(dataSample,1) = serialData(1,dataSample);
+                end
                 
                 if (not(isempty(serialData)))
                     
