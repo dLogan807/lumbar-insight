@@ -11313,11 +11313,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                     signalName{4}='Temperature';
                     signalFormat{4}='CAL';
                     signalUnit{4}='Celsius';
-                    if (thisShimmer.DefaultPressureCalibrationParameters==true)
-                        signalUnit{3}='Pa'; % eventually when there is a self calibration method * can be inserted
-                    else
-                        signalUnit{3}='Pa';
-                    end
+                    signalUnit{3}='Pa';
                 elseif strcmp(dataMode,'u')
                     pressureData=[pressureUncalibratedData temperatureUncalibratedData];
                     signalName{1}='Pressure';
