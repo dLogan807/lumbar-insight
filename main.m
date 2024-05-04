@@ -1,7 +1,6 @@
 clear;
 clc; 
 
-shimmer1 = ShimmerHandleClass("Shimmer3-5847");
-shimmer2 = ShimmerHandleClass("Shimmer3-5852");
+shimmer1 = ShimmerHandleClass("Shimmer3-7188");
 
-orientation3Dexample(shimmer1, shimmer2, 60);
+orientation3Dexample(shimmer1, 60);

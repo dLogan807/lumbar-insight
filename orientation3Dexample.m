@@ -41,14 +41,14 @@ DELAY_PERIOD = 0.5;                                                       % A de
 
 if (shimmer1.connect)                                  % TRUE if the shimmers connect
     % Define settings for shimmer
-    shimmer.setsamplingrate(51.2);                                         % Set the shimmer sampling rate to 51.2Hz
-    shimmer.setinternalboard('9DOF');                                      % Set the shimmer internal daughter board to '9DOF'
-    shimmer.disableallsensors;                                             % disable all sensors
-    shimmer.setenabledsensors(SensorMacros.GYRO,1,SensorMacros.MAG,1,...   % Enable the gyroscope, magnetometer and accelerometer.
+    shimmer1.setsamplingrate(51.2);                                         % Set the shimmer sampling rate to 51.2Hz
+    shimmer1.setinternalboard('9DOF');                                      % Set the shimmer internal daughter board to '9DOF'
+    shimmer1.disableallsensors;                                             % disable all sensors
+    shimmer1.setenabledsensors(SensorMacros.GYRO,1,SensorMacros.MAG,1,...   % Enable the gyroscope, magnetometer and accelerometer.
     SensorMacros.ACCEL,1);                                                  
-    shimmer.setaccelrange(0);                                              % Set the accelerometer range to 0 (+/- 1.5g for Shimmer2/2r, +/- 2.0g for Shimmer3)
-    shimmer.setorientation3D(1);                                           % Enable orientation3D
-    shimmer.setgyroinusecalibration(1);                                    % Enable gyro in-use calibration
+    shimmer1.setaccelrange(0);                                              % Set the accelerometer range to 0 (+/- 1.5g for Shimmer2/2r, +/- 2.0g for Shimmer3)
+    shimmer1.setorientation3D(1);                                           % Enable orientation3D
+    shimmer1.setgyroinusecalibration(1);                                    % Enable gyro in-use calibration
     
     if (shimmer1.start)                % TRUE if the shimmers start streaming
         
@@ -112,6 +112,7 @@ if (shimmer1.connect)                                  % TRUE if the shimmers co
                 rotateVertices(shimmer1Quaternion);
                  
                 X1 = generateConvexHullArray;
+                disp(X1);
                 K1 = convhulln(X1);
 
                 set(0,'CurrentFigure',h.figure1);

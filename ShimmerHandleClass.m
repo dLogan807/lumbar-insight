@@ -2998,7 +2998,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                         fprintf(strcat('Warning: getbatteryvoltage - Dir response expected but not returned for Shimmer COM',thisShimmer.name,'.\n'));
                         batteryVoltage = 'Nan';
                     else
-                        [shimmerResponse, ~] = read(thisShimmer.bluetoothConn, 5);                                   % Read the 5 bytes response from the realterm buffer
+                        [shimmerResponse] = read(thisShimmer.bluetoothConn, 5);                                   % Read the 5 bytes response from the realterm buffer
                         
                         if ( ~isempty(shimmerResponse) && (shimmerResponse(1) == thisShimmer.INSTREAM_CMD_RESPONSE) && (shimmerResponse(2) == thisShimmer.VBATT_RESPONSE) )
                             battAdcValue = uint32(uint16(shimmerResponse(4))*256 + uint16(shimmerResponse(3)));  % battery ADC value
@@ -4915,14 +4915,15 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                         
                         if (thisShimmer.FirmwareCompatibilityCode >= 6)
                             thisShimmer.getbatteryvoltage;
-                            if(thisShimmer.FirmwareIdentifier == 3)
-                                thisShimmer.readrealtimeclock;
-                                [year,month,day,~,~,~ ] = datevec(thisShimmer.getrealtimeclock);
-                                if (year == 1970 && month == 1 && day == 1)
-                                    thisShimmer.setrealtimeclock;
-                                end
-                                fprintf(['Real Time Clock on Shimmer: ' thisShimmer.getrealtimeclock '.\n'])
-                            end
+                            % if(thisShimmer.FirmwareIdentifier == 3)
+                            %     thisShimmer.readrealtimeclock;
+                            %     [year,month,day,~,~,~ ] = datevec(thisShimmer.getrealtimeclock);
+                            %     disp("Year: " + year + " Month: " + month + " Day: " + day);
+                            %     if (year == 1970 && month == 1 && day == 1)
+                            %         thisShimmer.setrealtimeclock;
+                            %     end
+                            %     fprintf(['Real Time Clock on Shimmer: ' thisShimmer.getrealtimeclock '.\n'])
+                            % end
                         end
                         
                         if (thisShimmer.FirmwareCompatibilityCode >= 7)
@@ -11928,13 +11929,15 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                     numBytes = 1;
                 end
                 
-                [serialData] = read(thisShimmer.bluetoothConn, thisShimmer.bluetoothConn.NumBytesAvailable);  % Read all available serial data from the com port
+                [serialData] = read(thisShimmer.bluetoothConn, numBytes);  % Read all available serial data from the com port
 
                 %Change columns to rows
                 swappedData = zeros(numBytes,1);
                 for dataSample = 1:1:numBytes
                     swappedData(dataSample,1) = serialData(1,dataSample);
                 end
+
+                serialData = swappedData;
                 
                 if (not(isempty(serialData)))
                     
