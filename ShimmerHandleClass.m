@@ -2946,11 +2946,11 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                     fprintf(strcat('Warning: getsdcarddirectoryname - Dir response expected but not returned for Shimmer COM',thisShimmer.name,'.\n'));
                     isRead = false;
                 else
-                    [shimmerResponse, isFileOpen] = readdatabuffer(thisShimmer, 3);     % Read the 3 bytes response from the realterm buffer
+                    [shimmerResponse] = readdatabuffer(thisShimmer, 3);     % Read the 3 bytes response from the realterm buffer
                     
                     if ( ~isempty(shimmerResponse) && (shimmerResponse(1) == thisShimmer.INSTREAM_CMD_RESPONSE) && (shimmerResponse(2) == thisShimmer.DIR_RESPONSE) )
                         directoryNameLength = double(shimmerResponse(3));                           % Length of SD Directory Name
-                        [shimmerResponse, isFileOpen] = readdatabuffer(thisShimmer, directoryNameLength);     % Read the directoryNameLength bytes response from the realterm buffer
+                        [shimmerResponse] = readdatabuffer(thisShimmer, directoryNameLength);     % Read the directoryNameLength bytes response from the realterm buffer
                         thisShimmer.SdCardDirectoryName = native2unicode(shimmerResponse', 'US-ASCII');   % Convert bytes to ASCII string
                         fprintf(['SD Card Directory Name is: ', thisShimmer.SdCardDirectoryName '\n']);
                         isRead = true;
@@ -3051,7 +3051,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                     thisShimmer.disconnect;                                             % Disconnect to close serial port cleanly
                     isRead = false;
                 else
-                    [shimmerResponse, isFileOpen] = readdatabuffer(thisShimmer, 3);     % Read the 3 bytes response from the realterm buffer
+                    [shimmerResponse] = readdatabuffer(thisShimmer, 3);     % Read the 3 bytes response from the realterm buffer
                     
                     if ( ~isempty(shimmerResponse) && (shimmerResponse(1) == thisShimmer.INSTREAM_CMD_RESPONSE) && (shimmerResponse(2) == thisShimmer.STATUS_RESPONSE) )
                         statusResponse = shimmerResponse(3);                            % Status byte
@@ -3532,7 +3532,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                         if (strcmp('Accelerometer',sensorName)||strcmp('All',sensorName))
                             nIterations = 0;
                             while(length(serialData) < 22 && nIterations < 4 )
-                                [tempSerialData, isFileOpen] = readdatabuffer(thisShimmer, thisShimmer.bluetoothConn.NumBytesAvailable);  % Read all available serial data from the com port
+                                [tempSerialData] = readdatabuffer(thisShimmer, thisShimmer.bluetoothConn.NumBytesAvailable);  % Read all available serial data from the com port
                                 serialData = [serialData; tempSerialData];
                                 pause(.2);
                                 nIterations = nIterations + 1;
@@ -3587,7 +3587,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                         if (strcmp('Gyroscope',sensorName)||strcmp('All',sensorName))
                             nIterations = 0;
                             while(length(serialData) < 22 && nIterations < 4 )
-                                [tempSerialData, isFileOpen] = readdatabuffer(thisShimmer, thisShimmer.bluetoothConn.NumBytesAvailable);  % Read all available serial data from the com port
+                                [tempSerialData] = readdatabuffer(thisShimmer, thisShimmer.bluetoothConn.NumBytesAvailable);  % Read all available serial data from the com port
                                 serialData = [serialData; tempSerialData];
                                 pause(.2);
                                 nIterations = nIterations + 1;
@@ -3627,7 +3627,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                         if (strcmp('Magnetometer',sensorName)||strcmp('All',sensorName))
                             nIterations = 0;
                             while(length(serialData) < 22 && nIterations < 4)
-                                [tempSerialData, isFileOpen] = readdatabuffer(thisShimmer, thisShimmer.bluetoothConn.NumBytesAvailable);  % Read all available serial data from the com port
+                                [tempSerialData] = readdatabuffer(thisShimmer, thisShimmer.bluetoothConn.NumBytesAvailable);  % Read all available serial data from the com port
                                 serialData = [serialData; tempSerialData];
                                 pause(.2);
                                 nIterations = nIterations + 1;
@@ -3681,7 +3681,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                         if (strcmp('All',sensorName)&& thisShimmer.ShimmerVersion == thisShimmer.SHIMMER_3)
                             nIterations = 0;
                             while(length(serialData) < 22 && nIterations < 4)
-                                [tempSerialData, isFileOpen] = readdatabuffer(thisShimmer, thisShimmer.bluetoothConn.NumBytesAvailable);  % Read all available serial data from the com port
+                                [tempSerialData] = readdatabuffer(thisShimmer, thisShimmer.bluetoothConn.NumBytesAvailable);  % Read all available serial data from the com port
                                 serialData = [serialData; tempSerialData];
                                 pause(.2);
                                 nIterations = nIterations + 1;
@@ -3738,7 +3738,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                             if (strcmp('EMG',sensorName)||strcmp('All',sensorName))
                                 nIterations = 0;
                                 while(length(serialData) < 5 && nIterations < 4)
-                                    [tempSerialData, isFileOpen] = readdatabuffer(thisShimmer, thisShimmer.bluetoothConn.NumBytesAvailable);  % Read all available serial data from the com port
+                                    [tempSerialData] = readdatabuffer(thisShimmer, thisShimmer.bluetoothConn.NumBytesAvailable);  % Read all available serial data from the com port
                                     serialData = [serialData; tempSerialData];
                                     pause(.2);
                                     nIterations = nIterations + 1;
@@ -3759,7 +3759,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                             if (strcmp('ECG',sensorName)||strcmp('All',sensorName))
                                 nIterations = 0;
                                 while(length(serialData) < 9 && nIterations < 4)
-                                    [tempSerialData, isFileOpen] = readdatabuffer(thisShimmer, thisShimmer.bluetoothConn.NumBytesAvailable);  % Read all available serial data from the com port
+                                    [tempSerialData] = readdatabuffer(thisShimmer, thisShimmer.bluetoothConn.NumBytesAvailable);  % Read all available serial data from the com port
                                     serialData = [serialData; tempSerialData];
                                     pause(.2);
                                     nIterations = nIterations + 1;
@@ -7359,7 +7359,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                 isAcknowledged = waitforack(thisShimmer, thisShimmer.DEFAULT_TIMEOUT);  % Wait for Acknowledgment from Shimmer
                 
                 if (isAcknowledged == true)
-                    [shimmerResponse, isFileOpen] = readdatabuffer(thisShimmer, thisShimmer.bluetoothConn.NumBytesAvailable);     % Read the 2 byte response from the realterm buffer
+                    [shimmerResponse] = readdatabuffer(thisShimmer, thisShimmer.bluetoothConn.NumBytesAvailable);     % Read the 2 byte response from the realterm buffer
                     
                     if ~isempty(shimmerResponse)
                         
@@ -7419,7 +7419,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                     fprintf(strcat('Warning: readbaudrate - Get Baud Rate command response expected but not returned for Shimmer COM',thisShimmer.name,'.\n'));
                     isRead = false;
                 else
-                    [shimmerResponse, isFileOpen] = readdatabuffer(thisShimmer, 2);     % Read the 2 bytes response from the realterm buffer
+                    [shimmerResponse] = readdatabuffer(thisShimmer, 2);     % Read the 2 bytes response from the realterm buffer
                     
                     if ( ~isempty(shimmerResponse) && (shimmerResponse(1) == thisShimmer.BT_COMMS_BAUD_RATE_RESPONSE) )
                         thisShimmer.BaudRate = shimmerResponse(2);                      % Update property BaudRate
@@ -7444,7 +7444,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                 isAcknowledged = waitforacknofeedback(thisShimmer, 1);     % Wait for Acknowledgment from Shimmer , 1 second is used to speed up the initializing process when detecting the firmware
                 
                 if (isAcknowledged == true)
-                    [shimmerResponse, isFileOpen] = readdatabuffer(thisShimmer, 7);        % Read the 7 byte response from the realterm buffer
+                    [shimmerResponse] = readdatabuffer(thisShimmer, 7);        % Read the 7 byte response from the realterm buffer
                     
                     if ~isempty(shimmerResponse)
                         
@@ -7544,7 +7544,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                 isAcknowledged = waitforacknofeedback(thisShimmer, thisShimmer.DEFAULT_TIMEOUT);     % Wait for Acknowledgement from Shimmer
                 
                 if (isAcknowledged == true)
-                    [shimmerResponse, isFileOpen] = readdatabuffer(thisShimmer, 7);        % Read the 2 byte response from the realterm buffer  
+                    [shimmerResponse] = readdatabuffer(thisShimmer, 7);        % Read the 2 byte response from the realterm buffer  
                     isRead = true;
                 end
             end            
@@ -7561,7 +7561,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                 isAcknowledged = waitforack(thisShimmer, thisShimmer.DEFAULT_TIMEOUT);     % Wait for Acknowledgment from Shimmer
                 
                 if (isAcknowledged == true)
-                    [shimmerResponse, isFileOpen] = readdatabuffer(thisShimmer, 2);        % Read the 2 byte response from the realterm buffer
+                    [shimmerResponse] = readdatabuffer(thisShimmer, 2);        % Read the 2 byte response from the realterm buffer
                     
                     if ~isempty(shimmerResponse)
                         
@@ -7602,7 +7602,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                 isAcknowledged = waitforack(thisShimmer, thisShimmer.DEFAULT_TIMEOUT);          % Wait for Acknowledgment from Shimmer
                 
                 if (isAcknowledged == true)
-                    [shimmerResponse, isFileOpen] = readdatabuffer(thisShimmer, 2);             % Read the 2 byte response from the realterm buffer
+                    [shimmerResponse] = readdatabuffer(thisShimmer, 2);             % Read the 2 byte response from the realterm buffer
                     
                     if (~isempty(shimmerResponse) && (shimmerResponse(1) == thisShimmer.LSM303DLHC_ACCEL_HRMODE_RESPONSE))
                         thisShimmer.AccelWideRangeHRMode = shimmerResponse(2);
@@ -7637,7 +7637,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                 isAcknowledged = waitforack(thisShimmer, thisShimmer.DEFAULT_TIMEOUT);        % Wait for Acknowledgment from Shimmer
                 
                 if (isAcknowledged == true)
-                    [shimmerResponse, isFileOpen] = readdatabuffer(thisShimmer, 2);           % Read the 2 byte response from the realterm buffer
+                    [shimmerResponse] = readdatabuffer(thisShimmer, 2);           % Read the 2 byte response from the realterm buffer
                     
                     if (~isempty(shimmerResponse) && (shimmerResponse(1) == thisShimmer.LSM303DLHC_ACCEL_LPMODE_RESPONSE))
                         thisShimmer.AccelWideRangeLPMode = shimmerResponse(2);
@@ -7676,7 +7676,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                 write(thisShimmer.bluetoothConn, thisShimmer.GET_CONFIG_BYTE0_COMMAND);          % Send the Get Config Byte0 Command to the Shimmer                
                 isAcknowledged = waitforack(thisShimmer, thisShimmer.DEFAULT_TIMEOUT);      % Wait for Acknowledgment from Shimmer                
                 if (isAcknowledged == true)
-                    [shimmerResponse, isFileOpen] = readdatabuffer(thisShimmer, 2);         % Read the 2 byte response from the realterm buffer                    
+                    [shimmerResponse] = readdatabuffer(thisShimmer, 2);         % Read the 2 byte response from the realterm buffer                    
                     if ~isempty(shimmerResponse)
                         if (shimmerResponse(1) == thisShimmer.CONFIG_BYTE0_RESPONSE)
                             thisShimmer.ConfigByte0 = shimmerResponse(2);
@@ -7715,9 +7715,9 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                 isAcknowledged = waitforack(thisShimmer, thisShimmer.DEFAULT_TIMEOUT);      % Wait for Acknowledgment from Shimmer                
                 if (isAcknowledged == true)
                     if(thisShimmer.ShimmerVersion < thisShimmer.SHIMMER_3)
-                        [shimmerResponse, isFileOpen] = readdatabuffer(thisShimmer, 2);     % Read the 2 byte response from the realterm buffer    
+                        [shimmerResponse] = readdatabuffer(thisShimmer, 2);     % Read the 2 byte response from the realterm buffer    
                     else
-                        [shimmerResponse, isFileOpen] = readdatabuffer(thisShimmer, 5);     % Read the 5 byte response from the realterm buffer   
+                        [shimmerResponse] = readdatabuffer(thisShimmer, 5);     % Read the 5 byte response from the realterm buffer   
                     end
                     if ~isempty(shimmerResponse)
                         if (shimmerResponse(1) == thisShimmer.CONFIG_BYTE0_RESPONSE)
@@ -7771,7 +7771,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                 isAcknowledged = waitforack(thisShimmer, thisShimmer.DEFAULT_TIMEOUT);      % Wait for Acknowledgment from Shimmer
                 
                 if (isAcknowledged == true)
-                    [shimmerResponse, isFileOpen] = readdatabuffer(thisShimmer, 2);         % Read the 2 byte response from the realterm buffer
+                    [shimmerResponse] = readdatabuffer(thisShimmer, 2);         % Read the 2 byte response from the realterm buffer
                     
                     if ~isempty(shimmerResponse)
                         
@@ -7814,7 +7814,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                 isAcknowledged = waitforack(thisShimmer, thisShimmer.DEFAULT_TIMEOUT);     % Wait for Acknowledgment from Shimmer
                 
                 if (isAcknowledged == true)
-                    [shimmerResponse, isFileOpen] = readdatabuffer(thisShimmer, 2);        % Read the 2 byte response from the realterm buffer
+                    [shimmerResponse] = readdatabuffer(thisShimmer, 2);        % Read the 2 byte response from the realterm buffer
                     
                     if ~isempty(shimmerResponse)
                         
@@ -7860,7 +7860,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                     isAcknowledged = waitforack(thisShimmer, thisShimmer.DEFAULT_TIMEOUT);     % Wait for Acknowledgment from Shimmer
                     
                     if (isAcknowledged == true)
-                        [shimmerResponse, isFileOpen] = readdatabuffer(thisShimmer, 2);        % Read the 2 byte response from the realterm buffer
+                        [shimmerResponse] = readdatabuffer(thisShimmer, 2);        % Read the 2 byte response from the realterm buffer
                         
                         if ~isempty(shimmerResponse)
                             
@@ -7901,7 +7901,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                 isAcknowledged = waitforack(thisShimmer, thisShimmer.DEFAULT_TIMEOUT);     % Wait for Acknowledgment from Shimmer
                 
                 if (isAcknowledged == true)
-                    [shimmerResponse, isFileOpen] = readdatabuffer(thisShimmer, 2);        % Read the 2 byte response from the realterm buffer
+                    [shimmerResponse] = readdatabuffer(thisShimmer, 2);        % Read the 2 byte response from the realterm buffer
                     
                     if ~isempty(shimmerResponse)
                         
@@ -7945,7 +7945,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                 isAcknowledged = waitforack(thisShimmer, thisShimmer.DEFAULT_TIMEOUT);          % Wait for Acknowledgment from Shimmer
                 
                 if (isAcknowledged == true)
-                    [shimmerResponse, isFileOpen] = readdatabuffer(thisShimmer, 2);             % Read the 2 byte response from the realterm buffer
+                    [shimmerResponse] = readdatabuffer(thisShimmer, 2);             % Read the 2 byte response from the realterm buffer
                     
                     if ~isempty(shimmerResponse) && (shimmerResponse(1) == thisShimmer.BMP180_PRES_RESOLUTION_RESPONSE)
                         thisShimmer.PressureResolution = shimmerResponse(2);
@@ -8018,7 +8018,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                         serialData = [];
                         nIterations = 0;
                         while(length(serialData) < nBytes && nIterations < 4)
-                            [tempSerialData, isFileOpen] = readdatabuffer(thisShimmer, thisShimmer.bluetoothConn.NumBytesAvailable);                % Read all available serial data from the com port
+                            [tempSerialData] = readdatabuffer(thisShimmer, thisShimmer.bluetoothConn.NumBytesAvailable);                % Read all available serial data from the com port
                             serialData = [serialData; tempSerialData];
                             pause(.2);
                             nIterations = nIterations + 1;
@@ -8105,7 +8105,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                     IDByteArray = 'Nan';
                 else
                     serialData = [];
-                    [serialData, isFileOpen] = readdatabuffer(thisShimmer, thisShimmer.bluetoothConn.NumBytesAvailable);         % Read all available serial data from the com port
+                    [serialData] = readdatabuffer(thisShimmer, thisShimmer.bluetoothConn.NumBytesAvailable);         % Read all available serial data from the com port
                     if (~isempty(serialData) && serialData(1)==thisShimmer.DAUGHTER_CARD_ID_RESPONSE)
                         for numByte = 1:numBytes
                             IDByteArray(numByte) = serialData(numByte+2);                % First two bytes are DAUGHTER_CARD_ID_RESPONSE and numBytes.
@@ -8138,7 +8138,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                     serialData = [];
                     nIterations = 0;
                     while(length(serialData) < 12 && nIterations < 4 )                                       % Read the 12 byte response from the realterm buffer
-                        [tempSerialData, isFileOpen] = readdatabuffer(thisShimmer, thisShimmer.bluetoothConn.NumBytesAvailable);   % Read all available serial data from the com port
+                        [tempSerialData] = readdatabuffer(thisShimmer, thisShimmer.bluetoothConn.NumBytesAvailable);   % Read all available serial data from the com port
                         serialData = [serialData; tempSerialData];
                         pause(.2);
                         nIterations = nIterations + 1;
@@ -8260,7 +8260,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                 isAcknowledged = waitforack(thisShimmer, thisShimmer.DEFAULT_TIMEOUT);     % Wait for Acknowledgment from Shimmer
                 
                 if (isAcknowledged == true)
-                    [shimmerResponse, isFileOpen] = readdatabuffer(thisShimmer, 2);        % Read the 2 byte response from the realterm buffer
+                    [shimmerResponse] = readdatabuffer(thisShimmer, 2);        % Read the 2 byte response from the realterm buffer
                     
                     if ~isempty(shimmerResponse)
                         
@@ -8301,7 +8301,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                 isAcknowledged = waitforack(thisShimmer, thisShimmer.DEFAULT_TIMEOUT);     % Wait for Acknowledgment from Shimmer
                 
                 if (isAcknowledged == true)
-                    [shimmerResponse, isFileOpen] = readdatabuffer(thisShimmer, 2);        % Read the 2 byte response from the realterm buffer
+                    [shimmerResponse] = readdatabuffer(thisShimmer, 2);        % Read the 2 byte response from the realterm buffer
                     
                     if (~isempty(shimmerResponse) && (shimmerResponse(1) == thisShimmer.INTERNAL_EXP_POWER_ENABLE_RESPONSE))
                             thisShimmer.InternalExpPower = shimmerResponse(2);
@@ -8338,7 +8338,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                 isAcknowledged = waitforack(thisShimmer, thisShimmer.DEFAULT_TIMEOUT);      % Wait for Acknowledgment from Shimmer
                 
                 if (isAcknowledged == true)
-                    [shimmerResponse, isFileOpen] = readdatabuffer(thisShimmer, 2);         % Read the 2 byte response from the realterm buffer
+                    [shimmerResponse] = readdatabuffer(thisShimmer, 2);         % Read the 2 byte response from the realterm buffer
                     
                     if ~isempty(shimmerResponse)
                         
@@ -8380,7 +8380,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                 isAcknowledged = waitforack(thisShimmer, thisShimmer.DEFAULT_TIMEOUT);                % Wait for Acknowledgment from Shimmer
                 
                 if (isAcknowledged == true)
-                    [shimmerResponse, isFileOpen] = readdatabuffer(thisShimmer, 2);                   % Read the 2 byte response from the realterm buffer
+                    [shimmerResponse] = readdatabuffer(thisShimmer, 2);                   % Read the 2 byte response from the realterm buffer
                     
                     if ~isempty(shimmerResponse)
                         
@@ -8432,7 +8432,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                     if (chipIdentifier == 1) 
                         % SENSOR_EXG1
                         if (isAcknowledged == true)
-                            [shimmerResponse, isFileOpen] = readdatabuffer(thisShimmer, 3);        % Read the 3 bytes response from the realterm buffer
+                            [shimmerResponse] = readdatabuffer(thisShimmer, 3);        % Read the 3 bytes response from the realterm buffer
 
                             if ( ~isempty(shimmerResponse) && (shimmerResponse(1) == thisShimmer.EXG_REGS_RESPONSE) )
                                     thisShimmer.EXG1Config1 = shimmerResponse(3);       % Update property EXG1Config1
@@ -8451,7 +8451,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                     else
                         % SENSOR_EXG2
                         if (isAcknowledged == true)
-                            [shimmerResponse, isFileOpen] = readdatabuffer(thisShimmer, 3);        % Read the 3 bytes response from the realterm buffer
+                            [shimmerResponse] = readdatabuffer(thisShimmer, 3);        % Read the 3 bytes response from the realterm buffer
 
                             if (~isempty(shimmerResponse) && (shimmerResponse(1) == thisShimmer.EXG_REGS_RESPONSE))
                                     thisShimmer.EXG2Config1 = shimmerResponse(3);       % Update property EXG2Config1
@@ -8499,7 +8499,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                             if (chipIdentifier == 1)
                                 % SENSOR_EXG1
                                 if (isAcknowledged == true)
-                                    [shimmerResponse, isFileOpen] = readdatabuffer(thisShimmer, 3);    % Read the 3 bytes response from the realterm buffer
+                                    [shimmerResponse] = readdatabuffer(thisShimmer, 3);    % Read the 3 bytes response from the realterm buffer
                                     if (~isempty(shimmerResponse) && (shimmerResponse(1) == thisShimmer.EXG_REGS_RESPONSE))
                                         thisShimmer.EXG1Ch1Set = shimmerResponse(3);
                                         thisShimmer.EXG1CH1Gain = convertEXGGain(thisShimmer, bitshift(bitand(112,thisShimmer.EXG1Ch1Set),-4)); % Update property EXG1CH1Gain
@@ -8519,7 +8519,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                             else
                                 % SENSOR_EXG2
                                 if (isAcknowledged == true)
-                                    [shimmerResponse, isFileOpen] = readdatabuffer(thisShimmer, 3);        % Read the 3 bytes response from the realterm buffer
+                                    [shimmerResponse] = readdatabuffer(thisShimmer, 3);        % Read the 3 bytes response from the realterm buffer
                                     
                                     if (~isempty(shimmerResponse) && (shimmerResponse(1) == thisShimmer.EXG_REGS_RESPONSE))
                                         thisShimmer.EXG2Ch1Set = shimmerResponse(3);
@@ -8559,7 +8559,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                             if (chipIdentifier == 1)
                                 % SENSOR_EXG1
                                 if (isAcknowledged == true)
-                                    [shimmerResponse, isFileOpen] = readdatabuffer(thisShimmer, 3);        % Read the 3 bytes response from the realterm buffer
+                                    [shimmerResponse] = readdatabuffer(thisShimmer, 3);        % Read the 3 bytes response from the realterm buffer
                                     
                                     if (~isempty(shimmerResponse) && (shimmerResponse(1) == thisShimmer.EXG_REGS_RESPONSE))
                                         thisShimmer.EXG1Ch2Set = shimmerResponse(3);
@@ -8580,7 +8580,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                             else
                                 % SENSOR_EXG2
                                 if (isAcknowledged == true)
-                                    [shimmerResponse, isFileOpen] = readdatabuffer(thisShimmer, 3);        % Read the 3 bytes response from the realterm buffer
+                                    [shimmerResponse] = readdatabuffer(thisShimmer, 3);        % Read the 3 bytes response from the realterm buffer
                                     
                                     if (~isempty(shimmerResponse) && (shimmerResponse(1) == thisShimmer.EXG_REGS_RESPONSE))
                                         thisShimmer.EXG2Ch2Set = shimmerResponse(3);
@@ -8656,7 +8656,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                     isRead = false;
                 else
                     serialData = [];
-                    [serialData, isFileOpen] = readdatabuffer(thisShimmer, thisShimmer.bluetoothConn.NumBytesAvailable);         % Read all available serial data from the com port
+                    [serialData] = readdatabuffer(thisShimmer, thisShimmer.bluetoothConn.NumBytesAvailable);         % Read all available serial data from the com port
                     if (~isempty(serialData) && serialData(1)==thisShimmer.EXG_REGS_RESPONSE)
                         % Update properties
                         thisShimmer.EXG1RLD_Sens = serialData(3);                    
@@ -8762,7 +8762,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                         serialData = [];
                         nIterations = 0;
                         while(length(serialData) < 12 && nIterations < 4)                      % Read the 12 byte response from the realterm buffer
-                            [tempSerialData, isFileOpen] = readdatabuffer(thisShimmer, thisShimmer.bluetoothConn.NumBytesAvailable);   % Read all available serial data from the com port
+                            [tempSerialData] = readdatabuffer(thisShimmer, thisShimmer.bluetoothConn.NumBytesAvailable);   % Read all available serial data from the com port
                             serialData = [serialData; tempSerialData];
                             pause(.2);
                             nIterations = nIterations + 1;
@@ -8906,7 +8906,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                     end
                 else
                     serialData = [];
-                    [serialData, isFileOpen] = readdatabuffer(thisShimmer, thisShimmer.bluetoothConn.NumBytesAvailable);         % Read all available serial data from the com port
+                    [serialData] = readdatabuffer(thisShimmer, thisShimmer.bluetoothConn.NumBytesAvailable);         % Read all available serial data from the com port
                     if (~isempty(serialData) && serialData(1)==thisShimmer.EXG_REGS_RESPONSE)
                         % Update properties
                         if (chipIdentifier == 1)
@@ -8992,7 +8992,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                     end
                 else
                     serialData = [];
-                    [serialData, isFileOpen] = readdatabuffer(thisShimmer, thisShimmer.bluetoothConn.NumBytesAvailable);         % Read all available serial data from the com port
+                    [serialData] = readdatabuffer(thisShimmer, thisShimmer.bluetoothConn.NumBytesAvailable);         % Read all available serial data from the com port
                     if (~isempty(serialData) && serialData(1)==thisShimmer.EXG_REGS_RESPONSE)
                         % Update properties
                         if (chipIdentifier == 1)
@@ -9061,7 +9061,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                     isRead = 'false';
                 else
                     serialData = [];
-                    [serialData, isFileOpen] = readdatabuffer(thisShimmer, 9);           % Read all available serial data from the com port
+                    [serialData] = readdatabuffer(thisShimmer, 9);           % Read all available serial data from the com port
                     if (~isempty(serialData) && serialData(1)==thisShimmer.RWC_RESPONSE)
                         % Update class properties
                         responseBytesLittleEndian = serialData(2:9);
@@ -9094,7 +9094,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                 isAcknowledged = waitforack(thisShimmer, thisShimmer.DEFAULT_TIMEOUT);      % Wait for Acknowledgment from Shimmer
                 
                 if (isAcknowledged == true)
-                    [shimmerResponse, isFileOpen] = readdatabuffer(thisShimmer, 2);         % Read the 2 byte response from the realterm buffer
+                    [shimmerResponse] = readdatabuffer(thisShimmer, 2);         % Read the 2 byte response from the realterm buffer
                     
                     if ~isempty(shimmerResponse)
                         
@@ -9136,7 +9136,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                 isAcknowledged = waitforack(thisShimmer, thisShimmer.DEFAULT_TIMEOUT);     % Wait for acknowledgment from Shimmer
                 
                 if (isAcknowledged == true)
-                    [shimmerResponse, isFileOpen] = readdatabuffer(thisShimmer, 5);        % Read the 5 byte response from the realterm buffer
+                    [shimmerResponse] = readdatabuffer(thisShimmer, 5);        % Read the 5 byte response from the realterm buffer
                     
                     if ~isempty(shimmerResponse)
                         
@@ -9194,7 +9194,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                 isAcknowledged = waitforack(thisShimmer, thisShimmer.DEFAULT_TIMEOUT);     % Wait for Acknowledgment from Shimmer
                 
                 if (isAcknowledged == true)
-                    [shimmerResponse, isFileOpen] = readdatabuffer(thisShimmer, 9);        % Read the 5 byte response from the realterm buffer
+                    [shimmerResponse] = readdatabuffer(thisShimmer, 9);        % Read the 5 byte response from the realterm buffer
                     
                     if ~isempty(shimmerResponse)
                         
@@ -9283,7 +9283,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                     end
                     
                     if (isAcknowledged == true)
-                        [shimmerResponse, isFileOpen] = readdatabuffer(thisShimmer, thisShimmer.bluetoothConn.NumBytesAvailable);     % Read response from the realterm buffer
+                        [shimmerResponse] = readdatabuffer(thisShimmer, thisShimmer.bluetoothConn.NumBytesAvailable);     % Read response from the realterm buffer
                         
                         if (~isempty(shimmerResponse) && (shimmerResponse(1) == thisShimmer.SHIMMER_VERSION_RESPONSE))    
                             thisShimmer.ShimmerVersion = shimmerResponse(2);
@@ -9317,7 +9317,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                 isAcknowledged = waitforack(thisShimmer, thisShimmer.DEFAULT_TIMEOUT);    % Wait for Acknowledgment from Shimmer
                 
                 if (isAcknowledged == true)
-                    [shimmerResponse, isFileOpen] = readdatabuffer(thisShimmer, thisShimmer.bluetoothConn.NumBytesAvailable);     % Read Inquiry Command response from the realterm buffer
+                    [shimmerResponse] = readdatabuffer(thisShimmer, thisShimmer.bluetoothConn.NumBytesAvailable);     % Read Inquiry Command response from the realterm buffer
                     
                     if ~isempty(shimmerResponse)
                         
@@ -9352,7 +9352,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                 thisShimmer.BufferSize = inquiryResponse(9);                                        % Buffer size is currently not used
                 nIterations = 0;
                 while(length(inquiryResponse) < 9+nChannels && nIterations < 4)
-                    [tempResponse, isFileOpen] = readdatabuffer(thisShimmer, thisShimmer.bluetoothConn.NumBytesAvailable);     % Read Inquiry Command response from the realterm buffer
+                    [tempResponse] = readdatabuffer(thisShimmer, thisShimmer.bluetoothConn.NumBytesAvailable);     % Read Inquiry Command response from the realterm buffer
                     inquiryResponse = [inquiryResponse; tempResponse];
                     nIterations = nIterations + 1;
                 end
@@ -11930,7 +11930,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                 
                 serialData = [];
                 
-                [serialData, isFileOpen] = readdatabuffer(thisShimmer, thisShimmer.bluetoothConn.NumBytesAvailable);  % Read all available serial data from the com port
+                [serialData] = readdatabuffer(thisShimmer, thisShimmer.bluetoothConn.NumBytesAvailable);  % Read all available serial data from the com port
                 
                 if (not(isempty(serialData)))
                     
@@ -12207,7 +12207,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
             tic;                                                           % Start timer
             
             while (isempty(serialData) && (elapsedTime < timeout))         % Keep reading serial port data until new data arrives OR elapsedTime exceeds timeout
-                [serialData, isFileOpen] = readdatabuffer(thisShimmer, 1); % Read a single byte of serial data from the com port
+                [serialData] = readdatabuffer(thisShimmer, 1); % Read a single byte of serial data from the com port
                 pause(waitPeriod);                                         % Wait 0.1 of a second
                 timeCount = timeCount + waitPeriod;                        % Timeout is used to exit while loop after 5 seconds
                 
@@ -12243,7 +12243,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
             tic;                                                           % Start timer
             
             while (isempty(serialData) && (elapsedTime < timeout))        % Keep reading serial port data until new data arrives OR elapsedTime exceeds timeout
-                [serialData, isFileOpen] = readdatabuffer(thisShimmer, 1); % Read a single byte of serial data from the com port
+                [serialData] = readdatabuffer(thisShimmer, 1); % Read a single byte of serial data from the com port
                 pause(waitPeriod);                                         % Wait 0.1 of a second
                 timeCount = timeCount + waitPeriod;                        % Timeout is used to exit while loop after 5 seconds
                 
