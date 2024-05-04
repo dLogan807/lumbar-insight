@@ -4864,8 +4864,15 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
             elseif (strcmp(thisShimmer.State,'Streaming'))
                 fprintf(strcat('Warning: connect - Cannot connect Shimmer COM',thisShimmer.name,', because it is already Streaming.\n'));
                 isConnected = true;
-            elseif (strcmp(thisShimmer.State,'Disconnected'))
-                isOpen = opencomport(thisShimmer);                                      % Attempt to establish a connection by opening the comport
+            elseif (strcmp(thisShimmer.State,'Disconnected'))    
+                isOpen = false;
+
+                try
+                    thisShimmer.bluetoothConn = bluetooth(thisShimmer.name);                % Attempt to establish a bluetooth connection
+                    isOpen = true;
+                catch
+                end
+                
                 if (isOpen)
                     thisShimmer.State = 'Connected';                                    % Set Shimmer state to Connected
                     readshimmerversion(thisShimmer);                                    % Requests the Shimmer version from the Shimmer and stores the response in thisShimmer.ShimmerVersion
@@ -4930,7 +4937,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                         thisShimmer.WarningGetDeprecatedGetData = 0;                                % Set warning property to zero
                     end
                 else
-                    fprintf(strcat('Warning: connect - Serial port failed to open for COM',thisShimmer.name,'. Disconnecting Shimmer.\n'));
+                    fprintf(strcat('Warning: connect - failed to establish bluetooth connection with ',thisShimmer.name,'. Disconnecting Shimmer.\n'));
                     disconnect(thisShimmer);
                     isConnected=false;
                 end
