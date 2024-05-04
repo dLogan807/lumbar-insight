@@ -1,4 +1,4 @@
-function orientation3Dexample(shimmer1, captureDuration)
+function orientation3D(shimmer1, captureDuration)
 %ORIENTATION3DEXAMPLE - Demonstrate 3D orientation visualation and write to file
 %
 %  ORIENTATION3DEXAMPLE(COMPORT, CAPTUREDURATION, FILENAME) streams 3
@@ -37,7 +37,7 @@ SensorMacros = SetEnabledSensorsMacrosClass;                               % ass
 
 % Note: these constants are only relevant to this examplescript and are not used
 % by the ShimmerHandle Class
-DELAY_PERIOD = 0.1;                                                       % A delay period of time in seconds between data read operations
+DELAY_PERIOD = 0.05;                                                       % A delay period of time in seconds between data read operations
 
 if (shimmer1.connect)                                  % TRUE if the shimmers connect
     % Define settings for shimmer
