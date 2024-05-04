@@ -2937,7 +2937,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                 disp('Warning: getsdcarddirectoryname - This function is not supported in this firmware version, please update firmware.');
                 isRead = false;
             else
-                clearreaddatabuffer(thisShimmer);                                       % As a precaution always clear the read data buffer before a write
+                flush(thisShimmer.bluetoothConn, "input");                                       % As a precaution always clear the read data buffer before a write
                 writetocomport(thisShimmer, thisShimmer.GET_DIR_COMMAND);               % Send the GET_DIR_COMMAND command the Shimmer
                 
                 isAcknowledged = waitforack(thisShimmer, thisShimmer.DEFAULT_TIMEOUT);  % Wait for Acknowledgment from Shimmer
@@ -2985,12 +2985,12 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                 batteryVoltage = 'Nan';
             else
                 if strcmp(thisShimmer.State,'Connected')
-                    clearreaddatabuffer(thisShimmer);                                                            % As a precaution always clear the read data buffer before a write
+                    flush(thisShimmer.bluetoothConn, "input");                                                            % As a precaution always clear the read data buffer before a write
                 end
                 writetocomport(thisShimmer, thisShimmer.GET_VBATT_COMMAND);                                      % Send the GET_VBATT_COMMAND command the Shimmer
                 
                 if strcmp(thisShimmer.State,'Connected')
-                    clearreaddatabuffer(thisShimmer);                                                            % As a precaution always clear the read data buffer before a write
+                    flush(thisShimmer.bluetoothConn, "input");                                                            % As a precaution always clear the read data buffer before a write
                     
                     isAcknowledged = waitforack(thisShimmer, thisShimmer.DEFAULT_TIMEOUT);                       % Wait for Acknowledgment from Shimmer
                     if ~(isAcknowledged == true)
@@ -3037,7 +3037,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                 disp('Warning: getstatus - This function is not supported in this firmware version, please update firmware.');
                 isRead = false;
             else
-                clearreaddatabuffer(thisShimmer);                                       % As a precaution always clear the read data buffer before a write
+                flush(thisShimmer.bluetoothConn, "input");                                       % As a precaution always clear the read data buffer before a write
                 writetocomport(thisShimmer, thisShimmer.GET_STATUS_COMMAND);            % Send the GET_STATUS_COMMAND command the Shimmer
                 
                 isAcknowledged = waitforack(thisShimmer, thisShimmer.DEFAULT_TIMEOUT);  % Wait for Acknowledgment from Shimmer
@@ -3487,7 +3487,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
             if strcmp(thisShimmer.getstate,'Streaming')
                 disp('Please stop streaming');
             else
-                clearreaddatabuffer(thisShimmer);
+                flush(thisShimmer.bluetoothConn, "input");
                 if strcmp('Accelerometer',sensorName)
                     writetocomport(thisShimmer,thisShimmer.GET_ACCEL_CALIBRATION_PARAMETERS_COMMAND);    % Send command to get Accelerometer Calibration Data
                 elseif strcmp('Gyroscope',sensorName)
@@ -4999,7 +4999,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
             %   See also connect start disconnect toggleLed startdatalogandstream
             %   stopdatalogandstream stoploggingonly startloggingonly 
             if (strcmp(thisShimmer.State,'Streaming'))                               % TRUE if the Shimmer is streaming
-                clearreaddatabuffer(thisShimmer);                                    % As a precaution always clear the read data buffer before a write
+                flush(thisShimmer.bluetoothConn, "input");                                    % As a precaution always clear the read data buffer before a write
                 writetocomport(thisShimmer, thisShimmer.STOP_STREAMING_COMMAND);     % Send the Stop Command to the Shimmer
                 thisShimmer.BlinkLED = -1;
                 thisShimmer.WriteLEDBLINKWAITFORACK=0;
@@ -5066,7 +5066,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
             %   See also connect start stop disconnect startdatalogandstream
             %   stopdatalogandstream stoploggingonly startloggingonly 
             if (strcmp(thisShimmer.State,'Connected'))                               % Shimmer must be in a Connected state to toggle the LED
-                clearreaddatabuffer(thisShimmer);                                    % As a precaution always clear the read data buffer before a write
+                flush(thisShimmer.bluetoothConn, "input");                                    % As a precaution always clear the read data buffer before a write
                 writetocomport(thisShimmer, thisShimmer.TOGGLE_LED_COMMAND);         % Send command to toggle the LED.
                 isToggled = waitforack(thisShimmer, thisShimmer.DEFAULT_TIMEOUT);    % Wait for Acknowledgment from Shimmer
                 
@@ -5154,7 +5154,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                 fprintf('Warning: stoploggingonly - This function is not supported in this firmware version, please update firmware.\n');
                 isStopped = false;
             elseif (thisShimmer.IsSDLogging == 1 && strcmp(thisShimmer.State,'Streaming') || strcmp(thisShimmer.State,'Connected'))                               % TRUE if the Shimmer is streaming
-                clearreaddatabuffer(thisShimmer);                                       % As a precaution always clear the read data buffer before a write
+                flush(thisShimmer.bluetoothConn, "input");                                       % As a precaution always clear the read data buffer before a write
                 writetocomport(thisShimmer, thisShimmer.STOP_LOGGING_ONLY_COMMAND);     % Send the STOP_LOGGING_ONLY_COMMAND to the Shimmer
                 
                 thisShimmer.IsSDLogging = 0;
@@ -5247,7 +5247,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                 isStopped = false;
             elseif (strcmp(thisShimmer.State,'Streaming'))   % TRUE if the Shimmer is streaming & logging
                 
-                clearreaddatabuffer(thisShimmer);                                                          % As a precaution always clear the read data buffer before a write
+                flush(thisShimmer.bluetoothConn, "input");                                                          % As a precaution always clear the read data buffer before a write
                 writetocomport(thisShimmer, thisShimmer.STOP_SDBT_COMMAND);                                % Send the Stop Command to the Shimmer
                 thisShimmer.BlinkLED = -1;
                 thisShimmer.WriteLEDBLINKWAITFORACK=0;
@@ -5276,7 +5276,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
             
             thisShimmer.SerialDataOverflow = [];
             thisShimmer.nFramePacketErrors = 0;
-            clearreaddatabuffer(thisShimmer);
+            flush(thisShimmer.bluetoothConn, "input");
             
         end % function reset
              
@@ -5382,7 +5382,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                disp('Warning: disablevbattfreq - This function is not supported in this firmware version.'); 
                isWritten = 'false';
             else
-                clearreaddatabuffer(thisShimmer);                                                    % As a precaution always clear the read data buffer before a write
+                flush(thisShimmer.bluetoothConn, "input");                                                    % As a precaution always clear the read data buffer before a write
                 writetocomport(thisShimmer, thisShimmer.SET_VBATT_FREQ_COMMAND);                     % Send the SET_VBATT_FREQ_COMMAND to the Shimmer
                 writetocomport(thisShimmer, char(0));                                                % Write 4 zero bytes to disable periodic sampling of battery value   
                 writetocomport(thisShimmer, char(0));
@@ -5405,7 +5405,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
             elseif ~(strcmp(thisShimmer.State,'Connected'))                     % Shimmer must be in a Connected state
                 fprintf(strcat('Warning: writeresettodefaultconfiguration - Cannot set sampling range for COM ',thisShimmer.name,' as Shimmer is not connected.\n'));
             else
-                clearreaddatabuffer(thisShimmer);                                                    % As a precaution always clear the read data buffer before a write
+                flush(thisShimmer.bluetoothConn, "input");                                                    % As a precaution always clear the read data buffer before a write
                 writetocomport(thisShimmer, thisShimmer.RESET_TO_DEFAULT_CONFIGURATION_COMMAND);     % Send the RESET_TO_DEFAULT_CONFIGURATION_COMMAND to the Shimmer
                 
                 isWritten = waitforack(thisShimmer, thisShimmer.DEFAULT_TIMEOUT);                    % Wait for Acknowledgment from Shimmer
@@ -5441,7 +5441,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
             % Writes sampling rate to Shimmer - in Connected state.
             if (strcmp(thisShimmer.State,'Connected'))
                 
-                clearreaddatabuffer(thisShimmer);                                    % As a precaution always clear the read data buffer before a write
+                flush(thisShimmer.bluetoothConn, "input");                                    % As a precaution always clear the read data buffer before a write
                 writetocomport(thisShimmer, thisShimmer.SET_SAMPLING_RATE_COMMAND);  % Send the Set Sampling Rate Command to the Shimmer
                 if (thisShimmer.ShimmerVersion < thisShimmer.SHIMMER_3)
                     if (samplingRate < 4.0315) && (samplingRate > 0)                     % Refer to '.\Resources\Sampling Rate Table.txt' for more details 
@@ -5489,7 +5489,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                 disp('Warning: writebaudrate - This function is not supported in this firmware version, please update firmware.');
                 isWritten = false;
             else
-                clearreaddatabuffer(thisShimmer);                                       % As a precaution always clear the read data buffer before a write
+                flush(thisShimmer.bluetoothConn, "input");                                       % As a precaution always clear the read data buffer before a write
                 writetocomport(thisShimmer, thisShimmer.SET_BT_COMMS_BAUD_RATE);        % Send the Set Baud Rate Command to the Shimmer
                 writetocomport(thisShimmer, char(baudRate));                            % Send Baud Rate to the Shimmer
                 
@@ -5523,7 +5523,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
             % Connected state.
             if (strcmp(thisShimmer.State,'Connected') && thisShimmer.ShimmerVersion < thisShimmer.SHIMMER_3)
                 
-                clearreaddatabuffer(thisShimmer);                                    % As a precaution always clear the read data buffer before a write
+                flush(thisShimmer.bluetoothConn, "input");                                    % As a precaution always clear the read data buffer before a write
                 writetocomport(thisShimmer, thisShimmer.SET_EMG_CALIBRATION_COMMAND);  % Send the Set Sampling Rate Command to the Shimmer
                 
                 writetocomport(thisShimmer, char(bitshift(offset,-8)));
@@ -5551,7 +5551,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
             % Writes ECG calibration parameters for Shimmer2/2r - in Connected state.
             if (strcmp(thisShimmer.State,'Connected') && thisShimmer.ShimmerVersion < thisShimmer.SHIMMER_3)
                 
-                clearreaddatabuffer(thisShimmer);                                    % As a precaution always clear the read data buffer before a write
+                flush(thisShimmer.bluetoothConn, "input");                                    % As a precaution always clear the read data buffer before a write
                 writetocomport(thisShimmer, thisShimmer.SET_ECG_CALIBRATION_COMMAND);  % Send the Set ECG Calibration Command to the Shimmer
                                 
                 writetocomport(thisShimmer, char(bitshift(offsetlall,-8)));
@@ -5587,7 +5587,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
             if (strcmp(thisShimmer.State,'Connected')) 
                 
                 if (thisShimmer.FirmwareCompatibilityCode >= 2 && (enable == 0 || enable ==1))                   
-                    clearreaddatabuffer(thisShimmer);                                  % As a precaution always clear the read data buffer before a write
+                    flush(thisShimmer.bluetoothConn, "input");                                  % As a precaution always clear the read data buffer before a write
                     writetocomport(thisShimmer, thisShimmer.SET_INTERNAL_EXP_POWER_ENABLE_COMMAND); 
                     
                     writetocomport(thisShimmer, char(enable));                    
@@ -5620,7 +5620,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
             if (strcmp(thisShimmer.State,'Connected'))
                 
                 if (thisShimmer.ShimmerVersion == thisShimmer.SHIMMER_3 && (enable == 0 || enable == 1))
-                    clearreaddatabuffer(thisShimmer);                                             % As a precaution always clear the read data buffer before a write
+                    flush(thisShimmer.bluetoothConn, "input");                                             % As a precaution always clear the read data buffer before a write
                     writetocomport(thisShimmer, thisShimmer.SET_LSM303DLHC_ACCEL_HRMODE_COMMAND); % Send SET_LSM303DLHC_ACCEL_HRMODE_COMMAND to Shimmer
                     
                     writetocomport(thisShimmer, char(enable));
@@ -5649,7 +5649,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
             if (strcmp(thisShimmer.State,'Connected'))
                 
                 if (thisShimmer.ShimmerVersion == thisShimmer.SHIMMER_3 && (enable == 0 || enable == 1))
-                    clearreaddatabuffer(thisShimmer);                                             % As a precaution always clear the read data buffer before a write
+                    flush(thisShimmer.bluetoothConn, "input");                                             % As a precaution always clear the read data buffer before a write
                     writetocomport(thisShimmer, thisShimmer.SET_LSM303DLHC_ACCEL_LPMODE_COMMAND); % Send SET_LSM303DLHC_ACCEL_LPMODE_COMMAND to Shimmer
                     
                     writetocomport(thisShimmer, char(enable));
@@ -5693,7 +5693,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                 
                 if (validSetting == true)
                     
-                    clearreaddatabuffer(thisShimmer);                                  % As a precaution always clear the read data buffer before a write
+                    flush(thisShimmer.bluetoothConn, "input");                                  % As a precaution always clear the read data buffer before a write
                     writetocomport(thisShimmer, thisShimmer.SET_ACCEL_RANGE_COMMAND);  % Send the Set Sampling Rate Command to the Shimmer
                     
                     writetocomport(thisShimmer, char(accelRange));                     % Write the accel range char value to the Shimmer
@@ -5722,7 +5722,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
             % Writes config byte 0 for Shimmer2/2r - in Connected state
             if (strcmp(thisShimmer.State,'Connected') && thisShimmer.ShimmerVersion < thisShimmer.SHIMMER_3)
                 
-                clearreaddatabuffer(thisShimmer);                                       % As a precaution always clear the read data buffer before a write
+                flush(thisShimmer.bluetoothConn, "input");                                       % As a precaution always clear the read data buffer before a write
                 writetocomport(thisShimmer, thisShimmer.SET_CONFIG_BYTE0_COMMAND);      % Send the SET_CONFIG_BYTE0_COMMAND to the Shimmer
                 writetocomport(thisShimmer, char(configByte0));                         % Write the configByte0 char value to the Shimmer
                 
@@ -5745,7 +5745,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
             % Writes config bytes for Shimmer3 - in Connected state
             if (strcmp(thisShimmer.State,'Connected'))
                 
-                clearreaddatabuffer(thisShimmer);                                       % As a precaution always clear the read data buffer before a write
+                flush(thisShimmer.bluetoothConn, "input");                                       % As a precaution always clear the read data buffer before a write
                 writetocomport(thisShimmer, thisShimmer.SET_CONFIG_BYTE0_COMMAND);      % Send the SET_CONFIG_BYTE0_COMMAND to the Shimmer (this is equal to SET_CONFIG_BYTES_COMMAND for Shimmer3)
                 writetocomport(thisShimmer, char(configByte0));                         % Write the configByte0 char value to the Shimmer
                 if(thisShimmer.ShimmerVersion == thisShimmer.SHIMMER_3)
@@ -5771,7 +5771,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
             % This function is currently not supported for Shimmer3.
             if (strcmp(thisShimmer.State,'Connected') && thisShimmer.ShimmerVersion < thisShimmer.SHIMMER_3)
                 
-                clearreaddatabuffer(thisShimmer);                                       % As a precaution always clear the read data buffer before a write
+                flush(thisShimmer.bluetoothConn, "input");                                       % As a precaution always clear the read data buffer before a write
                 writetocomport(thisShimmer, thisShimmer.SET_BUFFER_SIZE_COMMAND);       % Send the SET_BUFFER_SIZE_COMMAND to the Shimmer
                 writetocomport(thisShimmer, char(bufferSize));                          % Write the bufferSize char value to the Shimmer
                 
@@ -5796,7 +5796,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                 
                 if ((gsrRange == 0) || (gsrRange == 1) || (gsrRange == 2) || (gsrRange == 3) || (gsrRange == 4))
                     
-                    clearreaddatabuffer(thisShimmer);                                    % As a precaution always clear the read data buffer before a write
+                    flush(thisShimmer.bluetoothConn, "input");                                    % As a precaution always clear the read data buffer before a write
                     writetocomport(thisShimmer, thisShimmer.SET_GSR_RANGE_COMMAND);      % Send the SET_GSR_RANGE_COMMAND to the Shimmer
                     
                     writetocomport(thisShimmer, char(gsrRange));                         % Write the gsr range char value to the Shimmer
@@ -5834,7 +5834,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                 if (strcmp(thisShimmer.State,'Connected') && thisShimmer.FirmwareCompatibilityCode >= 3)
                     
                     if (length(exgCon)==10)
-                        clearreaddatabuffer(thisShimmer);                                   % As a precaution always clear the read data buffer before a write
+                        flush(thisShimmer.bluetoothConn, "input");                                   % As a precaution always clear the read data buffer before a write
                         writetocomport(thisShimmer, thisShimmer.SET_EXG_REGS_COMMAND);      % Send the SET_EXG_REGS_COMMAND to the Shimmer
                         writetocomport(thisShimmer, char(chipIdentifier-1));                % char(0) selects SENSOR_EXG1, char(1) selects SENSOR_EXG2
                         writetocomport(thisShimmer, char(0));                               % Start at byte 0
@@ -5882,7 +5882,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                             EXGConfig1UpdatedDataRateBits = bitor((EXG2Config1ClearedDataRateBits), exgRate); % Updated EXG2Config1 byte
                         end
                                                                                 
-                            clearreaddatabuffer(thisShimmer);                                   % As a precaution always clear the read data buffer before a write
+                            flush(thisShimmer.bluetoothConn, "input");                                   % As a precaution always clear the read data buffer before a write
                             writetocomport(thisShimmer, thisShimmer.SET_EXG_REGS_COMMAND);      % Send the SET_EXG_REGS_COMMAND to the Shimmer
                             writetocomport(thisShimmer, char(chipIdentifier-1));                % char(0) selects SENSOR_EXG1, char(1) selects SENSOR_EXG2
                             writetocomport(thisShimmer, char(0));                               % Start at byte 0
@@ -5938,7 +5938,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                                 EXGCh1SetUpdatedGainBits = bitor((EXG2Ch1SetClearedGainBits), bitshift(exgGain,4));   % Updated EXG2Ch1Set byte
                             end
                             
-                            clearreaddatabuffer(thisShimmer);                                   % As a precaution always clear the read data buffer before a write
+                            flush(thisShimmer.bluetoothConn, "input");                                   % As a precaution always clear the read data buffer before a write
                             writetocomport(thisShimmer, thisShimmer.SET_EXG_REGS_COMMAND);      % Send the SET_EXG_REGS_COMMAND to the Shimmer
                             writetocomport(thisShimmer, char(chipIdentifier-1));                % char(0) selects SENSOR_EXG1, char(1) selects SENSOR_EXG2
                             writetocomport(thisShimmer, char(3));                               % Start at byte 3
@@ -5985,7 +5985,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                                 EXGCh2SetUpdatedGainBits = bitor((EXG2Ch2SetClearedGainBits), bitshift(exgGain,4));   % Updated EXG2Ch2Set byte
                             end
 
-                                clearreaddatabuffer(thisShimmer);                                   % As a precaution always clear the read data buffer before a write
+                                flush(thisShimmer.bluetoothConn, "input");                                   % As a precaution always clear the read data buffer before a write
                                 writetocomport(thisShimmer, thisShimmer.SET_EXG_REGS_COMMAND);      % Send the SET_EXG_REGS_COMMAND to the Shimmer
                                 writetocomport(thisShimmer, char(chipIdentifier-1));                % char(0) selects SENSOR_EXG1, char(1) selects SENSOR_EXG2
                                 writetocomport(thisShimmer, char(4));                               % Start at byte 4
@@ -6042,7 +6042,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                 EXG1RLD_SensUpdatedElecRefConfBits = bitand(EXG1RLD_Sens,255-15);
                 EXG1RLD_SensUpdatedElecRefConfBits = bitor(EXG1RLD_SensUpdatedElecRefConfBits,exgReferenceElectrodeConfiguration);  % Set only the bits that need to be set
                 if (length(exgReferenceElectrodeConfiguration)==1 && exgReferenceElectrodeConfiguration < 16) % Check if configuration valid.
-                    clearreaddatabuffer(thisShimmer);                                                         % As a precaution always clear the read data buffer before a write
+                    flush(thisShimmer.bluetoothConn, "input");                                                         % As a precaution always clear the read data buffer before a write
                     writetocomport(thisShimmer, thisShimmer.SET_EXG_REGS_COMMAND);                            % Send the SET_EXG_REGS_COMMAND to the Shimmer
                     writetocomport(thisShimmer, char(0));                                                     % char(0) selects SENSOR_EXG1
                     writetocomport(thisShimmer, char(5));                                                     % Start at byte 5
@@ -6103,7 +6103,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                     EXGLoff_SensUpdatedElecRefConfBits = bitand(EXG2Loff,255-15); % clear bits first
                     EXGLoff_SensUpdatedElecRefConfBits = bitor(EXGLoff_SensUpdatedElecRefConfBits,detectionCurrent); % Set the detectionCurrent bits of EXG2Loff
                 end
-                clearreaddatabuffer(thisShimmer);                                       % As a precaution always clear the read data buffer before a write
+                flush(thisShimmer.bluetoothConn, "input");                                       % As a precaution always clear the read data buffer before a write
                 writetocomport(thisShimmer, thisShimmer.SET_EXG_REGS_COMMAND);          % Send the SET_EXG_REGS_COMMAND to the Shimmer
                 writetocomport(thisShimmer, char(chipIdentifier-1));                      % char chipIdentifier selects SENSOR_EXG1/SENSOR_EXG2
                 writetocomport(thisShimmer, char(2));                                   % Start at byte 2
@@ -6162,7 +6162,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                     EXGLoff_SensUpdatedCompThresBits = bitand(EXG2Loff,255-224); % clear bits to set
                     EXGLoff_SensUpdatedCompThresBits = bitor(EXGLoff_SensUpdatedCompThresBits,comparatorThreshold); % Set the comparatorThreshold bits of EXG1Loff
                 end
-                    clearreaddatabuffer(thisShimmer);                                       % As a precaution always clear the read data buffer before a write
+                    flush(thisShimmer.bluetoothConn, "input");                                       % As a precaution always clear the read data buffer before a write
                     writetocomport(thisShimmer, thisShimmer.SET_EXG_REGS_COMMAND);          % Send the SET_EXG_REGS_COMMAND to the Shimmer
                     writetocomport(thisShimmer, char(chipIdentifier-1));                      % char chipIdentifier selects SENSOR_EXG1/SENSOR_EXG2
                     writetocomport(thisShimmer, char(2));                                   % Start at byte 2
@@ -6260,7 +6260,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
   
                     end
                     
-                    clearreaddatabuffer(thisShimmer);                               % As a precaution always clear the read data buffer before a write
+                    flush(thisShimmer.bluetoothConn, "input");                               % As a precaution always clear the read data buffer before a write
                     writetocomport(thisShimmer, thisShimmer.SET_EXG_REGS_COMMAND);  % Send the SET_EXG_REGS_COMMAND to the Shimmer
                     writetocomport(thisShimmer, char(chipselect));                  % chipselect = 0/1 selects SENSOR_EXG1/SENSOR_EXG2
                     writetocomport(thisShimmer, char(1));                           % Start at byte 1
@@ -6326,7 +6326,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                 fprintf(strcat('Warning: writerealtimeclock - Cannot set Real Time Clock for COM ',thisShimmer.name,' as Shimmer is not connected.\n'));
             else                       
 
-                clearreaddatabuffer(thisShimmer);                                                    % As a precaution always clear the read data buffer before a write
+                flush(thisShimmer.bluetoothConn, "input");                                                    % As a precaution always clear the read data buffer before a write
                 writetocomport(thisShimmer, thisShimmer.SET_RWC_COMMAND);                            % Send the Set Real Time Clock Command to the Shimmer
 
                 % write 8 bytes System Time consecutively to Comport - little Endian:                
@@ -6352,7 +6352,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                             || ((thisShimmer.ShimmerVersion == thisShimmer.SHIMMER_3 && thisShimmer.HardwareCompatibilityCode < 2)...
                             && ((magRange == 7) || (magRange == 1) || (magRange == 2) || (magRange == 3) || (magRange == 4) || (magRange == 5) || (magRange == 6))))
                         
-                        clearreaddatabuffer(thisShimmer);                                    % As a precaution always clear the read data buffer before a write
+                        flush(thisShimmer.bluetoothConn, "input");                                    % As a precaution always clear the read data buffer before a write
                         writetocomport(thisShimmer, thisShimmer.SET_MAG_GAIN_COMMAND);       % Send the SET_MAG_GAIN_COMMAND to the Shimmer
                         
                         writetocomport(thisShimmer, char(magRange));                         % Write the magRange char value to the Shimmer
@@ -6383,7 +6383,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                 
                 if ((gyroRange == 0) || (gyroRange == 1) || (gyroRange == 2) || (gyroRange == 3))
                     
-                    clearreaddatabuffer(thisShimmer);                                             % As a precaution always clear the read data buffer before a write
+                    flush(thisShimmer.bluetoothConn, "input");                                             % As a precaution always clear the read data buffer before a write
                     writetocomport(thisShimmer, thisShimmer.SET_MPU9150_GYRO_RANGE_COMMAND);      % Send the SET_MPU9150_GYRO_RANGE_COMMAND to the Shimmer
                     
                     writetocomport(thisShimmer, char(gyroRange));                                 % Write the gyroRange char value to the Shimmer
@@ -6415,7 +6415,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                 
                 if ((pressureRes == 0) || (pressureRes == 1) || (pressureRes == 2) || (pressureRes == 3))
                     
-                    clearreaddatabuffer(thisShimmer);                                    % As a precaution always clear the read data buffer before a write
+                    flush(thisShimmer.bluetoothConn, "input");                                    % As a precaution always clear the read data buffer before a write
                     writetocomport(thisShimmer, thisShimmer.SET_BMP180_PRES_RESOLUTION_COMMAND);
                     
                     writetocomport(thisShimmer, char(pressureRes));
@@ -6452,7 +6452,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                         || (thisShimmer.ShimmerVersion == thisShimmer.SHIMMER_3 && thisShimmer.HardwareCompatibilityCode >= 2)...
                         && (magRate == 0) || (magRate == 1) || (magRate == 2) || (magRate == 3))
                     
-                    clearreaddatabuffer(thisShimmer);                                       % As a precaution always clear the read data buffer before a write
+                    flush(thisShimmer.bluetoothConn, "input");                                       % As a precaution always clear the read data buffer before a write
                     writetocomport(thisShimmer, thisShimmer.SET_MAG_SAMPLING_RATE_COMMAND); % Send the Set Mag Rate Command to the Shimmer
                     
                     writetocomport(thisShimmer, char(magRate));                             % Write the mag rate char value to the Shimmer
@@ -6485,7 +6485,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                         || ((thisShimmer.HardwareCompatibilityCode >= 2) && (accelRate == 1) || (accelRate == 2) || (accelRate == 3) || (accelRate == 4) || (accelRate == 5)...
                         || (accelRate == 6) || (accelRate == 7) || (accelRate == 8) || (accelRate == 9) || (accelRate == 10)))
                                            
-                    clearreaddatabuffer(thisShimmer);                                                     % As a precaution always clear the read data buffer before a write
+                    flush(thisShimmer.bluetoothConn, "input");                                                     % As a precaution always clear the read data buffer before a write
                     writetocomport(thisShimmer, thisShimmer.SET_LSM303DLHC_ACCEL_SAMPLING_RATE_COMMAND);  % Send the Set Mag Rate Command to the Shimmer
                     
                     writetocomport(thisShimmer, char(accelRate));                                         % Write the mag rate char value to the Shimmer
@@ -6518,7 +6518,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                 
                 if (gyroRate>=0 && gyroRate<=255)
                     
-                    clearreaddatabuffer(thisShimmer);                                           % As a precaution always clear the read data buffer before a write
+                    flush(thisShimmer.bluetoothConn, "input");                                           % As a precaution always clear the read data buffer before a write
                     writetocomport(thisShimmer, thisShimmer.SET_MPU9150_SAMPLING_RATE_COMMAND); % Send the Set Gyro Rate Command to the Shimmer
                     
                     writetocomport(thisShimmer, char(gyroRate));                                % Write the gyroRate char value to the Shimmer
@@ -6548,7 +6548,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                 disp('Warning: setledblink - Not supported for LogAndStream.');
                 
             elseif (strcmp(thisShimmer.State,'Connected')||strcmp(thisShimmer.State,'Streaming'))
-                clearreaddatabuffer(thisShimmer);                                 % As a precaution always clear the read data buffer before a write
+                flush(thisShimmer.bluetoothConn, "input");                                 % As a precaution always clear the read data buffer before a write
                 writetocomport(thisShimmer, thisShimmer.SET_BLINK_LED);           % Send the Set Blink LED Command to the Shimmer
                 writetocomport(thisShimmer, char(blink));                         % Write the blink char value to the Shimmer
                 
@@ -6573,7 +6573,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                 
             elseif (thisShimmer.WriteLEDBLINKWAITFORACK==0)
                 if (strcmp(thisShimmer.State,'Streaming'))
-                    clearreaddatabuffer(thisShimmer);                                 % As a precaution always clear the read data buffer before a write
+                    flush(thisShimmer.bluetoothConn, "input");                                 % As a precaution always clear the read data buffer before a write
                     writetocomport(thisShimmer, thisShimmer.SET_BLINK_LED);           % Send the SET_BLINK_LED command to the Shimmer
                     writetocomport(thisShimmer, char(blink));                         % Write the blink char value to the Shimmer
                     
@@ -7312,7 +7312,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                 enabledSensorsLowByte = bitand(enabledSensors,255);                 % Extract the lower byte          % previously enabledSensorsLowByte = uint8(enabledSensors);
                 enabledSensorsHighByte = bitand(bitshift(enabledSensors,-8),255);   % Extract the higher byte
                
-                clearreaddatabuffer(thisShimmer);                                   % As a precaution always clear the read data buffer before a write
+                flush(thisShimmer.bluetoothConn, "input");                                   % As a precaution always clear the read data buffer before a write
                 writetocomport(thisShimmer, thisShimmer.SET_SENSORS_COMMAND);       % Send the Set Sensors Command to the Shimmer
                 writetocomport(thisShimmer, char(enabledSensorsLowByte));           % Write the enabled sensors lower byte value to the Shimmer
                 writetocomport(thisShimmer, char(enabledSensorsHighByte));          % Write the enabled sensors higher byte value to the Shimmer
@@ -7353,7 +7353,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
             % Receives the sampling rate and updates the SamplingRate property.
             if (strcmp(thisShimmer.State,'Connected'))
                 
-                clearreaddatabuffer(thisShimmer);                                       % As a precaution always clear the read data buffer before a write
+                flush(thisShimmer.bluetoothConn, "input");                                       % As a precaution always clear the read data buffer before a write
                 writetocomport(thisShimmer, thisShimmer.GET_SAMPLING_RATE_COMMAND);     % Send the Get Sampling Rate Command to the Shimmer
                 
                 isAcknowledged = waitforack(thisShimmer, thisShimmer.DEFAULT_TIMEOUT);  % Wait for Acknowledgment from Shimmer
@@ -7410,7 +7410,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                 disp('Warning: readbaudrate - This function is not supported in this firmware version, please update firmware.');
                 isRead = false;
             else
-                clearreaddatabuffer(thisShimmer);                                       % As a precaution always clear the read data buffer before a write
+                flush(thisShimmer.bluetoothConn, "input");                                       % As a precaution always clear the read data buffer before a write
                 writetocomport(thisShimmer, thisShimmer.GET_BT_COMMS_BAUD_RATE);        % Send the Set Baud Rate Command to the Shimmer
                 
                 isAcknowledged = waitforack(thisShimmer, thisShimmer.DEFAULT_TIMEOUT);  % Wait for Acknowledgment from Shimmer
@@ -7438,7 +7438,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
             % Receives the firmware version and updates the corresponding properties.
             if (strcmp(thisShimmer.State,'Connected'))
                 
-                clearreaddatabuffer(thisShimmer);                                          % As a precaution always clear the read data buffer before a write
+                flush(thisShimmer.bluetoothConn, "input");                                          % As a precaution always clear the read data buffer before a write
                 writetocomport(thisShimmer, thisShimmer.GET_FW_VERSION_COMMAND);          % Send the Get Firmware Version Command to the Shimmer device
                 
                 isAcknowledged = waitforacknofeedback(thisShimmer, 1);     % Wait for Acknowledgment from Shimmer , 1 second is used to speed up the initializing process when detecting the firmware
@@ -7538,7 +7538,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
             
             if (strcmp(thisShimmer.State,'Connected'))
                 
-                clearreaddatabuffer(thisShimmer);                                         % As a precaution always clear the read data buffer before a write
+                flush(thisShimmer.bluetoothConn, "input");                                         % As a precaution always clear the read data buffer before a write
                 writetocomport(thisShimmer, thisShimmer.GET_FW_VERSION_COMMAND);          % Send the Get FW version Command to the Shimmer
                 
                 isAcknowledged = waitforacknofeedback(thisShimmer, thisShimmer.DEFAULT_TIMEOUT);     % Wait for Acknowledgement from Shimmer
@@ -7555,7 +7555,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
             % Receives the accel range and updates the AccelRange property.
             if (strcmp(thisShimmer.State,'Connected'))
                 
-                clearreaddatabuffer(thisShimmer);                                          % As a precaution always clear the read data buffer before a write
+                flush(thisShimmer.bluetoothConn, "input");                                          % As a precaution always clear the read data buffer before a write
                 writetocomport(thisShimmer, thisShimmer.GET_ACCEL_RANGE_COMMAND);          % Send the Set Accel Range Command to the Shimmer
                 
                 isAcknowledged = waitforack(thisShimmer, thisShimmer.DEFAULT_TIMEOUT);     % Wait for Acknowledgment from Shimmer
@@ -7596,7 +7596,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
             % Receives the High Resolution mode setting and updates the AccelWideRangeHRMode property.
             if (strcmp(thisShimmer.State,'Connected') && thisShimmer.ShimmerVersion == thisShimmer.SHIMMER_3)
                 
-                clearreaddatabuffer(thisShimmer);                                               % As a precaution always clear the read data buffer before a write
+                flush(thisShimmer.bluetoothConn, "input");                                               % As a precaution always clear the read data buffer before a write
                 writetocomport(thisShimmer, thisShimmer.GET_LSM303DLHC_ACCEL_HRMODE_COMMAND);   % Send GET_LSM303DLHC_ACCEL_HRMODE_COMMAND to Shimmer
                 
                 isAcknowledged = waitforack(thisShimmer, thisShimmer.DEFAULT_TIMEOUT);          % Wait for Acknowledgment from Shimmer
@@ -7631,7 +7631,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
             % Receives the Low Power mode setting and updates the AccelWideRangeLPMode property.
             if (strcmp(thisShimmer.State,'Connected') && thisShimmer.ShimmerVersion == thisShimmer.SHIMMER_3)
                 
-                clearreaddatabuffer(thisShimmer);                                             % As a precaution always clear the read data buffer before a write
+                flush(thisShimmer.bluetoothConn, "input");                                             % As a precaution always clear the read data buffer before a write
                 writetocomport(thisShimmer, thisShimmer.GET_LSM303DLHC_ACCEL_LPMODE_COMMAND); % Send GET_LSM303DLHC_ACCEL_LPMODE_COMMAND to Shimmer
                 
                 isAcknowledged = waitforack(thisShimmer, thisShimmer.DEFAULT_TIMEOUT);        % Wait for Acknowledgment from Shimmer
@@ -7672,7 +7672,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
             % Sends the GET_CONFIG_BYTE0_COMMAND to Shimmer2/2r - in Connected state 
             % Receives Config Byte 0 and updates the ConfigByte0 property.
             if (strcmp(thisShimmer.State,'Connected') && thisShimmer.ShimmerVersion < thisShimmer.SHIMMER_3)
-                clearreaddatabuffer(thisShimmer);                                           % As a precaution always clear the read data buffer before a write                
+                flush(thisShimmer.bluetoothConn, "input");                                           % As a precaution always clear the read data buffer before a write                
                 writetocomport(thisShimmer, thisShimmer.GET_CONFIG_BYTE0_COMMAND);          % Send the Get Config Byte0 Command to the Shimmer                
                 isAcknowledged = waitforack(thisShimmer, thisShimmer.DEFAULT_TIMEOUT);      % Wait for Acknowledgment from Shimmer                
                 if (isAcknowledged == true)
@@ -7710,7 +7710,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
             % Receives Config Byte 0, Config Byte 1, Config Byte 2 and Config Byte 3
             % and updates the corresponding properties.
             if (strcmp(thisShimmer.State,'Connected'))
-                clearreaddatabuffer(thisShimmer);                                           % As a precaution always clear the read data buffer before a write                
+                flush(thisShimmer.bluetoothConn, "input");                                           % As a precaution always clear the read data buffer before a write                
                 writetocomport(thisShimmer, thisShimmer.GET_CONFIG_BYTE0_COMMAND);          % Send GET_CONFIG_BYTE0_COMMAND to Shimmer3 to get config bytes byte0, byte1, byte2, byte3.              
                 isAcknowledged = waitforack(thisShimmer, thisShimmer.DEFAULT_TIMEOUT);      % Wait for Acknowledgment from Shimmer                
                 if (isAcknowledged == true)
@@ -7764,7 +7764,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
             % Currently not supported for Shimmer3.
             if (strcmp(thisShimmer.State,'Connected') && thisShimmer.ShimmerVersion < thisShimmer.SHIMMER_3)
                 
-                clearreaddatabuffer(thisShimmer);                                           % As a precaution always clear the read data buffer before a write
+                flush(thisShimmer.bluetoothConn, "input");                                           % As a precaution always clear the read data buffer before a write
                 
                 writetocomport(thisShimmer, thisShimmer.GET_BUFFER_SIZE_COMMAND);          % Send the Get Buffer Size Command to the Shimmer
                 
@@ -7808,7 +7808,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
             % Receives GSR range and updates the GsrRange property. 
             if (strcmp(thisShimmer.State,'Connected'))
                 
-                clearreaddatabuffer(thisShimmer);                                          % As a precaution always clear the read data buffer before a write
+                flush(thisShimmer.bluetoothConn, "input");                                          % As a precaution always clear the read data buffer before a write
                 writetocomport(thisShimmer, thisShimmer.GET_GSR_RANGE_COMMAND);            % Send the Get GSR Range Command to the Shimmer
                 
                 isAcknowledged = waitforack(thisShimmer, thisShimmer.DEFAULT_TIMEOUT);     % Wait for Acknowledgment from Shimmer
@@ -7854,7 +7854,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
             else
                 if (strcmp(thisShimmer.State,'Connected'))
                     
-                    clearreaddatabuffer(thisShimmer);                                          % As a precaution always clear the read data buffer before a write
+                    flush(thisShimmer.bluetoothConn, "input");                                          % As a precaution always clear the read data buffer before a write
                     writetocomport(thisShimmer, thisShimmer.GET_MAG_GAIN_COMMAND);             % Send the Get Mag Range Command to the Shimmer
                     
                     isAcknowledged = waitforack(thisShimmer, thisShimmer.DEFAULT_TIMEOUT);     % Wait for Acknowledgment from Shimmer
@@ -7895,7 +7895,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
             % Receives MPU9150 - Gyroscope range and updates the GyroRange property. 
             if (strcmp(thisShimmer.State,'Connected') && thisShimmer.ShimmerVersion == thisShimmer.SHIMMER_3)
                 
-                clearreaddatabuffer(thisShimmer);                                          % As a precaution always clear the read data buffer before a write
+                flush(thisShimmer.bluetoothConn, "input");                                          % As a precaution always clear the read data buffer before a write
                 writetocomport(thisShimmer, thisShimmer.GET_MPU9150_GYRO_RANGE_COMMAND);            % Send the Get Mag Range Command to the Shimmer
                 
                 isAcknowledged = waitforack(thisShimmer, thisShimmer.DEFAULT_TIMEOUT);     % Wait for Acknowledgment from Shimmer
@@ -7939,7 +7939,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                 disp('Warning: readpressureresolution - Command not supported for this firmware version, please update firmware.')
             elseif (strcmp(thisShimmer.State,'Connected') && thisShimmer.ShimmerVersion == thisShimmer.SHIMMER_3)
                 
-                clearreaddatabuffer(thisShimmer);                                               % As a precaution always clear the read data buffer before a write
+                flush(thisShimmer.bluetoothConn, "input");                                               % As a precaution always clear the read data buffer before a write
                 writetocomport(thisShimmer, thisShimmer.GET_BMP180_PRES_RESOLUTION_COMMAND);    % Send GET_BMP180_PRES_RESOLUTION_COMMAND to the Shimmer
                 
                 isAcknowledged = waitforack(thisShimmer, thisShimmer.DEFAULT_TIMEOUT);          % Wait for Acknowledgment from Shimmer
@@ -8007,7 +8007,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                         nBytes = 25;
                         getCalCoCommand = thisShimmer.GET_BMP280_CALIBRATION_COEFFICIENTS_COMMAND;
                     end
-                    clearreaddatabuffer(thisShimmer);                                                       % As a precaution always clear the read data buffer before a write
+                    flush(thisShimmer.bluetoothConn, "input");                                                       % As a precaution always clear the read data buffer before a write
                     writetocomport(thisShimmer,getCalCoCommand);                                            % Send command to get pressure sensor calibration coefficients
                     isStarted = waitforack(thisShimmer, thisShimmer.DEFAULT_TIMEOUT);                       % Wait for Acknowledgment from Shimmer
                     
@@ -8094,7 +8094,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                 disp('Warning: readexpansionboardidbytes - Command not supported for this firmware version, please update firmware.')
                 IDByteArray = 'Nan';
             else
-                clearreaddatabuffer(thisShimmer);                                        % As a precaution always clear the read data buffer before a write
+                flush(thisShimmer.bluetoothConn, "input");                                        % As a precaution always clear the read data buffer before a write
                 writetocomport(thisShimmer,thisShimmer.GET_DAUGHTER_CARD_ID_COMMAND);    % Send command to get expansion board ID bytes
                 writetocomport(thisShimmer, char(numBytes));                             % Send numBytes value
                 writetocomport(thisShimmer, char(offset));                               % Send offset value
@@ -8127,7 +8127,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                 isRead = false;
             elseif (strcmp(thisShimmer.State,'Connected') && thisShimmer.ShimmerVersion == thisShimmer.SHIMMER_3 && (chipIdentifier == 1 || chipIdentifier == 2))
                 
-                clearreaddatabuffer(thisShimmer);                                          % As a precaution always clear the read data buffer before a write
+                flush(thisShimmer.bluetoothConn, "input");                                          % As a precaution always clear the read data buffer before a write
                 writetocomport(thisShimmer, thisShimmer.GET_EXG_REGS_COMMAND);
                 writetocomport(thisShimmer, char(chipIdentifier-1));                       % char(0) selects SENSOR_EXG1, char(1) selects SENSOR_EXG2
                 writetocomport(thisShimmer, char(0));
@@ -8254,7 +8254,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
             % Receives Magetometer data rate and updates the MagRate property. 
             if (strcmp(thisShimmer.State,'Connected'))
                 
-                clearreaddatabuffer(thisShimmer);                                          % As a precaution always clear the read data buffer before a write
+                flush(thisShimmer.bluetoothConn, "input");                                          % As a precaution always clear the read data buffer before a write
                 writetocomport(thisShimmer, thisShimmer.GET_MAG_SAMPLING_RATE_COMMAND);    % Send the Get Mag Rate Command to the Shimmer
                 
                 isAcknowledged = waitforack(thisShimmer, thisShimmer.DEFAULT_TIMEOUT);     % Wait for Acknowledgment from Shimmer
@@ -8295,7 +8295,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
             % Receives Internal Expansion Power settingand updates the InternalExpPower property. 
             if (strcmp(thisShimmer.State,'Connected') && thisShimmer.FirmwareCompatibilityCode >= 2)
                 
-                clearreaddatabuffer(thisShimmer);                                          % As a precaution always clear the read data buffer before a write
+                flush(thisShimmer.bluetoothConn, "input");                                          % As a precaution always clear the read data buffer before a write
                 writetocomport(thisShimmer, thisShimmer.GET_INTERNAL_EXP_POWER_ENABLE_COMMAND);            
                 
                 isAcknowledged = waitforack(thisShimmer, thisShimmer.DEFAULT_TIMEOUT);     % Wait for Acknowledgment from Shimmer
@@ -8332,7 +8332,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
             % Receives MPU9150 - Gyroscope data rate and updates the GyroRate property. 
             if (strcmp(thisShimmer.State,'Connected') && thisShimmer.ShimmerVersion == thisShimmer.SHIMMER_3)
                 
-                clearreaddatabuffer(thisShimmer);                                           % As a precaution always clear the read data buffer before a write
+                flush(thisShimmer.bluetoothConn, "input");                                           % As a precaution always clear the read data buffer before a write
                 writetocomport(thisShimmer, thisShimmer.GET_MPU9150_SAMPLING_RATE_COMMAND); % Send the Get Gyro Rate Command to the Shimmer
                 
                 isAcknowledged = waitforack(thisShimmer, thisShimmer.DEFAULT_TIMEOUT);      % Wait for Acknowledgment from Shimmer
@@ -8374,7 +8374,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
             % Receives LSM303DLHC/LSM303AHTR - Accelerometer data rate and updates the AccelWideRangeDataRate property.
             if (strcmp(thisShimmer.State,'Connected') && thisShimmer.ShimmerVersion == thisShimmer.SHIMMER_3)
                 
-                clearreaddatabuffer(thisShimmer);                                                     % As a precaution always clear the read data buffer before a write
+                flush(thisShimmer.bluetoothConn, "input");                                                     % As a precaution always clear the read data buffer before a write
                 writetocomport(thisShimmer, thisShimmer.GET_LSM303DLHC_ACCEL_SAMPLING_RATE_COMMAND);  % Send the Get Accel Rate Command to the Shimmer
                 
                 isAcknowledged = waitforack(thisShimmer, thisShimmer.DEFAULT_TIMEOUT);                % Wait for Acknowledgment from Shimmer
@@ -8423,7 +8423,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
             elseif((chipIdentifier == 1 || chipIdentifier == 2) && thisShimmer.FirmwareCompatibilityCode >= 3)
 
                 if (strcmp(thisShimmer.State,'Connected'))
-                    clearreaddatabuffer(thisShimmer);                                          % As a precaution always clear the read data buffer before a write
+                    flush(thisShimmer.bluetoothConn, "input");                                          % As a precaution always clear the read data buffer before a write
                     writetocomport(thisShimmer, thisShimmer.GET_EXG_REGS_COMMAND);             % Send the GET_EXG_REGS_COMMAND to the Shimmer
                     writetocomport(thisShimmer, char(chipIdentifier-1));                       % char(0) selects SENSOR_EXG1, char(1) selects SENSOR_EXG2
                     writetocomport(thisShimmer, char(0));                                      % Start at byte 0.
@@ -8490,7 +8490,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                     % channelIdentifier 1
                     if (chipIdentifier == 1 || chipIdentifier == 2)
                         if (strcmp(thisShimmer.State,'Connected'))
-                            clearreaddatabuffer(thisShimmer);                                          % As a precaution always clear the read data buffer before a write
+                            flush(thisShimmer.bluetoothConn, "input");                                          % As a precaution always clear the read data buffer before a write
                             writetocomport(thisShimmer, thisShimmer.GET_EXG_REGS_COMMAND);             % Send the GET_EXG_REGS_COMMAND to the Shimmer
                             writetocomport(thisShimmer, char(chipIdentifier-1));                       % char(0) selects SENSOR_EXG1, char(1) selects SENSOR_EXG2
                             writetocomport(thisShimmer, char(3));                                      % Start at byte 3.
@@ -8550,7 +8550,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                     % channelIdentifier 2
                     if(chipIdentifier == 1 || chipIdentifier == 2)
                         if (strcmp(thisShimmer.State,'Connected'))
-                            clearreaddatabuffer(thisShimmer);                                          % As a precaution always clear the read data buffer before a write
+                            flush(thisShimmer.bluetoothConn, "input");                                          % As a precaution always clear the read data buffer before a write
                             writetocomport(thisShimmer, thisShimmer.GET_EXG_REGS_COMMAND);             % Send the GET_EXG_REGS_COMMAND to the Shimmer
                             writetocomport(thisShimmer, char(chipIdentifier-1));                       % char(0) selects SENSOR_EXG1, char(1) selects SENSOR_EXG2
                             writetocomport(thisShimmer, char(4));                                      % Start at byte 4.
@@ -8642,7 +8642,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                 thisShimmer.EXGReferenceElectrodeConfiguration = 'Nan';
                 isRead = false;
             else
-                clearreaddatabuffer(thisShimmer);                                        % As a precaution always clear the read data buffer before a write
+                flush(thisShimmer.bluetoothConn, "input");                                        % As a precaution always clear the read data buffer before a write
                 writetocomport(thisShimmer,thisShimmer.GET_EXG_REGS_COMMAND);            % Send command to get ExG register values
                 writetocomport(thisShimmer, char(0));                                    % char(0) selects SENSOR_EXG1
                 writetocomport(thisShimmer, char(5));                                    % Start at byte 7.
@@ -8720,7 +8720,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
             else
                 chipselect = 0;
                 while chipselect < 2;                                                        % Get ExG register values for both SENSOR_EXG1 and SENSOR_EXG2
-                    clearreaddatabuffer(thisShimmer);                                        % As a precaution always clear the read data buffer before a write
+                    flush(thisShimmer.bluetoothConn, "input");                                        % As a precaution always clear the read data buffer before a write
                     writetocomport(thisShimmer,thisShimmer.GET_EXG_REGS_COMMAND);            % Send command to get ExG register values
                     writetocomport(thisShimmer, char(chipselect));                           % chipselect = 0/1 selects SENSOR_EXG1/SENSOR_EXG2
                     writetocomport(thisShimmer, char(0));                                    % Start at byte 0.
@@ -8886,7 +8886,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
             elseif ~(chipIdentifier == 1 || chipIdentifier == 2)
                 disp('Warning: readexgleadoffdetectioncurrent - Invalid value for chipIdentifier.')
             else
-                clearreaddatabuffer(thisShimmer);                                        % As a precaution always clear the read data buffer before a write
+                flush(thisShimmer.bluetoothConn, "input");                                        % As a precaution always clear the read data buffer before a write
                 writetocomport(thisShimmer,thisShimmer.GET_EXG_REGS_COMMAND);            % Send command to get ExG register values
                 writetocomport(thisShimmer, char(chipIdentifier-1));                     % Selects SENSOR_EXG1/SENSOR_EXG2
                 writetocomport(thisShimmer, char(2));                                    % Start at byte 2.
@@ -8972,7 +8972,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
             elseif ~(chipIdentifier == 1 || chipIdentifier == 2)
                 disp('Warning: readexgleadoffcomparatorthreshold - Invalid value for chipIdentifier.')
             else
-                clearreaddatabuffer(thisShimmer);                                        % As a precaution always clear the read data buffer before a write
+                flush(thisShimmer.bluetoothConn, "input");                                        % As a precaution always clear the read data buffer before a write
                 writetocomport(thisShimmer,thisShimmer.GET_EXG_REGS_COMMAND);            % Send command to get ExG register values
                 writetocomport(thisShimmer, char(chipIdentifier-1));                     % Selects SENSOR_EXG1/SENSOR_EXG2
                 writetocomport(thisShimmer, char(2));                                    % Start at byte 2.
@@ -9049,7 +9049,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                 thisShimmer.RealTimeClockTicks = 'Nan';
                 isRead = 'false';
             else
-                clearreaddatabuffer(thisShimmer);                                        % As a precaution always clear the read data buffer before a write
+                flush(thisShimmer.bluetoothConn, "input");                                        % As a precaution always clear the read data buffer before a write
                 writetocomport(thisShimmer,thisShimmer.GET_RWC_COMMAND);                 % Send command to get Real Time Clock value
   
                 isAcknowledged = waitforack(thisShimmer, thisShimmer.DEFAULT_TIMEOUT);   % Wait for Acknowledgment from Shimmer
@@ -9088,7 +9088,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                 
             elseif (strcmp(thisShimmer.State,'Connected'))
                 
-                clearreaddatabuffer(thisShimmer);                                           % As a precaution always clear the read data buffer before a write
+                flush(thisShimmer.bluetoothConn, "input");                                           % As a precaution always clear the read data buffer before a write
                 writetocomport(thisShimmer, thisShimmer.GET_BLINK_LED);                     % Send the GET_BLINK_LED Command to the Shimmer
                 
                 isAcknowledged = waitforack(thisShimmer, thisShimmer.DEFAULT_TIMEOUT);      % Wait for Acknowledgment from Shimmer
@@ -9130,7 +9130,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
             % This function is currently only available for Shimmer2/2r.
             if (strcmp(thisShimmer.State,'Connected') && thisShimmer.ShimmerVersion < thisShimmer.SHIMMER_3)
                 
-                clearreaddatabuffer(thisShimmer);                                          % As a precaution always clear the read data buffer before a write
+                flush(thisShimmer.bluetoothConn, "input");                                          % As a precaution always clear the read data buffer before a write
                 writetocomport(thisShimmer, thisShimmer.GET_EMG_CALIBRATION_COMMAND);            % Send the GET_EMG_CALIBRATION_COMMAND Command to the Shimmer
                 
                 isAcknowledged = waitforack(thisShimmer, thisShimmer.DEFAULT_TIMEOUT);     % Wait for acknowledgment from Shimmer
@@ -9188,7 +9188,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
             % This function is currently only available for Shimmer2/2r.
             if (strcmp(thisShimmer.State,'Connected') && thisShimmer.ShimmerVersion < thisShimmer.SHIMMER_3)
                 
-                clearreaddatabuffer(thisShimmer);                                          % As a precaution always clear the read data buffer before a write
+                flush(thisShimmer.bluetoothConn, "input");                                          % As a precaution always clear the read data buffer before a write
                 writetocomport(thisShimmer, thisShimmer.GET_ECG_CALIBRATION_COMMAND);      % Send GET_ECG_CALIBRATION_COMMAND to the Shimmer
                 
                 isAcknowledged = waitforack(thisShimmer, thisShimmer.DEFAULT_TIMEOUT);     % Wait for Acknowledgment from Shimmer
@@ -9253,7 +9253,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
             % Calls the inquiry function and updates the EnabledSensors property.
             if (strcmp(thisShimmer.State,'Connected'))
                 
-                clearreaddatabuffer(thisShimmer);                          % As a precaution always clear the read data buffer before a write
+                flush(thisShimmer.bluetoothConn, "input");                          % As a precaution always clear the read data buffer before a write
                 isRead = inquiry(thisShimmer);                             % Send an inquiry command to the Shimmer
                                                 
                 if (~isRead)
@@ -9273,7 +9273,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
             % Sends the GET_SHIMMER_VERSION_COMMAND_NEW (or GET_SHIMMER_VERSION_COMMAND) to Shimmer - in Connected state 
             % Receives the Shimmer Version and updates the ShimmerVersion property. 
             if (strcmp(thisShimmer.State,'Connected'))
-                    clearreaddatabuffer(thisShimmer);                                         % As a precaution always clear the read data buffer before a write
+                    flush(thisShimmer.bluetoothConn, "input");                                         % As a precaution always clear the read data buffer before a write
 
                     writetocomport(thisShimmer, thisShimmer.GET_SHIMMER_VERSION_COMMAND_NEW);     % Send the new Get Shimmer Version Command to the Shimmer                    
                     isAcknowledged = waitforack(thisShimmer, 2);    % Wait for Acknowledgment from Shimmer (user short timeout to speed up initialisation)
@@ -9311,7 +9311,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
             % parseinquiryresponse with the just received Inquire Response 
             % as input argument.
             if (strcmp(thisShimmer.State,'Connected'))
-                clearreaddatabuffer(thisShimmer);                                         % As a precaution always clear the read data buffer before a write
+                flush(thisShimmer.bluetoothConn, "input");                                         % As a precaution always clear the read data buffer before a write
                 writetocomport(thisShimmer, thisShimmer.INQUIRY_COMMAND);                 % Send the Inquiry Command to the Shimmer
                 
                 isAcknowledged = waitforack(thisShimmer, thisShimmer.DEFAULT_TIMEOUT);    % Wait for Acknowledgment from Shimmer
