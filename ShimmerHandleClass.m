@@ -137,7 +137,6 @@ classdef ShimmerHandleClass < handle
         MagneCalParametersAMShimmer3_2=[0 -1 0; 1 0 0; 0 0 -1];            % Default Calibration Parameters for Magnetometer (Alignment Matrix)   - LSM303AHTR
 
         %Data properties
-        LastQuaternion = [0.5, 0.5, 0.5, 0.5];              % Last estimated quaternion value, used to incrementally update quaternion.
         SerialDataOverflow = [];                            % Feedback buffer used by the framepackets method
 
         SignalNameArray;                                    % Cell array contain the names of the enabled sensor signals in string format
@@ -243,6 +242,8 @@ classdef ShimmerHandleClass < handle
         name (1,:) {string};
         isConnected {logical} = false;
         isStreaming {logical} = false;
+
+        LastQuaternion = [0.5, 0.5, 0.5, 0.5];              % Last estimated quaternion value, used to incrementally update quaternion.
 
         HardwareCompatibilityCode;                          %1 if IMU
 
