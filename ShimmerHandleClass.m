@@ -5032,7 +5032,8 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                         thisShimmer.stop;                                  % Stop streaming before closing COM Port
                     end
                 end
-                isOpen=closecomport(thisShimmer);                          % Close the COM Port
+                isOpen=false;
+                clear thisShimmer.bluetoothConn;                           %Clear bluetooth variable
                 
                 if (~isOpen)                                               % TRUE if COM Port is closed
                     thisShimmer.State = 'Disconnected';                    % Set Shimmer state to Disconnected
