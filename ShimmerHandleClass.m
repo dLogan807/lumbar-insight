@@ -7496,7 +7496,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                                 
                             elseif(thisShimmer.FirmwareIdentifier == 3)    % LogAndStream firmware identified
                                 thisShimmer.FullFirmwareName = ['LogAndStream v', num2str(thisShimmer.FirmwareMajorVersion),'.',num2str(thisShimmer.FirmwareMinorVersion),'.', num2str(thisShimmer.FirmwareInternal)];
-                                disp(['Firmware version ' thisShimmer.FullFirmwareName ' Detected for Shimmer COM' thisShimmer.name]);
+                                disp("Firmware version " + thisShimmer.FullFirmwareName + " detected for " + thisShimmer.name);
                                 if(thisShimmer.ShimmerVersion == thisShimmer.SHIMMER_3 && thisShimmer.FirmwareMajorVersion == 0 && thisShimmer.FirmwareMinorVersion == 1)
                                     thisShimmer.FirmwareCompatibilityCode = 3;
                                 elseif(thisShimmer.ShimmerVersion == thisShimmer.SHIMMER_3 && thisShimmer.FirmwareMajorVersion == 0 && thisShimmer.FirmwareMinorVersion >= 6)
