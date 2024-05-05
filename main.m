@@ -1,10 +1,7 @@
 clear;
 clc; 
 
-% shimmer1 = ShimmerHandleClass("Shimmer3-5847");
+shimmer1 = ShimmerHandleClass("Shimmer3-5847");
 shimmer2 = ShimmerHandleClass("Shimmer3-5852");
 
-% shimmer1.connect;
-shimmer2.connect;
-
-% orientation3D(shimmer2, 60);
+orientation3D(shimmer1, shimmer2, 60);

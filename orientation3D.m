@@ -1,4 +1,4 @@
-function orientation3D(shimmer1, captureDuration)
+function orientation3D(shimmer1, shimmer2, captureDuration)
 %ORIENTATION3DEXAMPLE - Demonstrate 3D orientation visualation and write to file
 %
 %  ORIENTATION3DEXAMPLE(COMPORT, CAPTUREDURATION, FILENAME) streams 3
@@ -33,24 +33,16 @@ function orientation3D(shimmer1, captureDuration)
 addpath('./quaternion/')                                                   % directory containing quaternion functions
 addpath('./shimmerResources/')                                             % directory containing supporting functions
 
-SensorMacros = SetEnabledSensorsMacrosClass;                               % assign user friendly macros for setenabledsensors
-
 % Note: these constants are only relevant to this examplescript and are not used
 % by the ShimmerHandle Class
 DELAY_PERIOD = 0.05;                                                       % A delay period of time in seconds between data read operations
 
-if (shimmer1.connect)                                  % TRUE if the shimmers connect
-    % Define settings for shimmer
-    shimmer1.setsamplingrate(51.2);                                         % Set the shimmer sampling rate to 51.2Hz
-    shimmer1.setinternalboard('9DOF');                                      % Set the shimmer internal daughter board to '9DOF'
-    shimmer1.disableallsensors;                                             % disable all sensors
-    shimmer1.setenabledsensors(SensorMacros.GYRO,1,SensorMacros.MAG,1,...   % Enable the gyroscope, magnetometer and accelerometer.
-    SensorMacros.ACCEL,1);                                                  
-    shimmer1.setaccelrange(0);                                              % Set the accelerometer range to 0 (+/- 1.5g for Shimmer2/2r, +/- 2.0g for Shimmer3)
-    shimmer1.setorientation3D(1);                                           % Enable orientation3D
-    shimmer1.setgyroinusecalibration(1);                                    % Enable gyro in-use calibration
+if (shimmer1.connect && shimmer2.connect)                                  % TRUE if the shimmers connect
+   
+    configureShimmer(shimmer1);
+    configureShimmer(shimmer2);
     
-    if (shimmer1.start)                % TRUE if the shimmers start streaming
+    if (shimmer1.start && shimmer2.start)                % TRUE if the shimmers start streaming
         
         % initial viewpoint for 3D visualisation
         cameraUpVector = [0,1,0,0];
@@ -59,6 +51,7 @@ if (shimmer1.connect)                                  % TRUE if the shimmers co
         %layout = tiledlayout(1,2);
 
         shimmer1AllData = [];
+        shimmer2AllData = [];
         
         h.figure1=figure('Name', shimmer1.name + ' Orientation');             % Create a handle to figure for plotting data from the first shimmer
         
@@ -80,21 +73,31 @@ if (shimmer1.connect)                                  % TRUE if the shimmers co
             
             [shimmer1NewData,shimmer1SignalNameArray,shimmer1SignalFormatArray,shimmer1SignalUnitArray] = shimmer1.getdata('c');   % Read the latest data from shimmer data buffer, signalFormatArray defines the format of the data and signalUnitArray the unit
 
-            if (~isempty(shimmer1NewData))                                                                          % TRUE if new data has arrived
+            if (~isempty(shimmer1NewData) && ~isempty(shimmer2NewData))                                                                          % TRUE if new data has arrived
                 
                 shimmer1AllData = [shimmer1AllData; shimmer1NewData];
+                shimmer2AllData = [shimmer2AllData; shimmer2NewData];
                 
                 shimmer1QuaternionChannels(1) = find(ismember(shimmer1SignalNameArray, 'Quaternion 0'));                  % Find Quaternion signal indices.
                 shimmer1QuaternionChannels(2) = find(ismember(shimmer1SignalNameArray, 'Quaternion 1'));
                 shimmer1QuaternionChannels(3) = find(ismember(shimmer1SignalNameArray, 'Quaternion 2'));
                 shimmer1QuaternionChannels(4) = find(ismember(shimmer1SignalNameArray, 'Quaternion 3'));
 
+                shimmer2QuaternionChannels(1) = find(ismember(shimmer2SignalNameArray, 'Quaternion 0'));                  % Find Quaternion signal indices.
+                shimmer2QuaternionChannels(2) = find(ismember(shimmer2SignalNameArray, 'Quaternion 1'));
+                shimmer2QuaternionChannels(3) = find(ismember(shimmer2SignalNameArray, 'Quaternion 2'));
+                shimmer2QuaternionChannels(4) = find(ismember(shimmer2SignalNameArray, 'Quaternion 3'));
+
                 shimmer1Quaternion = shimmer1NewData(end, shimmer1QuaternionChannels);                                            % Only use the most recent quaternion sample for the graphic
+                shimmer2Quaternion = shimmer2NewData(end, shimmer2QuaternionChannels);
 
                 rotateVertices(shimmer1, shimmer1Quaternion);
+                rotateVertices(shimmer2, shimmer2Quaternion);
                  
                 X1 = generateConvexHullArray(shimmer1);
+                X2 = generateConvexHullArray(shimmer2);
                 K1 = convhulln(X1);
+                K2 = convhulln(X2);
 
                 set(0,'CurrentFigure',h.figure1);
                 hold off;
@@ -118,12 +121,30 @@ if (shimmer1.connect)                                  % TRUE if the shimmers co
         end
         
         elapsedTime = elapsedTime + toc;                                                                  % Stop timer
-        fprintf('The percentage of received packets: %d \n',shimmer1.getpercentageofpacketsreceived(shimmer1AllData(:,1))); % Detect lost packets
+        fprintf(shimmer1.name + ' percentage of received packets: %d \n',shimmer1.getpercentageofpacketsreceived(shimmer1AllData(:,1))); % Detect lost packets
+        fprintf(shimmer2.name + ' percentage of received packets: %d \n',shimmer1.getpercentageofpacketsreceived(shimmer1AllData(:,1)));
         shimmer1.stop;                                                                                     % Stop data streaming
+        shimmer2.stop;
     end
-    %shimmer.disconnect;                                                                                   % Disconnect from shimmer
+    shimmer1.disconnect;                                                                                   % Disconnect from shimmer
+    shimmer2.disconnect;
     
 end
+
+    function configureShimmer(shimmer)
+        % Define settings for shimmer
+        
+        SensorMacros = SetEnabledSensorsMacrosClass;                           % assign user friendly macros for setenabledsensors
+
+        shimmer.setsamplingrate(51.2);                                         % Set the shimmer sampling rate to 51.2Hz
+    	shimmer.setinternalboard('9DOF');                                      % Set the shimmer internal daughter board to '9DOF'
+        shimmer.disableallsensors;                                             % disable all sensors
+        shimmer.setenabledsensors(SensorMacros.GYRO,1,SensorMacros.MAG,1,...   % Enable the gyroscope, magnetometer and accelerometer.
+        SensorMacros.ACCEL,1);                                                  
+        shimmer.setaccelrange(0);                                              % Set the accelerometer range to 0 (+/- 1.5g for Shimmer2/2r, +/- 2.0g for Shimmer3)
+        shimmer.setorientation3D(1);                                           % Enable orientation3D
+        shimmer.setgyroinusecalibration(1);                                    % Enable gyro in-use calibration
+    end
 
     function rotateVertices(shimmer, quaternion)
         shimmer.shimmer3dRotated.p1 = quatrotate(quaternion, [0 shimmer.shimmer3d.p1]);                           % Rotate the vertices
