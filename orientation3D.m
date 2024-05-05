@@ -49,9 +49,6 @@ if (shimmer1.connect && shimmer2.connect)                                  % TRU
         shimmer1AllData = [];
         shimmer2AllData = [];
         
-        % h.figure1=figure('Name', shimmer1.name + ' Orientation');             % Create a handle to figure for plotting data from the first shimmer
-        % h.figure2=figure('Name', shimmer2.name + ' Orientation');             % Create a handle to figure for plotting data from the first shimmer
-        
         uicontrol('Style', 'pushbutton', 'String', 'Set',...
             'Position', [20 20 50 20],...
             'Callback', {@setaxes});                                       % Pushbutton to set the viewpoint
@@ -91,41 +88,9 @@ if (shimmer1.connect && shimmer2.connect)                                  % TRU
 
                 rotateVertices(shimmer1, shimmer1Quaternion);
                 rotateVertices(shimmer2, shimmer2Quaternion);
-                 
-                X1 = generateConvexHullArray(shimmer1);
-                X2 = generateConvexHullArray(shimmer2);
-                K1 = convhulln(X1);
-                K2 = convhulln(X2);
 
-                nexttile(1);
-                hold off;
-                % Plot object surface
-                trisurf(K1,X1(:,1),X1(:,2),X1(:,3),'EdgeColor','None','FaceColor','w');
-                hold on;
-
-                plotOutlines(shimmer1);
-
-                xlim([-2,2])
-                ylim([-2,2])
-                zlim([-2,2])
-                grid on
-                view(cameraPosition(2:4))
-                set(gca,'CameraUpVector',cameraUpVector(2:4));
-
-                nexttile(2);
-                hold off;
-                % Plot object surface
-                trisurf(K2,X2(:,1),X2(:,2),X2(:,3),'EdgeColor','None','FaceColor','w');
-                hold on;
-
-                plotOutlines(shimmer2);
-
-                xlim([-2,2])
-                ylim([-2,2])
-                zlim([-2,2])
-                grid on
-                view(cameraPosition(2:4))
-                set(gca,'CameraUpVector',cameraUpVector(2:4));
+                plotShimmer(shimmer1, 1);
+                plotShimmer(shimmer2, 2);
             end
             
             elapsedTime = elapsedTime + toc;                                                              % Stop timer and add to elapsed time
@@ -224,6 +189,27 @@ end
         plot3([shimmer.shimmer3dRotated.p14(2), shimmer.shimmer3dRotated.p15(2)],[shimmer.shimmer3dRotated.p14(3), shimmer.shimmer3dRotated.p15(3)],[shimmer.shimmer3dRotated.p14(4), shimmer.shimmer3dRotated.p15(4)],'-k','LineWidth',2)
         plot3([shimmer.shimmer3dRotated.p15(2), shimmer.shimmer3dRotated.p16(2)],[shimmer.shimmer3dRotated.p15(3), shimmer.shimmer3dRotated.p16(3)],[shimmer.shimmer3dRotated.p15(4), shimmer.shimmer3dRotated.p16(4)],'-k','LineWidth',2)
         plot3([shimmer.shimmer3dRotated.p16(2), shimmer.shimmer3dRotated.p13(2)],[shimmer.shimmer3dRotated.p16(3), shimmer.shimmer3dRotated.p13(3)],[shimmer.shimmer3dRotated.p16(4), shimmer.shimmer3dRotated.p13(4)],'-k','LineWidth',2)
+    end
+
+    function plotShimmer(shimmer, tileNum)
+        X = generateConvexHullArray(shimmer);
+        K = convhulln(X);
+
+        nexttile(tileNum);
+
+        hold off;
+        % Plot object surface
+        trisurf(K,X(:,1),X(:,2),X(:,3),'EdgeColor','None','FaceColor','w');
+        hold on;
+
+        plotOutlines(shimmer);
+
+        xlim([-2,2])
+        ylim([-2,2])
+        zlim([-2,2])
+        grid on
+        view(cameraPosition(2:4))
+        set(gca,'CameraUpVector',cameraUpVector(2:4));
     end
 
     function setaxes(hObj,event) 
