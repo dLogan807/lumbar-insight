@@ -31,7 +31,7 @@ function orientation3D(shimmer1, captureDuration)
 %  See also plotandwriteexample twoshimmerexample ShimmerHandleClass
 
 addpath('./quaternion/')                                                   % directory containing quaternion functions
-addpath('./exampleResources/')                                             % directory containing supporting functions
+addpath('./shimmerResources/')                                             % directory containing supporting functions
 
 SensorMacros = SetEnabledSensorsMacrosClass;                               % assign user friendly macros for setenabledsensors
 
