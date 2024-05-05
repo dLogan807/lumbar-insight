@@ -16,7 +16,7 @@ function orientation3D(shimmer1, shimmer2, captureDuration)
 %  alternative to the 'getuncalibrateddata' method in the beta release.
 %  The user is advised to use the updated method 'getdata'.
 %
-%  SYNOPSIS: orientation3Dexample(comPort, captureDuration, fileName)
+%  SYNOPSIS: orientation3Dexample(shimmer1, shimmer2, captureDuration)
 %
 %  INPUT: comPort - String value defining the COM port number for Shimmer
 %  INPUT: captureDuration - Numerical value defining the period of time
@@ -25,10 +25,6 @@ function orientation3D(shimmer1, shimmer2, captureDuration)
 %  INPUT : fileName - String value defining the name of the file that data
 %                     is written to in a comma delimited format.
 %  OUTPUT: none
-%
-%  EXAMPLE: orientation3Dexample("Shimmer-5847", 30, 'testdata.dat')
-%
-%  See also plotandwriteexample twoshimmerexample ShimmerHandleClass
 
 addpath('./quaternion/')                                                   % directory containing quaternion functions
 addpath('./shimmerResources/')                                             % directory containing supporting functions
@@ -48,12 +44,13 @@ if (shimmer1.connect && shimmer2.connect)                                  % TRU
         cameraUpVector = [0,1,0,0];
         cameraPosition = [0,0,0,1];
         
-        %layout = tiledlayout(1,2);
+        layout = tiledlayout(1,2);
 
         shimmer1AllData = [];
         shimmer2AllData = [];
         
-        h.figure1=figure('Name', shimmer1.name + ' Orientation');             % Create a handle to figure for plotting data from the first shimmer
+        % h.figure1=figure('Name', shimmer1.name + ' Orientation');             % Create a handle to figure for plotting data from the first shimmer
+        % h.figure2=figure('Name', shimmer2.name + ' Orientation');             % Create a handle to figure for plotting data from the first shimmer
         
         uicontrol('Style', 'pushbutton', 'String', 'Set',...
             'Position', [20 20 50 20],...
@@ -72,6 +69,7 @@ if (shimmer1.connect && shimmer2.connect)                                  % TRU
             pause(DELAY_PERIOD);                                           % Pause for this period of time on each iteration to allow data to arrive in the buffer
             
             [shimmer1NewData,shimmer1SignalNameArray,shimmer1SignalFormatArray,shimmer1SignalUnitArray] = shimmer1.getdata('c');   % Read the latest data from shimmer data buffer, signalFormatArray defines the format of the data and signalUnitArray the unit
+            [shimmer2NewData,shimmer2SignalNameArray,shimmer2SignalFormatArray,shimmer2SignalUnitArray] = shimmer2.getdata('c');
 
             if (~isempty(shimmer1NewData) && ~isempty(shimmer2NewData))                                                                          % TRUE if new data has arrived
                 
@@ -99,13 +97,28 @@ if (shimmer1.connect && shimmer2.connect)                                  % TRU
                 K1 = convhulln(X1);
                 K2 = convhulln(X2);
 
-                set(0,'CurrentFigure',h.figure1);
+                nexttile(1);
                 hold off;
                 % Plot object surface
                 trisurf(K1,X1(:,1),X1(:,2),X1(:,3),'EdgeColor','None','FaceColor','w');
                 hold on;
 
                 plotOutlines(shimmer1);
+
+                xlim([-2,2])
+                ylim([-2,2])
+                zlim([-2,2])
+                grid on
+                view(cameraPosition(2:4))
+                set(gca,'CameraUpVector',cameraUpVector(2:4));
+
+                nexttile(2);
+                hold off;
+                % Plot object surface
+                trisurf(K2,X2(:,1),X2(:,2),X2(:,3),'EdgeColor','None','FaceColor','w');
+                hold on;
+
+                plotOutlines(shimmer2);
 
                 xlim([-2,2])
                 ylim([-2,2])
