@@ -43,11 +43,11 @@ if (shimmer1.connect && shimmer2.connect)                                  % TRU
         % initial viewpoint for 3D visualisation
         cameraUpVector = [0,1,0,0];
         cameraPosition = [0,0,0,1];
-        
-        layout = tiledlayout(1,2);
 
         shimmer1AllData = [];
         shimmer2AllData = [];
+
+        shiftShimmerPlot(shimmer2.shimmer3d, 7);
         
         uicontrol('Style', 'pushbutton', 'String', 'Set',...
             'Position', [20 20 50 20],...
@@ -89,8 +89,19 @@ if (shimmer1.connect && shimmer2.connect)                                  % TRU
                 rotateVertices(shimmer1, shimmer1Quaternion);
                 rotateVertices(shimmer2, shimmer2Quaternion);
 
-                plotShimmer(shimmer1, 1);
-                plotShimmer(shimmer2, 2);
+                hold off;
+                plotShimmer(shimmer1);
+                plotShimmer(shimmer2);
+                hold on;
+
+                xlim([-2,6]);
+                ylim([-2,2]);
+                zlim([-2,2]);
+                
+                grid on
+        
+                % view(cameraPosition(2:4))
+                % set(gca,'CameraUpVector',cameraUpVector(2:4));
             end
             
             elapsedTime = elapsedTime + toc;                                                              % Stop timer and add to elapsed time
@@ -124,6 +135,19 @@ end
         shimmer.setgyroinusecalibration(1);                                    % Enable gyro in-use calibration
     end
 
+    %Move the base position of the shimmer along the x-axis
+    function shiftShimmerPlot(shimmer3d, shiftAmount)
+        fields = fieldnames(shimmer3d);
+
+        for i = 1:numel(fields)
+          coord = shimmer3d.(fields{i});
+          newValue = coord(1, 1) + shiftAmount;
+        
+          shimmer3d.(fields{i}) = [newValue coord(1,2) coord(1,3)];
+          
+        end
+    end
+
     function rotateVertices(shimmer, quaternion)
         shimmer.shimmer3dRotated.p1 = quatrotate(quaternion, [0 shimmer.shimmer3d.p1]);                           % Rotate the vertices
         shimmer.shimmer3dRotated.p2 = quatrotate(quaternion, [0 shimmer.shimmer3d.p2]);
@@ -141,6 +165,16 @@ end
         shimmer.shimmer3dRotated.p14 = quatrotate(quaternion, [0 shimmer.shimmer3d.p14]);
         shimmer.shimmer3dRotated.p15 = quatrotate(quaternion, [0 shimmer.shimmer3d.p15]);
         shimmer.shimmer3dRotated.p16 = quatrotate(quaternion, [0 shimmer.shimmer3d.p16]);
+    end
+
+    function plotShimmer(shimmer)
+        X = generateConvexHullArray(shimmer);
+        K = convhulln(X);
+
+        % Plot object surface
+        trisurf(K,X(:,1),X(:,2),X(:,3),'EdgeColor','None','FaceColor','w');
+
+        plotOutlines(shimmer);
     end
     
     function convexArray = generateConvexHullArray(shimmer)
@@ -189,27 +223,6 @@ end
         plot3([shimmer.shimmer3dRotated.p14(2), shimmer.shimmer3dRotated.p15(2)],[shimmer.shimmer3dRotated.p14(3), shimmer.shimmer3dRotated.p15(3)],[shimmer.shimmer3dRotated.p14(4), shimmer.shimmer3dRotated.p15(4)],'-k','LineWidth',2)
         plot3([shimmer.shimmer3dRotated.p15(2), shimmer.shimmer3dRotated.p16(2)],[shimmer.shimmer3dRotated.p15(3), shimmer.shimmer3dRotated.p16(3)],[shimmer.shimmer3dRotated.p15(4), shimmer.shimmer3dRotated.p16(4)],'-k','LineWidth',2)
         plot3([shimmer.shimmer3dRotated.p16(2), shimmer.shimmer3dRotated.p13(2)],[shimmer.shimmer3dRotated.p16(3), shimmer.shimmer3dRotated.p13(3)],[shimmer.shimmer3dRotated.p16(4), shimmer.shimmer3dRotated.p13(4)],'-k','LineWidth',2)
-    end
-
-    function plotShimmer(shimmer, tileNum)
-        X = generateConvexHullArray(shimmer);
-        K = convhulln(X);
-
-        nexttile(tileNum);
-
-        hold off;
-        % Plot object surface
-        trisurf(K,X(:,1),X(:,2),X(:,3),'EdgeColor','None','FaceColor','w');
-        hold on;
-
-        plotOutlines(shimmer);
-
-        xlim([-2,2])
-        ylim([-2,2])
-        zlim([-2,2])
-        grid on
-        view(cameraPosition(2:4))
-        set(gca,'CameraUpVector',cameraUpVector(2:4));
     end
 
     function setaxes(hObj,event) 
