@@ -89,10 +89,7 @@ if (shimmer1.connect && shimmer2.connect)                                  % TRU
                 rotateVertices(shimmer1, shimmer1Quaternion);
                 rotateVertices(shimmer2, shimmer2Quaternion);
 
-                hold off;
-                plotShimmer(shimmer1);
-                plotShimmer(shimmer2);
-                hold on;
+                plotShimmers(shimmer1, shimmer2);
 
                 xlim([-2,6]);
                 ylim([-2,2]);
@@ -167,14 +164,20 @@ end
         shimmer.shimmer3dRotated.p16 = quatrotate(quaternion, [0 shimmer.shimmer3d.p16]);
     end
 
-    function plotShimmer(shimmer)
-        X = generateConvexHullArray(shimmer);
-        K = convhulln(X);
+    function plotShimmers(shimmer1, shimmer2)
+        X1 = generateConvexHullArray(shimmer1);
+        X2 = generateConvexHullArray(shimmer2);
+        K1 = convhulln(X1);
+        K2 = convhulln(X2);  
 
         % Plot object surface
-        trisurf(K,X(:,1),X(:,2),X(:,3),'EdgeColor','None','FaceColor','w');
+        hold off;
+        trisurf(K1,X1(:,1),X1(:,2),X1(:,3),'EdgeColor','None','FaceColor','w');
+        trisurf(K2,X2(:,1),X2(:,2),X2(:,3),'EdgeColor','None','FaceColor','w');
+        hold on;
 
-        plotOutlines(shimmer);
+        plotOutlines(shimmer1);
+        plotOutlines(shimmer2);
     end
     
     function convexArray = generateConvexHullArray(shimmer)
