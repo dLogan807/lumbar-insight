@@ -4886,7 +4886,11 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                 try
                     thisShimmer.bluetoothConn = bluetooth(thisShimmer.name);                % Attempt to establish a bluetooth connection
                     isOpen = true;
-                catch
+                catch ME
+                    if(strcmp(ME.identifier, 'MATLAB:bluetooth:bluetooth:connectionExists'))
+                        disp(ME.message);
+                        disp("Please switch off and then switch on the Shimmer.")
+                    end
                 end
                 
                 if (isOpen)

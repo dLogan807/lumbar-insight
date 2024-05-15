@@ -47,7 +47,7 @@ if (shimmer1.connect && shimmer2.connect)                                  % TRU
         shimmer1AllData = [];
         shimmer2AllData = [];
 
-        shiftShimmerPlot(shimmer2.shimmer3d, 7);
+        shiftShimmerPlot(shimmer2, 1);
         
         uicontrol('Style', 'pushbutton', 'String', 'Set',...
             'Position', [20 20 50 20],...
@@ -133,15 +133,14 @@ end
     end
 
     %Move the base position of the shimmer along the x-axis
-    function shiftShimmerPlot(shimmer3d, shiftAmount)
-        fields = fieldnames(shimmer3d);
+    function shiftShimmerPlot(shimmer, xShiftAmount)
+        fields = fieldnames(shimmer.shimmer3d);
 
         for i = 1:numel(fields)
-          coord = shimmer3d.(fields{i});
-          newValue = coord(1, 1) + shiftAmount;
+          coord = shimmer.shimmer3d.(fields{i});
+          newValue = coord(1, 1) + xShiftAmount;
         
-          shimmer3d.(fields{i}) = [newValue coord(1,2) coord(1,3)];
-          
+          shimmer.shimmer3d.(fields{i}) = [newValue coord(1,2) coord(1,3)];          
         end
     end
 
