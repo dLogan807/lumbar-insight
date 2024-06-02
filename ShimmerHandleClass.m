@@ -4889,7 +4889,6 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                 catch ME
                     if(strcmp(ME.identifier, 'MATLAB:bluetooth:bluetooth:connectionExists'))
                         disp(ME.message);
-                        disp("Restarting MATLAB will resolve this.")
                     end
                 end
                 
@@ -4958,7 +4957,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                         thisShimmer.WarningGetDeprecatedGetData = 0;                                % Set warning property to zero
                     end
                 else
-                    fprintf(strcat('Warning: connect - failed to establish bluetooth connection with ',thisShimmer.name,'.\n'));
+                    fprintf(strcat('Warning: connect - failed to establish bluetooth connection with ', thisShimmer.name,'.\n'));
                     disconnect(thisShimmer);
                     isConnected=false;
                 end

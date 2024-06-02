@@ -39,6 +39,12 @@ if (shimmer1.connect && shimmer2.connect)                                  % TRU
     configureShimmer(shimmer2);
     
     if (shimmer1.start && shimmer2.start)                % TRUE if the shimmers start streaming
+
+        fig = uifigure;
+        tlabel1 = uilabel(fig);
+        tlabel1.Position = [50 50 150 22];
+        tlabel2 = uilabel(fig);
+        tlabel2.Position = [50 100 150 22];
         
         % initial viewpoint for 3D visualisation
         cameraUpVector = [0,1,0,0];
@@ -93,6 +99,8 @@ if (shimmer1.connect && shimmer2.connect)                                  % TRU
 
                 plotShimmer(shimmer1, 1);
                 plotShimmer(shimmer2, 2);
+
+                calculateAngle(shimmer1Quaternion, shimmer2Quaternion);
             end
             
             elapsedTime = elapsedTime + toc;                                                              % Stop timer and add to elapsed time
@@ -238,4 +246,15 @@ end
 
     end
 
+    % https://au.mathworks.com/matlabcentral/answers/476474-how-to-find-the-angle-between-two-quaternions
+    function angle = calculateAngle(quaternion1, quaternion2)
+        z = quatmultiply(quatconj(quaternion1), quaternion2);
+
+        a1 = 2*atan2d(norm(z(2:4)),z(1));
+        %or
+        a2 = 2*acosd(z(1));
+
+        tlabel1.Text = "Angle1: " + a1;
+        tlabel2.Text = "Angle2: " + a2;
+    end
 end
