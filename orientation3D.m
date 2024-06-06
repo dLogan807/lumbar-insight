@@ -43,8 +43,6 @@ if (shimmer1.connect && shimmer2.connect)                                  % TRU
         fig = uifigure;
         tlabel1 = uilabel(fig);
         tlabel1.Position = [50 50 150 22];
-        tlabel2 = uilabel(fig);
-        tlabel2.Position = [50 100 150 22];
         
         % initial viewpoint for 3D visualisation
         cameraUpVector = [0,1,0,0];
@@ -250,11 +248,8 @@ end
     function angle = calculateAngle(quaternion1, quaternion2)
         z = quatmultiply(quatconj(quaternion1), quaternion2);
 
-        a1 = 2*atan2d(norm(z(2:4)),z(1));
-        %or
-        a2 = 2*acosd(z(1));
+        angle = 2*acosd(z(1));
 
-        tlabel1.Text = "Angle1: " + a1;
-        tlabel2.Text = "Angle2: " + a2;
+        tlabel1.Text = "Angle: " + angle;
     end
 end
