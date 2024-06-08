@@ -5057,7 +5057,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                     end
                 end
                 isOpen=false;
-                clear thisShimmer.bluetoothConn;                           %Clear bluetooth variable
+                clear thisShimmer.bluetoothConn;                           %Clear bluetooth connection
                 
                 if (~isOpen)                                               % TRUE if COM Port is closed
                     thisShimmer.State = 'Disconnected';                    % Set Shimmer state to Disconnected

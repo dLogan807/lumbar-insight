@@ -1,23 +1,61 @@
-classdef Model
-    %MODEL Summary of this class goes here
-    %   Detailed explanation goes here
+classdef Model < handle
+    %MODEL Application data model.
     
-    properties
-        Property1
-    end
+    properties ( SetAccess = private )
+        % Application data.
+
+        Shimmers (1,2) ShimmerHandleClass
+
+        Cameras (1,:) Camera
+    end % properties ( SetAccess = private )
+    
+    events ( NotifyAccess = private )
+        % Event broadcast when the data is changed.
+        Shimmer1Changed
+        Shimmer2Changed
+
+        SessionStarted
+    end % events ( NotifyAccess = private )
     
     methods
-        function obj = Model(inputArg1,inputArg2)
-            %MODEL Construct an instance of this class
-            %   Detailed explanation goes here
-            obj.Property1 = inputArg1 + inputArg2;
-        end
-        
-        function outputArg = method1(obj,inputArg)
-            %METHOD1 Summary of this method goes here
-            %   Detailed explanation goes here
-            outputArg = obj.Property1 + inputArg;
-        end
-    end
-end
 
+        function connectShimmer( shimmerNum, obj ) 
+        
+            obj.Shimmers(shimmerNum).connect;
+
+            notify( obj, "ConnectedShimmer" + shimmerNum )
+
+        end % connectShimmer
+
+        function disconnectShimmer( shimmerNum, obj ) 
+        
+            obj.Shimmers(shimmerNum).disconnect;
+
+            notify( obj, "DisconnectedShimmer" + shimmerNum )
+
+        end % disconnectShimmer
+
+        function configureShimmers( obj) 
+        end
+
+        function startSession( obj ) 
+        
+            obj.Shimmers(1).start;
+            obj.Shimmers(2).start;
+
+            notify( obj, "SessionStarted" )
+
+        end % startSession
+
+        function endSession( obj ) 
+        
+            obj.Shimmers(1).stop;
+            obj.Shimmers(2).stop;
+
+            notify( obj, "SessionStarted" )
+
+        end % startSession
+        
+    end % methods
+    
+end % classdef
