@@ -7,6 +7,8 @@ classdef Model < handle
         Shimmers (1,2) ShimmerHandleClass
 
         Cameras (1,:) Camera
+
+
     end % properties ( SetAccess = private )
     
     events ( NotifyAccess = private )
@@ -80,6 +82,23 @@ classdef Model < handle
             notify( obj, "SessionEnded" )
 
         end % endSession
+
+        function quaternion = getLastShimmerQuaternion( shimmerName, obj )
+            % Get latest quaternion
+
+            shimmerIndex = getShimmerIndexByName(shimmerName);
+            shimmer = obj.Shimmers(shimmerIndex);
+
+            [shimmerData,shimmerSignalNameArray,~,~] = shimmer.getdata('c');
+
+            shimmerQuaternionChannels(1) = find(ismember(shimmerSignalNameArray, 'Quaternion 0'));                  % Find Quaternion signal indices.
+            shimmerQuaternionChannels(2) = find(ismember(shimmerSignalNameArray, 'Quaternion 1'));
+            shimmerQuaternionChannels(3) = find(ismember(shimmerSignalNameArray, 'Quaternion 2'));
+            shimmerQuaternionChannels(4) = find(ismember(shimmerSignalNameArray, 'Quaternion 3'));
+
+            quaternion = shimmerData(end, shimmerQuaternionChannels);
+
+        end % getLastShimmerQuaternion
         
     end % methods
 
