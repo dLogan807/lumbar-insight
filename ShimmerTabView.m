@@ -1,4 +1,4 @@
-classdef View < Component
+classdef ShimmerTabView < Component
     %VIEW Visualizes the data, responding to any relevant model events.
     %
     % Copyright 2021-2022 The MathWorks, Inc.
@@ -12,12 +12,12 @@ classdef View < Component
 
     methods
 
-        function obj = View( model, namedArgs )
+        function obj = ShimmerTabView( model, namedArgs )
             %VIEW View constructor.
 
             arguments
                 model(1, 1) Model
-                namedArgs.?View
+                namedArgs.?ShimmerTabView
             end % arguments
 
             % Call the superclass constructor.
@@ -68,7 +68,7 @@ classdef View < Component
             %"DataChanged".
 
             % Retrieve the most recent data and update the line.
-        end % onDataChanged
+        end % onShimmerConnected
 
     end % methods ( Access = private )
 

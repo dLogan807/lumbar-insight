@@ -14,37 +14,33 @@ g = uigridlayout( ...
     "RowHeight", {"1x", 40}, ...
     "ColumnWidth", "1x" );
 
+% Create tab group
+tabgroup = uitabgroup(g, "SelectionChangedFcn", @onTabChanged);
+shimmerTab = uitab(tabgroup,"Title","Shimmer Setup");
+cameraTab = uitab(tabgroup,"Title","Camera Setup");
+sessionTab = uitab(tabgroup,"Title","Session");
+visualisationTab = uitab(tabgroup,"Title","3D Visualisation");
+managementTab = uitab(tabgroup,"Title","Session Management");
+
 % Create the model.
 m = Model;
 
-% Create the view.
-View( m, "Parent", g );
+% Create the Shimmer view.
+ShimmerTabView( m, "Parent", shimmerTab );
 
-% Create the controller.
-Controller( m, "Parent", g );
-
-% Create toolbar to reset the model.
-icon = fullfile( matlabroot, ...
-"toolbox", "matlab", "icons", "tool_rotate_3d.png" ); 
-tb = uitoolbar( "Parent", f );
-uipushtool( ...
-    "Parent", tb, ...
-    "Icon", icon, ...
-    "Tooltip", "Reset the data.", ...
-    "ClickedCallback", @onReset );
-
-    function onReset( ~, ~ )
-        %ONRESET Callback function for the toolbar reset button.
-        
-        % Reset the model.
-        reset( m )
-        
-    end % onReset
+% Create the Shimmer controller.
+ShimmerTabController( m, "Parent", shimmerTab );
 
 % Return the figure handle if requested.
 if nargout > 0
     nargoutchk( 1, 1 )
     varargout{1} = f;
 end % if
+
+function onTabChanged( ~, ~, ~ )
+
+    disp("Tab changed!");
+    
+end % onTabChanged
 
 end % launchMVCApp

@@ -1,16 +1,16 @@
-classdef Controller < Component
+classdef ShimmerTabController < Component
     %CONTROLLER Provides an interactive control to generate new data.
     %
     % Copyright 2021-2022 The MathWorks, Inc.
     
     methods
         
-        function obj = Controller( model, namedArgs )
+        function obj = ShimmerTabController( model, namedArgs )
             % CONTROLLER Controller constructor.
             
             arguments
                 model(1, 1) Model
-                namedArgs.?Controller
+                namedArgs.?ShimmerTabController
             end % arguments
             
             % Call the superclass constructor.
@@ -34,11 +34,12 @@ classdef Controller < Component
                 "RowHeight", "1x", ...
                 "ColumnWidth", "1x", ...
                 "Padding", 0 );
+
             uibutton( ...
                 "Parent", g, ...
                 "Text", "Generate Random Data", ...
                 "ButtonPushedFcn", @obj.onButtonPushed );
-            
+                        
         end % setup
         
         function update( ~ )
@@ -54,10 +55,10 @@ classdef Controller < Component
         function onButtonPushed( obj, ~, ~ )
             
             % Invoke the random() method of the model.
-            random( obj.Model )
+            disp("Button pushed.")
             
         end % onButtonPushed
-        
+
     end % methods ( Access = private )
     
 end % classdef
