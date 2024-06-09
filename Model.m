@@ -8,7 +8,9 @@ classdef Model < handle
 
         Cameras (1,:) Camera
 
-
+        currentAngle double
+        maximumAngle double
+        correctionAngle double
     end % properties ( SetAccess = private )
     
     events ( NotifyAccess = private )
@@ -19,6 +21,8 @@ classdef Model < handle
 
         SessionStarted
         SessionEnded
+
+        QuaternionGet
 
     end % events ( NotifyAccess = private )
     
@@ -98,6 +102,7 @@ classdef Model < handle
 
             quaternion = shimmerData(end, shimmerQuaternionChannels);
 
+            notify( obj, "QuaternionGet" )
         end % getLastShimmerQuaternion
         
     end % methods
