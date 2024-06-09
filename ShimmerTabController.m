@@ -1,23 +1,35 @@
-classdef ShimmerTabController < Component
+classdef ShimmerTabController < handle
     %CONTROLLER Provides an interactive control to generate new data.
     %
     % Copyright 2021-2022 The MathWorks, Inc.
+
+    properties ( Access = private )
+        % Application data model.
+        Model(1, 1) Model
+        % Shimmer View
+        ShimmerTabView ShimmerTabView
+        % Listener object used to respond dynamically to view events.
+        Listener(:, 1) event.listener {mustBeScalarOrEmpty}
+    end % properties ( Access = private )
     
     methods
         
-        function obj = ShimmerTabController( model, namedArgs )
+        function obj = ShimmerTabController( model, shimmerTabView )
             % CONTROLLER Controller constructor.
             
             arguments
                 model(1, 1) Model
-                namedArgs.?ShimmerTabController
+                shimmerTabView ShimmerTabView
             end % arguments
-            
-            % Call the superclass constructor.
-            obj@Component( model )
-            
-            % Set any user-specified properties.
-            set( obj, namedArgs )
+
+            % Store the model.
+            obj.Model = model;
+
+            obj.ShimmerTabView = shimmerTabView;
+
+            % Listen for changes to the data. 
+            obj.Listener = listener( obj.ShimmerTabView, ... 
+                "ButtonPressed", @obj.onButtonPressed ); 
             
         end % constructor
         
@@ -28,18 +40,7 @@ classdef ShimmerTabController < Component
         function setup( obj )
             %SETUP Initialize the controller.
             
-            % Create grid and button.
-            g = uigridlayout( ...
-                "Parent", obj, ...
-                "RowHeight", "1x", ...
-                "ColumnWidth", "1x", ...
-                "Padding", 0 );
-
-            uibutton( ...
-                "Parent", g, ...
-                "Text", "Generate Random Data", ...
-                "ButtonPushedFcn", @obj.onButtonPushed );
-                        
+            
         end % setup
         
         function update( ~ )
@@ -51,14 +52,14 @@ classdef ShimmerTabController < Component
     end % methods ( Access = protected )
     
     methods ( Access = private )
-        
-        function onButtonPushed( obj, ~, ~ )
-            
-            % Invoke the random() method of the model.
-            disp("Button pushed.")
-            
-        end % onButtonPushed
+        function onButtonPressed( obj, ~, ~ ) 
+            %ONDATACHANGED Listener callback, responding to the model event
+            %"DataChanged"
 
+            % Retrieve the most recent data and update the line.
+            disp("Button was pressed!");
+        end
+        
     end % methods ( Access = private )
     
 end % classdef

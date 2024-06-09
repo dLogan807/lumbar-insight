@@ -11,25 +11,25 @@ f.Name = "Lumbar Insight";
 % Create the layout.
 g = uigridlayout( ...
     "Parent", f, ...
-    "RowHeight", {"1x", 40}, ...
+    "RowHeight", {"1x"}, ...
     "ColumnWidth", "1x" );
 
 % Create tab group
 tabgroup = uitabgroup(g, "SelectionChangedFcn", @onTabChanged);
-shimmerTab = uitab(tabgroup,"Title","Shimmer Setup");
-cameraTab = uitab(tabgroup,"Title","Camera Setup");
+shimmerTab = uitab(tabgroup,"Title","Shimmer Configuration");
+cameraTab = uitab(tabgroup,"Title","Camera Configuration");
 sessionTab = uitab(tabgroup,"Title","Session");
 visualisationTab = uitab(tabgroup,"Title","3D Visualisation");
 managementTab = uitab(tabgroup,"Title","Session Management");
 
 % Create the model.
-m = Model;
+model = Model;
 
 % Create the Shimmer view.
-ShimmerTabView( m, "Parent", shimmerTab );
+shimmerTabView = ShimmerTabView( model, "Parent", shimmerTab );
 
 % Create the Shimmer controller.
-ShimmerTabController( m, "Parent", shimmerTab );
+ShimmerTabController( model, shimmerTabView );
 
 % Return the figure handle if requested.
 if nargout > 0

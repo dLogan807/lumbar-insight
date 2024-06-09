@@ -1,75 +1,90 @@
-classdef ShimmerTabView < Component
+classdef ShimmerTabView < matlab.ui.componentcontainer.ComponentContainer 
     %VIEW Visualizes the data, responding to any relevant model events.
-    %
-    % Copyright 2021-2022 The MathWorks, Inc.
 
-    properties ( Access = private )
+    properties ( Access = private )         
         % Line object used to visualize the model data.
         Line(1, 1) matlab.graphics.primitive.Line
+        % Application data model.
+        Model(1, 1) Model
         % Listener object used to respond dynamically to model events.
         Listener(:, 1) event.listener {mustBeScalarOrEmpty}
-    end % properties ( Access = private )
+    end
+
+    events ( NotifyAccess = private )
+        % Event broadcast when view is interacted with
+        ButtonPressed
+
+
+    end % events ( NotifyAccess = private )
 
     methods
 
-        function obj = ShimmerTabView( model, namedArgs )
+        function obj = ShimmerTabView( model, namedArgs ) 
             %VIEW View constructor.
 
             arguments
                 model(1, 1) Model
-                namedArgs.?ShimmerTabView
+                namedArgs.?ShimmerTabView 
             end % arguments
 
-            % Call the superclass constructor.
-            obj@Component( model )
+            % Do not create a default figure parent for the component, and
+            % ensure that the component spans its parent. By default,
+            % ComponentContainer objects are auto-parenting - that is, a
+            % figure is created automatically if no parent argument is
+            % specified.
+            obj@matlab.ui.componentcontainer.ComponentContainer( ... 
+                "Parent", [], ... 
+                "Units", "normalized", ... 
+                "Position", [0, 0, 1, 1] ) 
 
-            % Listen for changes to the data.
-            obj.Listener = listener( obj.Model, ...
-                "ShimmerConnected", @obj.ShimmerConnected );
+            % Store the model.
+            obj.Model = model; 
+
+            % Listen for changes to the data. 
+            obj.Listener = listener( obj.Model, ... 
+                "ShimmerConnected", @obj.onShimmerConnected ); 
 
             % Set any user-specified properties.
-            set( obj, namedArgs )
+            set( obj, namedArgs ) 
 
-            % Refresh the view.
-            onShimmerConnected( obj )
+            % Refresh the view. 
+            onShimmerConnected( obj ) 
 
-        end % constructor
+        end 
 
-    end % methods
+    end 
 
-    methods ( Access = protected )
+    methods ( Access = protected ) 
 
-        function setup( obj )
-            %SETUP Initialize the view.
+        function setup( obj ) 
+            %SETUP Initialize the view. 
 
-            % Create the view graphics.
-            ax = axes( "Parent", obj );
-            obj.Line = line( ...
-                "Parent", ax, ...
-                "XData", NaN, ...
-                "YData", NaN, ...
-                "Color", ax.ColorOrder(1, :), ...
-                "LineWidth", 1.5 );
+            % Create the view graphics. 
+            ax = axes( "Parent", obj ); 
+            obj.Line = line( ... 
+                "Parent", ax, ... 
+                "XData", NaN, ... 
+                "YData", NaN, ... 
+                "Color", ax.ColorOrder(1, :), ... 
+                "LineWidth", 1.5 ); 
 
-        end % setup
+        end
 
-        function update( ~ )
-            %UPDATE Update the view. This method is empty because there are
-            %no public properties of the view.
+        function update( ~ ) 
+            %UPDATE Update the view. This method is empty because there are 
+            %no public properties of the view. 
 
-        end % update
+        end
 
-    end % methods ( Access = protected )
+    end
 
-    methods ( Access = private )
+    methods ( Access = private ) 
 
-        function onShimmerConnected( obj, ~, ~ )
+        function onShimmerConnected( obj, ~, ~ ) 
             %ONDATACHANGED Listener callback, responding to the model event
-            %"DataChanged".
+            %"DataChanged"
+        end
 
-            % Retrieve the most recent data and update the line.
-        end % onShimmerConnected
+    end
 
-    end % methods ( Access = private )
-
-end % classdef
+end

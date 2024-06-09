@@ -5,16 +5,17 @@ classdef Model < handle
         % Application data.
 
         Shimmers (1,2) ShimmerHandleClass = []
+        BluetoothDevices
 
         Cameras (1,:) Camera
 
-        currentAngle double
-        maximumAngle double
-        correctionAngle double
+        CurrentAngle double
+        MaximumAngle double
+        CorrectionAngle double
     end % properties ( SetAccess = private )
     
     events ( NotifyAccess = private )
-        % Event broadcast when the data is changed.
+        % Events broadcast when the model is altered.
         ShimmerConnected
         ShimmerDisconnected
         ShimmerConfigured
