@@ -4,7 +4,7 @@ classdef Model < handle
     properties ( SetAccess = private )
         % Application data.
 
-        Shimmers (1,2) ShimmerHandleClass
+        Shimmers (1,2) ShimmerHandleClass = []
 
         Cameras (1,:) Camera
 
@@ -15,9 +15,9 @@ classdef Model < handle
     
     events ( NotifyAccess = private )
         % Event broadcast when the data is changed.
-        ConnectedShimmer
-        DisconnectedShimmer
-        ConfiguredShimmer
+        ShimmerConnected
+        ShimmerDisconnected
+        ShimmerConfigured
 
         SessionStarted
         SessionEnded
@@ -34,7 +34,7 @@ classdef Model < handle
         
             obj.Shimmers(shimmerIndex).connect;
 
-            notify( obj, "ConnectedShimmer" )
+            notify( obj, "ShimmerConnected" )
 
         end % connectShimmer
 
@@ -44,7 +44,7 @@ classdef Model < handle
         
             obj.Shimmers(shimmerIndex).disconnect;
 
-            notify( obj, "DisconnectedShimmer" )
+            notify( obj, "ShimmerDisconnected" )
 
         end % disconnectShimmer
 
@@ -65,7 +65,7 @@ classdef Model < handle
             shimmer.setorientation3D(1);                                           % Enable orientation3D
             shimmer.setgyroinusecalibration(1);                                    % Enable gyro in-use calibration
 
-            notify( obj, "ConfiguredShimmer" )
+            notify( obj, "ShimmerConfigured" )
 
         end % configureShimmer
 
