@@ -8,12 +8,14 @@ classdef ShimmerTabView < matlab.ui.componentcontainer.ComponentContainer
         Model(1, 1) Model
         % Listener object used to respond dynamically to model events.
         Listener(:, 1) event.listener {mustBeScalarOrEmpty}
+
+        %Components
+        BTDeviceList
     end
 
     events ( NotifyAccess = private )
         % Event broadcast when view is interacted with
-        ButtonPressed
-
+        ScanButtonPushed
 
     end % events ( NotifyAccess = private )
 
@@ -42,13 +44,15 @@ classdef ShimmerTabView < matlab.ui.componentcontainer.ComponentContainer
 
             % Listen for changes to the data. 
             obj.Listener = listener( obj.Model, ... 
-                "ShimmerConnected", @obj.onShimmerConnected ); 
+                "ShimmerConnected", @obj.onShimmerConnected );
+            obj.Listener = listener( obj.Model, ... 
+                "DeviceListUpdated", @obj.onDeviceListUpdated );
 
             % Set any user-specified properties.
             set( obj, namedArgs ) 
 
-            % Refresh the view. 
-            onShimmerConnected( obj ) 
+            % Refresh the view.
+            % onDeviceListUpdated( obj )
 
         end 
 
@@ -57,16 +61,29 @@ classdef ShimmerTabView < matlab.ui.componentcontainer.ComponentContainer
     methods ( Access = protected ) 
 
         function setup( obj ) 
-            %SETUP Initialize the view. 
+            %SETUP Initialize the view.
 
-            % Create the view graphics. 
-            ax = axes( "Parent", obj ); 
-            obj.Line = line( ... 
-                "Parent", ax, ... 
-                "XData", NaN, ... 
-                "YData", NaN, ... 
-                "Color", ax.ColorOrder(1, :), ... 
-                "LineWidth", 1.5 ); 
+            gridLayout = uigridlayout( ...
+                "Parent", obj, ...
+                "RowHeight", {22, 22, "1x", "1x"}, ...
+                "ColumnWidth", {"1x", "1x"} );
+
+            % Create view components. 
+            btDeviceListLabel = uilabel("Parent", gridLayout, ...
+                "Text", "Available Bluetooth Devices" );
+            btDeviceListLabel.Layout.Row = 1;
+            btDeviceListLabel.Layout.Column = 1;
+
+            btScanButton = uibutton("Parent", gridLayout, ...
+                "Text", "Scan for devices", ...
+                "ButtonPushedFcn", @obj.onScanButtonPushed);
+            btScanButton.Layout.Row = 2;
+            btScanButton.Layout.Column = 1;
+
+            obj.BTDeviceList = uitable("Parent", gridLayout, ...
+                "Enable", "off" );
+            obj.BTDeviceList.Layout.Row = 3;
+            obj.BTDeviceList.Layout.Column = 1;
 
         end
 
@@ -80,9 +97,13 @@ classdef ShimmerTabView < matlab.ui.componentcontainer.ComponentContainer
 
     methods ( Access = private ) 
 
-        function onShimmerConnected( obj, ~, ~ ) 
-            %ONDATACHANGED Listener callback, responding to the model event
-            %"DataChanged"
+        function onScanButtonPushed( obj, ~, ~ ) 
+            notify( obj, "ScanButtonPushed" )
+        end
+
+        function onDeviceListUpdated( obj, ~, ~ )
+            obj.BTDeviceList.Data = obj.Model.BluetoothDevices;
+            disp(obj.Model.BluetoothDevices);
         end
 
     end

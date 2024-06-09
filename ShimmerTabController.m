@@ -29,7 +29,7 @@ classdef ShimmerTabController < handle
 
             % Listen for changes to the data. 
             obj.Listener = listener( obj.ShimmerTabView, ... 
-                "ButtonPressed", @obj.onButtonPressed ); 
+                "ScanButtonPushed", @obj.onScanButtonPushed ); 
             
         end % constructor
         
@@ -52,12 +52,20 @@ classdef ShimmerTabController < handle
     end % methods ( Access = protected )
     
     methods ( Access = private )
-        function onButtonPressed( obj, ~, ~ ) 
-            %ONDATACHANGED Listener callback, responding to the model event
-            %"DataChanged"
+        function onScanButtonPushed( obj, ~, ~ ) 
+            %ONSCANBUTTONPUSHED Listener callback, responding to the view event
 
-            % Retrieve the most recent data and update the line.
-            disp("Button was pressed!");
+            % Retrieve Shimmer bluetooth devices and update the model.
+            allDevices = bluetoothlist;
+            TF = contains(allDevices.Name, "Shimmer3");
+
+            shimmers = allDevices(TF,:);
+            shimmers.Address = [];
+            shimmers.Channel = [];
+            % shimmers = convertvars(shimmers,{'Name','Status'},'string');
+            shimmers.Name = extractHTMLText(shimmers.Name);
+
+            obj.Model.BluetoothDevices = shimmers;
         end
         
     end % methods ( Access = private )

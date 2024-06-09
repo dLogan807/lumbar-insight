@@ -1,11 +1,11 @@
 classdef Model < handle
     %MODEL Application data model.
     
-    properties ( SetAccess = private )
+    properties
         % Application data.
 
         Shimmers (1,2) ShimmerHandleClass = []
-        BluetoothDevices
+        BluetoothDevices table
 
         Cameras (1,:) Camera
 
@@ -16,6 +16,8 @@ classdef Model < handle
     
     events ( NotifyAccess = private )
         % Events broadcast when the model is altered.
+        DeviceListUpdated
+
         ShimmerConnected
         ShimmerDisconnected
         ShimmerConfigured
@@ -28,6 +30,12 @@ classdef Model < handle
     end % events ( NotifyAccess = private )
     
     methods
+
+        function set.BluetoothDevices ( obj, deviceList )
+            obj.BluetoothDevices = deviceList;
+
+            notify( obj, "DeviceListUpdated" )
+        end
 
         function connectShimmer( shimmerName, obj )
             
