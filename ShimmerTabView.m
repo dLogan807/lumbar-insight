@@ -4,13 +4,12 @@ classdef ShimmerTabView < matlab.ui.componentcontainer.ComponentContainer
     properties ( Access = private )         
         % Line object used to visualize the model data.
         Line(1, 1) matlab.graphics.primitive.Line
-        % Application data model.
-        Model(1, 1) Model
         % Listener object used to respond dynamically to model events.
         Listener(:, 1) event.listener {mustBeScalarOrEmpty}
 
         %Components
         BTDeviceList
+        BTScanButton
     end
 
     events ( NotifyAccess = private )
@@ -21,11 +20,10 @@ classdef ShimmerTabView < matlab.ui.componentcontainer.ComponentContainer
 
     methods
 
-        function obj = ShimmerTabView( model, namedArgs ) 
+        function obj = ShimmerTabView( namedArgs ) 
             %VIEW View constructor.
 
             arguments
-                model(1, 1) Model
                 namedArgs.?ShimmerTabView 
             end % arguments
 
@@ -39,23 +37,28 @@ classdef ShimmerTabView < matlab.ui.componentcontainer.ComponentContainer
                 "Units", "normalized", ... 
                 "Position", [0, 0, 1, 1] ) 
 
-            % Store the model.
-            obj.Model = model; 
-
-            % Listen for changes to the data. 
-            obj.Listener = listener( obj.Model, ... 
-                "ShimmerConnected", @obj.onShimmerConnected );
-            obj.Listener = listener( obj.Model, ... 
-                "DeviceListUpdated", @obj.onDeviceListUpdated );
-
             % Set any user-specified properties.
             set( obj, namedArgs ) 
 
-            % Refresh the view.
-            % onDeviceListUpdated( obj )
-
         end 
 
+        function SetBTScanButtonState( state, obj )
+            if (strcmp(state, "Scanning"))
+                set(obj.BTScanButton, "Text", "Scanning");
+                disp("Set")
+                % obj.BTScanButton.Text = "Scanning";
+                % obj.BTScanButton.Enable = "off";
+            else
+                set(obj.BTScanButton, "Text", "Scanning");
+                % obj.BTScanButton.Text = "Scan for Shimmers";
+                % obj.BTScanButton.Enable = "on";
+            end
+            
+        end
+
+        function setBTDeviceListData( obj, tableData)
+            obj.BTDeviceList.Data = tableData;
+        end
     end 
 
     methods ( Access = protected ) 
@@ -70,15 +73,16 @@ classdef ShimmerTabView < matlab.ui.componentcontainer.ComponentContainer
 
             % Create view components. 
             btDeviceListLabel = uilabel("Parent", gridLayout, ...
-                "Text", "Available Bluetooth Devices" );
+                "Text", "Available Shimmers" );
             btDeviceListLabel.Layout.Row = 1;
             btDeviceListLabel.Layout.Column = 1;
 
-            btScanButton = uibutton("Parent", gridLayout, ...
-                "Text", "Scan for devices", ...
-                "ButtonPushedFcn", @obj.onScanButtonPushed);
-            btScanButton.Layout.Row = 2;
-            btScanButton.Layout.Column = 1;
+            obj.BTScanButton = uibutton("Parent", gridLayout, ...
+                "Text", "Scan for Shimmers" );
+            obj.BTScanButton.ButtonPushedFcn = @obj.onScanButtonPushed;
+            obj.BTScanButton.Layout.Row = 2;
+            obj.BTScanButton.Layout.Column = 1;
+            set(obj.BTScanButton, )
 
             obj.BTDeviceList = uitable("Parent", gridLayout, ...
                 "Enable", "off" );
@@ -97,13 +101,9 @@ classdef ShimmerTabView < matlab.ui.componentcontainer.ComponentContainer
 
     methods ( Access = private ) 
 
-        function onScanButtonPushed( obj, ~, ~ ) 
+        function onScanButtonPushed( obj, ~, ~ )
+            disp("pushed!")
             notify( obj, "ScanButtonPushed" )
-        end
-
-        function onDeviceListUpdated( obj, ~, ~ )
-            obj.BTDeviceList.Data = obj.Model.BluetoothDevices;
-            disp(obj.Model.BluetoothDevices);
         end
 
     end

@@ -9,7 +9,7 @@ classdef ShimmerTabController < handle
         % Shimmer View
         ShimmerTabView ShimmerTabView
         % Listener object used to respond dynamically to view events.
-        Listener(:, 1) event.listener {mustBeScalarOrEmpty}
+        Listener(:, 1) event.listener
     end % properties ( Access = private )
     
     methods
@@ -27,9 +27,13 @@ classdef ShimmerTabController < handle
 
             obj.ShimmerTabView = shimmerTabView;
 
-            % Listen for changes to the data. 
-            obj.Listener = listener( obj.ShimmerTabView, ... 
-                "ScanButtonPushed", @obj.onScanButtonPushed ); 
+            % Listen for changes to the view. 
+            obj.Listener(end+1) = listener( obj.ShimmerTabView, ... 
+                "ScanButtonPushed", @obj.onScanButtonPushed );
+
+            % Listen for changes to the model data.
+            obj.Listener(end+1) = listener( obj.Model, ... 
+                "DeviceListUpdated", @obj.onDeviceListUpdated );
             
         end % constructor
         
@@ -39,7 +43,6 @@ classdef ShimmerTabController < handle
         
         function setup( obj )
             %SETUP Initialize the controller.
-            
             
         end % setup
         
@@ -53,21 +56,36 @@ classdef ShimmerTabController < handle
     
     methods ( Access = private )
         function onScanButtonPushed( obj, ~, ~ ) 
+            disp("Scanning!")
             %ONSCANBUTTONPUSHED Listener callback, responding to the view event
 
             % Retrieve Shimmer bluetooth devices and update the model.
+            obj.ShimmerTabView.SetBTScanButtonState("Scanning");
+
             allDevices = bluetoothlist;
             TF = contains(allDevices.Name, "Shimmer3");
 
             shimmers = allDevices(TF,:);
             shimmers.Address = [];
             shimmers.Channel = [];
-            % shimmers = convertvars(shimmers,{'Name','Status'},'string');
-            shimmers.Name = extractHTMLText(shimmers.Name);
+            shimmers = convertvars(shimmers,{'Name','Status'},'string');
+            % shimmers.Status = statusLinkToString(shimmers.Status);
 
             obj.Model.BluetoothDevices = shimmers;
         end
-        
+
+        function onDeviceListUpdated( obj, ~, ~ )
+            setBTDeviceListData(obj.Model.BluetoothDevices);
+            disp(obj.Model.BluetoothDevices);
+        end
+
+        function shimmerStatus = statusLinkToString( htmlElement )
+            
+            startIndex = strfind(htmlElement, "''>");
+            endIndex = strfind(htmlElement, "</a>");
+
+            shimmerStatus = extractBetween(htmlElement, startIndex, endIndex);
+        end
     end % methods ( Access = private )
     
 end % classdef

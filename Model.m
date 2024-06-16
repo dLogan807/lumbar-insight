@@ -4,10 +4,10 @@ classdef Model < handle
     properties
         % Application data.
 
-        Shimmers (1,2) ShimmerHandleClass = []
+        Shimmers (2, 1) ShimmerHandleClass = []
         BluetoothDevices table
 
-        Cameras (1,:) Camera
+        Cameras (:, 1) Camera
 
         CurrentAngle double
         MaximumAngle double

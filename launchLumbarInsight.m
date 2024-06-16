@@ -19,14 +19,13 @@ tabgroup = uitabgroup(g, "SelectionChangedFcn", @onTabChanged);
 shimmerTab = uitab(tabgroup,"Title","Shimmer Configuration");
 cameraTab = uitab(tabgroup,"Title","Camera Configuration");
 sessionTab = uitab(tabgroup,"Title","Session");
-visualisationTab = uitab(tabgroup,"Title","3D Visualisation");
 managementTab = uitab(tabgroup,"Title","Session Management");
 
 % Create the model.
 model = Model;
 
 % Create the Shimmer view.
-shimmerTabView = ShimmerTabView( model, "Parent", shimmerTab );
+shimmerTabView = ShimmerTabView( "Parent", shimmerTab );
 
 % Create the Shimmer controller.
 ShimmerTabController( model, shimmerTabView );
