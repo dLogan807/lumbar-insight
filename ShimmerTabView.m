@@ -42,16 +42,13 @@ classdef ShimmerTabView < matlab.ui.componentcontainer.ComponentContainer
 
         end 
 
-        function SetBTScanButtonState( state, obj )
+        function SetBTScanButtonState( obj, state)
             if (strcmp(state, "Scanning"))
-                set(obj.BTScanButton, "Text", "Scanning");
-                disp("Set")
-                % obj.BTScanButton.Text = "Scanning";
-                % obj.BTScanButton.Enable = "off";
+                obj.BTScanButton.Text = "Scanning";
+                obj.BTScanButton.Enable = "off";
             else
-                set(obj.BTScanButton, "Text", "Scanning");
-                % obj.BTScanButton.Text = "Scan for Shimmers";
-                % obj.BTScanButton.Enable = "on";
+                obj.BTScanButton.Text = "Scan for Shimmers";
+                obj.BTScanButton.Enable = "on";
             end
             
         end
@@ -79,10 +76,9 @@ classdef ShimmerTabView < matlab.ui.componentcontainer.ComponentContainer
 
             obj.BTScanButton = uibutton("Parent", gridLayout, ...
                 "Text", "Scan for Shimmers" );
-            obj.BTScanButton.ButtonPushedFcn = @obj.onScanButtonPushed;
             obj.BTScanButton.Layout.Row = 2;
             obj.BTScanButton.Layout.Column = 1;
-            set(obj.BTScanButton, )
+            set(obj.BTScanButton, 'ButtonPushedFcn', @obj.onScanButtonPushed);
 
             obj.BTDeviceList = uitable("Parent", gridLayout, ...
                 "Enable", "off" );
