@@ -16,7 +16,7 @@ g = uigridlayout( ...
 
 % Create tab group
 tabgroup = uitabgroup(g, "SelectionChangedFcn", @onTabChanged);
-shimmerTab = uitab(tabgroup,"Title","Shimmer Configuration");
+imuTab = uitab(tabgroup,"Title","IMU Configuration");
 cameraTab = uitab(tabgroup,"Title","Camera Configuration");
 sessionTab = uitab(tabgroup,"Title","Session");
 managementTab = uitab(tabgroup,"Title","Session Management");
@@ -25,10 +25,10 @@ managementTab = uitab(tabgroup,"Title","Session Management");
 model = Model;
 
 % Create the Shimmer view.
-shimmerTabView = ShimmerTabView( "Parent", shimmerTab );
+imuTabView = IMUTabView( "Parent", imuTab );
 
 % Create the Shimmer controller.
-ShimmerTabController( model, shimmerTabView );
+IMUTabController( model, imuTabView );
 
 % Return the figure handle if requested.
 if nargout > 0

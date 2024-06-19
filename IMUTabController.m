@@ -1,4 +1,4 @@
-classdef ShimmerTabController < handle
+classdef IMUTabController < handle
     %CONTROLLER Provides an interactive control to generate new data.
     %
     % Copyright 2021-2022 The MathWorks, Inc.
@@ -7,29 +7,29 @@ classdef ShimmerTabController < handle
         % Application data model.
         Model(1, 1) Model
         % Shimmer View
-        ShimmerTabView ShimmerTabView
+        IMUTabView IMUTabView
         % Listener object used to respond dynamically to view events.
         Listener(:, 1) event.listener
     end % properties ( Access = private )
     
     methods
         
-        function obj = ShimmerTabController( model, shimmerTabView )
+        function obj = IMUTabController( model, imuTabView )
             % CONTROLLER Controller constructor.
             
             arguments
                 model(1, 1) Model
-                shimmerTabView ShimmerTabView
+                imuTabView IMUTabView
             end % arguments
 
             % Store the model.
             obj.Model = model;
 
-            obj.ShimmerTabView = shimmerTabView;
+            obj.IMUTabView = imuTabView;
 
             % Listen for changes to the view. 
-            obj.Listener(end+1) = listener( obj.ShimmerTabView, ... 
-                "ScanButtonPushed", @obj.onScanButtonPushed );
+            obj.Listener(end+1) = listener( obj.IMUTabView, ... 
+                "BTScanButtonPushed", @obj.onBTScanButtonPushed );
 
             % Listen for changes to the model data.
             obj.Listener(end+1) = listener( obj.Model, ... 
@@ -55,12 +55,11 @@ classdef ShimmerTabController < handle
     end % methods ( Access = protected )
     
     methods ( Access = private )
-        function onScanButtonPushed( obj, ~, ~ ) 
-            disp("Scanning!")
+        function onBTScanButtonPushed( obj, ~, ~ ) 
             %ONSCANBUTTONPUSHED Listener callback, responding to the view event
-
+            disp("confirm push")
             % Retrieve Shimmer bluetooth devices and update the model.
-            obj.ShimmerTabView.SetBTScanButtonState("Scanning");
+            obj.IMUTabView.SetBTScanButtonState("Scanning");
 
             allDevices = bluetoothlist;
             TF = contains(allDevices.Name, "Shimmer3");
@@ -75,8 +74,8 @@ classdef ShimmerTabController < handle
         end
 
         function onDeviceListUpdated( obj, ~, ~ )
-            setBTDeviceListData(obj.Model.BluetoothDevices);
-            disp(obj.Model.BluetoothDevices);
+            obj.IMUTabView.setBTDeviceListData(obj.Model.BluetoothDevices);
+            obj.IMUTabView.SetBTScanButtonState("Devices Retrieved");
         end
 
         function shimmerStatus = statusLinkToString( htmlElement )
