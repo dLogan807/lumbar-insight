@@ -6,7 +6,7 @@ classdef IMUTabController < handle
     properties ( Access = private )
         % Application data model.
         Model(1, 1) Model
-        % Shimmer View
+        % IMU View
         IMUTabView IMUTabView
         % Listener object used to respond dynamically to view events.
         Listener(:, 1) event.listener
@@ -57,20 +57,31 @@ classdef IMUTabController < handle
     methods ( Access = private )
         function onBTScanButtonPushed( obj, ~, ~ ) 
             %ONSCANBUTTONPUSHED Listener callback, responding to the view event
-            disp("confirm push")
-            % Retrieve Shimmer bluetooth devices and update the model.
+
+            % Retrieve bluetooth devices and update the model.
             obj.IMUTabView.SetBTScanButtonState("Scanning");
 
             allDevices = bluetoothlist;
-            TF = contains(allDevices.Name, "Shimmer3");
+            allDevices.Address = [];
+            allDevices.Channel = [];
+            allDevices = convertvars(allDevices,{'Name','Status'},'string');
 
-            shimmers = allDevices(TF,:);
-            shimmers.Address = [];
-            shimmers.Channel = [];
-            shimmers = convertvars(shimmers,{'Name','Status'},'string');
-            % shimmers.Status = statusLinkToString(shimmers.Status);
+            rows = height(allDevices);
+            for row = 1:rows
+                currentRow = allDevices.Status(row,:);
 
-            obj.Model.BluetoothDevices = shimmers;
+                startIndex = strfind(currentRow, ">");
+                if (isempty(startIndex))
+                    continue;
+                end
+                endIndex = strfind(currentRow, "</");
+
+                allDevices.Status(row,:) = extractBetween(currentRow, startIndex(1) + 1, endIndex(1) - 1);
+            end
+
+            % allDevices.Status = statusHTMLToText(allDevices.Status);
+
+            obj.Model.BluetoothDevices = allDevices;
         end
 
         function onDeviceListUpdated( obj, ~, ~ )
@@ -78,12 +89,14 @@ classdef IMUTabController < handle
             obj.IMUTabView.SetBTScanButtonState("Devices Retrieved");
         end
 
-        function shimmerStatus = statusLinkToString( htmlElement )
-            
-            startIndex = strfind(htmlElement, "''>");
-            endIndex = strfind(htmlElement, "</a>");
+        function  statusHTMLToText( statusHTMLTable )
 
-            shimmerStatus = extractBetween(htmlElement, startIndex, endIndex);
+            arguments (Input)
+                statusHTMLTable Table
+            end
+
+            
+
         end
     end % methods ( Access = private )
     

@@ -70,7 +70,7 @@ classdef IMUTabView < matlab.ui.componentcontainer.ComponentContainer
 
             % Create view components. 
             btDeviceListLabel = uilabel("Parent", gridLayout, ...
-                "Text", "Available Devices" );
+                "Text", "Available Bluetooth Devices" );
             btDeviceListLabel.Layout.Row = 1;
             btDeviceListLabel.Layout.Column = 1;
 
@@ -78,7 +78,7 @@ classdef IMUTabView < matlab.ui.componentcontainer.ComponentContainer
                 "Text", "Scan for Devices" );
             obj.BTScanButton.Layout.Row = 2;
             obj.BTScanButton.Layout.Column = 1;
-            set(obj.BTScanButton, 'ButtonPushedFcn', @obj.onBTScanButtonPushed);
+            obj.BTScanButton.ButtonPushedFcn = @obj.onBTScanButtonPushed;
 
             obj.BTDeviceList = uitable("Parent", gridLayout, ...
                 "Enable", "off" );
@@ -99,7 +99,6 @@ classdef IMUTabView < matlab.ui.componentcontainer.ComponentContainer
 
         function onBTScanButtonPushed( obj, ~, ~ )
             notify( obj, "BTScanButtonPushed" )
-            disp("pushed")
         end
 
     end

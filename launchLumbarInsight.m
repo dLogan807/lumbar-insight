@@ -24,10 +24,10 @@ managementTab = uitab(tabgroup,"Title","Session Management");
 % Create the model.
 model = Model;
 
-% Create the Shimmer view.
+% Create the IMU view.
 imuTabView = IMUTabView( "Parent", imuTab );
 
-% Create the Shimmer controller.
+% Create the IMU controller.
 IMUTabController( model, imuTabView );
 
 % Return the figure handle if requested.
