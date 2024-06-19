@@ -56,7 +56,7 @@ classdef IMUTabController < handle
     
     methods ( Access = private )
         function onBTScanButtonPushed( obj, ~, ~ ) 
-            %ONSCANBUTTONPUSHED Listener callback, responding to the view event
+            % ONBTSCANBUTTONPUSHED Listener callback, responding to the view event
 
             % Retrieve bluetooth devices and update the model.
             obj.IMUTabView.SetBTScanButtonState("Scanning");
@@ -66,20 +66,7 @@ classdef IMUTabController < handle
             allDevices.Channel = [];
             allDevices = convertvars(allDevices,{'Name','Status'},'string');
 
-            rows = height(allDevices);
-            for row = 1:rows
-                currentRow = allDevices.Status(row,:);
-
-                startIndex = strfind(currentRow, ">");
-                if (isempty(startIndex))
-                    continue;
-                end
-                endIndex = strfind(currentRow, "</");
-
-                allDevices.Status(row,:) = extractBetween(currentRow, startIndex(1) + 1, endIndex(1) - 1);
-            end
-
-            % allDevices.Status = statusHTMLToText(allDevices.Status);
+            allDevices = statusHTMLToText(obj, allDevices);
 
             obj.Model.BluetoothDevices = allDevices;
         end
@@ -89,14 +76,23 @@ classdef IMUTabController < handle
             obj.IMUTabView.SetBTScanButtonState("Devices Retrieved");
         end
 
-        function  statusHTMLToText( statusHTMLTable )
+        function formattedDevices = statusHTMLToText( ~, deviceTable )
+            %ONDEVICELISTUPDATED Convert any HTML <a> elements to plaintext
+            
+            rows = height(deviceTable);
+            for row = 1:rows
+                currentRow = deviceTable.Status(row,:);
 
-            arguments (Input)
-                statusHTMLTable Table
+                startIndex = strfind(currentRow, ">");
+                if (isempty(startIndex))
+                    continue;
+                end
+                endIndex = strfind(currentRow, "</");
+
+                deviceTable.Status(row,:) = extractBetween(currentRow, startIndex(1) + 1, endIndex(1) - 1);
             end
 
-            
-
+            formattedDevices = deviceTable;
         end
     end % methods ( Access = private )
     
