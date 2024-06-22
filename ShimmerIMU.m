@@ -5,11 +5,6 @@ classdef ShimmerIMU < IMUInterface
     properties (Access = private)
         Driver ShimmerDriver
     end
-
-    properties (SetAccess = private)
-        IsConnected
-        IsStreaming
-    end
     
     methods
         function obj = ShimmerIMU(deviceName)

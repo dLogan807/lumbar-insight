@@ -59,7 +59,7 @@ classdef IMUTabController < handle
             % Retrieve bluetooth devices and update the model.
             obj.IMUTabView.SetBTScanButtonState("Scanning");
 
-            allDevices = bluetoothlist;
+            allDevices = bluetoothlist("Timeout", 10);
             allDevices.Address = [];
             allDevices.Channel = [];
             allDevices = convertvars(allDevices,{'Name','Status'},'string');

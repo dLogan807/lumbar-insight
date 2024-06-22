@@ -4,6 +4,11 @@ classdef (Abstract) IMUInterface < handle
     properties (SetAccess = protected)
         Name
     end
+
+    properties (SetAccess = private)
+        IsConnected
+        IsStreaming
+    end
     
     methods
         connect(obj)

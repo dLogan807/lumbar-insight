@@ -4,7 +4,7 @@ classdef Model < handle
     properties
         % Application data.
 
-        IMUDevices (2, 1) IMUInterface = []
+        IMUDevices (2, 1)
         BluetoothDevices table
 
         Cameras (:, 1) Camera
