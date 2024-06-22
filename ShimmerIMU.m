@@ -5,12 +5,37 @@ classdef ShimmerIMU < IMUInterface
     properties (Access = private)
         Driver ShimmerDriver
     end
+
+    properties (SetAccess = private)
+        IsConnected
+        IsStreaming
+    end
     
     methods
-        function shimmerObj = ShimmerIMU(deviceName)
-            shimmerObj.Name = deviceName;
+        function obj = ShimmerIMU(deviceName)
+            obj.Name = deviceName;
 
-            shimmerObj.Driver = ShimmerDriver(DeviceName);
+            obj.Driver = ShimmerDriver(DeviceName);
+        end
+
+        function isConnected = get.IsConnected(obj)
+            isConnected = false;
+
+            state = obj.Driver.State;
+
+            if (~strcmp(state, 'Disconnected'))
+                isConnected = true;
+            end
+        end
+
+        function isStreaming = get.IsStreaming(obj)
+            isStreaming = false;
+
+            state = obj.Driver.State;
+
+            if (~strcmp(state, 'Streaming'))
+                isStreaming = true;
+            end
         end
 
         function connected = connect(obj)
