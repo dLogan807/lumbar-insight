@@ -4,7 +4,7 @@ classdef Model < handle
     properties
         % Application data.
 
-        Shimmers (2, 1) ShimmerHandleClass = []
+        IMUDevices (2, 1) IMUInterface = []
         BluetoothDevices table
 
         Cameras (:, 1) Camera
@@ -63,16 +63,7 @@ classdef Model < handle
             shimmerIndex = getShimmerIndexByName(shimmerName);
             shimmer = obj.Shimmers(shimmerIndex);
             
-            SensorMacros = SetEnabledSensorsMacrosClass;                           % assign user friendly macros for setenabledsensors
-    
-            shimmer.setsamplingrate(51.2);                                         % Set the shimmer sampling rate to 51.2Hz
-    	    shimmer.setinternalboard('9DOF');                                      % Set the shimmer internal daughter board to '9DOF'
-            shimmer.disableallsensors;                                             % disable all sensors
-            shimmer.setenabledsensors(SensorMacros.GYRO,1,SensorMacros.MAG,1,...   % Enable the gyroscope, magnetometer and accelerometer.
-            SensorMacros.ACCEL,1);                                                  
-            shimmer.setaccelrange(0);                                              % Set the accelerometer range to 0 (+/- 1.5g for Shimmer2/2r, +/- 2.0g for Shimmer3)
-            shimmer.setorientation3D(1);                                           % Enable orientation3D
-            shimmer.setgyroinusecalibration(1);                                    % Enable gyro in-use calibration
+
 
             notify( obj, "ShimmerConfigured" )
 
@@ -80,8 +71,8 @@ classdef Model < handle
 
         function startSession( obj ) 
         
-            obj.Shimmers(1).start;
-            obj.Shimmers(2).start;
+            obj.IMUDevices(1).start;
+            obj.IMUDevices(2).start;
 
             notify( obj, "SessionStarted" )
 
@@ -89,8 +80,8 @@ classdef Model < handle
 
         function endSession( obj ) 
         
-            obj.Shimmers(1).stop;
-            obj.Shimmers(2).stop;
+            obj.IMUDevices(1).stop;
+            obj.IMUDevices(2).stop;
 
             notify( obj, "SessionEnded" )
 
@@ -102,14 +93,6 @@ classdef Model < handle
             shimmerIndex = getShimmerIndexByName(shimmerName);
             shimmer = obj.Shimmers(shimmerIndex);
 
-            [shimmerData,shimmerSignalNameArray,~,~] = shimmer.getdata('c');
-
-            shimmerQuaternionChannels(1) = find(ismember(shimmerSignalNameArray, 'Quaternion 0'));                  % Find Quaternion signal indices.
-            shimmerQuaternionChannels(2) = find(ismember(shimmerSignalNameArray, 'Quaternion 1'));
-            shimmerQuaternionChannels(3) = find(ismember(shimmerSignalNameArray, 'Quaternion 2'));
-            shimmerQuaternionChannels(4) = find(ismember(shimmerSignalNameArray, 'Quaternion 3'));
-
-            quaternion = shimmerData(end, shimmerQuaternionChannels);
 
             notify( obj, "QuaternionGet" )
         end % getLastShimmerQuaternion

@@ -1,30 +1,28 @@
-classdef IMUInterface < handle
+classdef (Abstract) IMUInterface < handle
     %IMUINTERFACE Abstract class for creating an IMU object
     
     properties (SetAccess = protected, GetAccess = protected)
         DeviceName
-        LatestQuaternion
     end
     
-    methods (Abstract)
-        connect(deviceName)
-        % Connect to a device using its Bluetooth name
+    methods
+        connect(obj)
+        % Connect to a device using its name
 
-        disconnect
+        disconnect(obj)
         % Disconnect from the device
 
-        configure
+        configure(obj)
         % Configure the device
 
-        startSession
+        startSession(obj)
         % Start streaming data
 
-        endSession
+        endSession(obj)
         % Stop streaming data
 
-        retrieveLatestQuaternion
-        % Get the most recent quaternion
-
+        getLatestQuaternion(obj)
+        % Get the most recent quaternion and update the property
     end
 end
 

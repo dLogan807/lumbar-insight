@@ -120,7 +120,7 @@ end
     function configureShimmer(shimmer)
         % Define settings for shimmer
         
-        SensorMacros = SetEnabledSensorsMacrosClass;                           % assign user friendly macros for setenabledsensors
+        SensorMacros = ShimmerEnabledSensorsMacrosClass;                           % assign user friendly macros for setenabledsensors
 
         shimmer.setsamplingrate(51.2);                                         % Set the shimmer sampling rate to 51.2Hz
     	shimmer.setinternalboard('9DOF');                                      % Set the shimmer internal daughter board to '9DOF'
