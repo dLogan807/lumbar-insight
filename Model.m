@@ -18,61 +18,72 @@ classdef Model < handle
         % Events broadcast when the model is altered.
         DeviceListUpdated
 
-        ShimmerConnected
-        ShimmerDisconnected
-        ShimmerConfigured
+        DeviceConnected
+        DeviceDisconnected
+        DeviceConfigured
 
         SessionStarted
         SessionEnded
 
-        QuaternionGet
+        QuaternionUpdated
 
     end % events ( NotifyAccess = private )
     
     methods
 
         function set.BluetoothDevices ( obj, deviceList )
+            % SET.BLUETOOTHDEVICES Set table of bluetooth devices, notify
+            % controller
+
             obj.BluetoothDevices = deviceList;
 
             notify( obj, "DeviceListUpdated" )
         end
 
-        function connectShimmer( shimmerName, obj )
+        function connectDevice( deviceName, obj )
+            % CONNECTDEVICE Attempt device connection, notify controller 
             
-            shimmerIndex = getShimmerIndexByName(shimmerName);
+            deviceIndex = getDeviceIndexByName(deviceName);
         
-            obj.Shimmers(shimmerIndex).connect;
+            connected = obj.IMUDevices(deviceIndex).connect;
 
-            notify( obj, "ShimmerConnected" )
+            if (connected)
+                notify( obj, "DeviceConnected" )
+            else
+                notify( obj, "DeviceConnectFailed" )
+            end
 
-        end % connectShimmer
+        end % connectDevice
 
-        function disconnectShimmer( shimmerName, obj ) 
+        function disconnectDevice( deviceName, obj ) 
 
-            shimmerIndex = getShimmerIndexByName(shimmerName);
+            deviceIndex = getDeviceIndexByName(deviceName);
         
-            obj.Shimmers(shimmerIndex).disconnect;
+            disconnected = obj.IMUDevices(deviceIndex).disconnect;
 
-            notify( obj, "ShimmerDisconnected" )
+            if (disconnected)
+                notify( obj, "DeviceDisconnected" )
+            else
+                notify( obj, "DeviceDisconnectFailed" )
+            end
 
-        end % disconnectShimmer
+        end % disconnectDevice
 
-        function configureShimmer( shimmerName, obj ) 
-            % Define settings for shimmer
+        function configureDevice( deviceName, obj ) 
+            % Define settings for device
 
-            shimmerIndex = getShimmerIndexByName(shimmerName);
-            shimmer = obj.Shimmers(shimmerIndex);
+            deviceIndex = getDeviceIndexByName(deviceName);
             
+            obj.IMUDevices(deviceIndex);
 
+            notify( obj, "DeviceConfigured" )
 
-            notify( obj, "ShimmerConfigured" )
-
-        end % configureShimmer
+        end % configureDevice
 
         function startSession( obj ) 
         
-            obj.IMUDevices(1).start;
-            obj.IMUDevices(2).start;
+            obj.IMUDevices(1).startSession;
+            obj.IMUDevices(2).startSession;
 
             notify( obj, "SessionStarted" )
 
@@ -80,39 +91,29 @@ classdef Model < handle
 
         function endSession( obj ) 
         
-            obj.IMUDevices(1).stop;
-            obj.IMUDevices(2).stop;
+            obj.IMUDevices(1).endSession;
+            obj.IMUDevices(2).endSession;
 
             notify( obj, "SessionEnded" )
 
         end % endSession
-
-        function quaternion = getLastShimmerQuaternion( shimmerName, obj )
-            % Get latest quaternion
-
-            shimmerIndex = getShimmerIndexByName(shimmerName);
-            shimmer = obj.Shimmers(shimmerIndex);
-
-
-            notify( obj, "QuaternionGet" )
-        end % getLastShimmerQuaternion
         
     end % methods
 
     methods (Access = private)
 
-        function shimmerIndex = getShimmerIndexByName( shimmerName, obj )
+        function deviceIndex = getDeviceIndexByName( deviceName, obj )
 
-            if (strcmp(obj.Shimmers(1).name, shimmerName))
-                shimmerIndex = 1;
-            elseif (strcmp(obj.Shimmers(2).name, shimmerName))
-                shimmerIndex = 2;
+            if (strcmp(obj.IMUDevices(1).Name, deviceName))
+                deviceIndex = 1;
+            elseif (strcmp(obj.IMUDevices(2).Name, deviceName))
+                deviceIndex = 2;
             else
-                shimmerIndex = -1;
-                warning("Unable to retrieve index of Shimmer by name.");
+                deviceIndex = -1;
+                warning("Unable to retrieve index of Device by name.");
             end
 
-        end % shimmerIndex
+        end % deviceIndex
 
     end % private methods
     

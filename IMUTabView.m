@@ -1,5 +1,5 @@
 classdef IMUTabView < matlab.ui.componentcontainer.ComponentContainer 
-    %VIEW Visualizes the data, responding to any relevant model events.
+    %IMUTABVIEW Visualizes the data, responding to any relevant model events.
 
     properties ( Access = private )         
         % Line object used to visualize the model data.

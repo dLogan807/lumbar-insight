@@ -1,8 +1,8 @@
 classdef (Abstract) IMUInterface < handle
     %IMUINTERFACE Abstract class for creating an IMU object
     
-    properties (SetAccess = protected, GetAccess = protected)
-        DeviceName
+    properties (SetAccess = protected)
+        Name
     end
     
     methods

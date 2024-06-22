@@ -8,7 +8,7 @@ classdef ShimmerIMU < IMUInterface
     
     methods
         function shimmerObj = ShimmerIMU(deviceName)
-            shimmerObj.DeviceName = deviceName;
+            shimmerObj.Name = deviceName;
 
             shimmerObj.Driver = ShimmerDriver(DeviceName);
         end

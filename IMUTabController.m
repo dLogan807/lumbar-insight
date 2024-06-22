@@ -1,7 +1,5 @@
 classdef IMUTabController < handle
-    %CONTROLLER Provides an interactive control to generate new data.
-    %
-    % Copyright 2021-2022 The MathWorks, Inc.
+    %IMUTABCONTROLLER Provides an interactive control to generate new data.
 
     properties ( Access = private )
         % Application data model.
