@@ -5,6 +5,13 @@ classdef ShimmerIMU < IMUInterface
     properties (Access = private)
         Driver ShimmerDriver
     end
+
+    properties
+        Name
+        IsConnected
+        IsStreaming
+        LatestQuaternion
+    end
     
     methods
         function obj = ShimmerIMU(deviceName)
@@ -30,6 +37,21 @@ classdef ShimmerIMU < IMUInterface
 
             if (~strcmp(state, 'Streaming'))
                 isStreaming = true;
+            end
+        end
+
+        function latestQuaternion = get.LatestQuaternion(obj)
+            if (obj.IsStreaming)
+                [shimmerData,shimmerSignalNameArray,~,~] = obj.Driver.getdata('c');
+
+                shimmerQuaternionChannels(1) = find(ismember(shimmerSignalNameArray, 'Quaternion 0'));                  % Find Quaternion signal indices.
+                shimmerQuaternionChannels(2) = find(ismember(shimmerSignalNameArray, 'Quaternion 1'));
+                shimmerQuaternionChannels(3) = find(ismember(shimmerSignalNameArray, 'Quaternion 2'));
+                shimmerQuaternionChannels(4) = find(ismember(shimmerSignalNameArray, 'Quaternion 3'));
+    
+                latestQuaternion = shimmerData(end, shimmerQuaternionChannels);
+            else
+                latestQuaternion = [0.5, 0.5, 0.5, 0.5];
             end
         end
 
@@ -71,18 +93,6 @@ classdef ShimmerIMU < IMUInterface
 
             ended = obj.Driver.stop;
         end
-
-        function quaternion = getLatestQuaternion(obj)
-            [shimmerData,shimmerSignalNameArray,~,~] = obj.Driver.getdata('c');
-
-            shimmerQuaternionChannels(1) = find(ismember(shimmerSignalNameArray, 'Quaternion 0'));                  % Find Quaternion signal indices.
-            shimmerQuaternionChannels(2) = find(ismember(shimmerSignalNameArray, 'Quaternion 1'));
-            shimmerQuaternionChannels(3) = find(ismember(shimmerSignalNameArray, 'Quaternion 2'));
-            shimmerQuaternionChannels(4) = find(ismember(shimmerSignalNameArray, 'Quaternion 3'));
-
-            quaternion = shimmerData(end, shimmerQuaternionChannels);
-        end
-        % Get the most recent quaternion
     end
 end
 

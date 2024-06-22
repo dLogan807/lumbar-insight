@@ -1,16 +1,14 @@
 classdef (Abstract) IMUInterface < handle
     %IMUINTERFACE Abstract class for creating an IMU object
     
-    properties (SetAccess = protected)
+    properties (Abstract, SetAccess = protected)
         Name
-    end
-
-    properties (SetAccess = private)
         IsConnected
         IsStreaming
+        LatestQuaternion
     end
     
-    methods
+    methods (Abstract)
         connect(obj)
         % Connect to a device using its name
 
@@ -25,9 +23,6 @@ classdef (Abstract) IMUInterface < handle
 
         endSession(obj)
         % Stop streaming data
-
-        getLatestQuaternion(obj)
-        % Get the most recent quaternion and update the property
     end
 end
 
