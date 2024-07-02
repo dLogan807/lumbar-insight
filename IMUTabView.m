@@ -4,12 +4,14 @@ classdef IMUTabView < matlab.ui.componentcontainer.ComponentContainer
     properties ( Access = private )
         % Line object used to visualize the model data.
         Line(1, 1) matlab.graphics.primitive.Line
-        % Listener object used to respond dynamically to model events.
+        % Listener object used to respond dynamically to controller events.
         Listener(:, 1) event.listener {mustBeScalarOrEmpty}
 
         %Components
         BTDeviceList
         BTScanButton
+        DeviceConnect1 DeviceConnect
+        DeviceConnect2 DeviceConnect
     end
 
     events ( NotifyAccess = private )
@@ -86,6 +88,8 @@ classdef IMUTabView < matlab.ui.componentcontainer.ComponentContainer
                 "Enable", "off" );
             obj.BTDeviceList.Layout.Row = 3;
             obj.BTDeviceList.Layout.Column = 1;
+
+            obj.DeviceConnect1 = DeviceConnect("Parent", gridLayout);
 
         end
 

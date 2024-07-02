@@ -2,10 +2,11 @@ classdef (Abstract) IMUInterface < handle
     %IMUINTERFACE Abstract class for creating an IMU object
     
     properties (Abstract, SetAccess = protected)
-        Name
-        IsConnected
-        IsStreaming
+        Name string
+        IsConnected logical
+        IsStreaming logical
         LatestQuaternion
+        BatteryVoltage string
     end
     
     methods (Abstract)

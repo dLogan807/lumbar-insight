@@ -40,10 +40,10 @@ classdef Model < handle
             notify( obj, "DeviceListUpdated" )
         end
 
-        function connectDevice( deviceName, obj )
+        function connectDevice( deviceName, deviceType, obj )
             % CONNECTDEVICE Attempt device connection, notify controller 
             
-            deviceIndex = getDeviceIndexByName(deviceName);
+            ShimmerIMU(deviceName)
         
             connected = obj.IMUDevices(deviceIndex).connect;
 

@@ -75,7 +75,7 @@
 
 
 
-classdef ShimmerHandleClass < handle   % Inherit from super class 'handle' 
+classdef ShimmerDriver < handle   % Inherit from super class 'handle' 
     %ShimmerHandleClass   a class to interface with the Shimmer wireless sensor
     %                     platform.
     %
@@ -561,7 +561,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
     
     methods
         
-        function thisShimmer = ShimmerHandleClass(name)
+        function thisShimmer = ShimmerDriver(name)
             
             %SHIMMERHANDLECLASS - Constructor for the class
             %

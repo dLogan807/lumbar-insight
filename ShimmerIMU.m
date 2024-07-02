@@ -11,16 +11,17 @@ classdef ShimmerIMU < IMUInterface
         IsConnected
         IsStreaming
         LatestQuaternion
+        BatteryVoltage
     end
     
     methods
-        function obj = ShimmerIMU(deviceName)
+        function obj = ShimmerIMU( deviceName )
             obj.Name = deviceName;
 
-            obj.Driver = ShimmerDriver(DeviceName);
+            obj.Driver = ShimmerDriver( deviceName );
         end
 
-        function isConnected = get.IsConnected(obj)
+        function isConnected = get.IsConnected( obj )
             isConnected = false;
 
             state = obj.Driver.State;
@@ -30,7 +31,7 @@ classdef ShimmerIMU < IMUInterface
             end
         end
 
-        function isStreaming = get.IsStreaming(obj)
+        function isStreaming = get.IsStreaming( obj )
             isStreaming = false;
 
             state = obj.Driver.State;
@@ -38,6 +39,10 @@ classdef ShimmerIMU < IMUInterface
             if (~strcmp(state, 'Streaming'))
                 isStreaming = true;
             end
+        end
+
+        function batteryVoltage = get.BatteryVoltage( obj )
+            batteryVoltage = obj.Driver.getbatteryvoltage( obj );
         end
 
         function latestQuaternion = get.LatestQuaternion(obj)
