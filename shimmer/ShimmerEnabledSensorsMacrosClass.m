@@ -1,7 +1,7 @@
 % Class modified from the official Shimmer MATLAB Instrumentation Driver.
 % Shimmer. (2022). Shimmer Matlab Instrumentation Driver. https://github.com/ShimmerEngineering/Shimmer-MATLAB-ID
 
-classdef SetEnabledSensorsMacrosClass < handle
+classdef ShimmerEnabledSensorsMacrosClass < handle
     
     % SETENABLEDSENSORSMACROSCLASS - Defines macros for setenabledsensors
     % 
@@ -85,7 +85,7 @@ classdef SetEnabledSensorsMacrosClass < handle
     
     methods
         
-        function theseMacros = SetEnabledSensorsMacrosClass
+        function theseMacros = ShimmerEnabledSensorsMacrosClass
             
             % SETENABLEDSENSORSMACROSCLASS - Constructor for the class
             %
