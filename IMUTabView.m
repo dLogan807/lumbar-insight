@@ -10,8 +10,11 @@ classdef IMUTabView < matlab.ui.componentcontainer.ComponentContainer
         %Components
         BTDeviceList
         BTScanButton
-        DeviceConnect1 matlab.ui.componentcontainer.ComponentContainer
-        DeviceConnect2 matlab.ui.componentcontainer.ComponentContainer
+    end
+
+    properties
+        DeviceConnect1 DeviceConnect
+        DeviceConnect2 DeviceConnect
     end
 
     events ( NotifyAccess = private )

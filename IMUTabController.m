@@ -68,7 +68,7 @@ classdef IMUTabController < handle
             % Retrieve bluetooth devices and update the model.
             obj.IMUTabView.SetBTScanButtonState("Scanning");
 
-            allDevices = bluetoothlist("Timeout", 10);
+            allDevices = bluetoothlist("Timeout", 15);
             allDevices.Address = [];
             allDevices.Channel = [];
             allDevices = convertvars(allDevices,{'Name','Status'},'string');
@@ -85,10 +85,12 @@ classdef IMUTabController < handle
 
         function onDevice1ConnectButtonPushed( obj, ~, ~ )
             disp("Controller: connect 1 pushed");
+            obj.Model.connectDevice(obj.IMUTabView.DeviceConnect1.DeviceName, obj.IMUTabView.DeviceConnect1.DeviceType, 1);
         end
 
         function onDevice2ConnectButtonPushed( obj, ~, ~ )
             disp("Controller: connect 2 pushed");
+            obj.Model.connectDevice(obj.IMUTabView.DeviceConnect2.DeviceName, obj.IMUTabView.DeviceConnect2.DeviceType, 2);
         end
 
         function onDevice1DisconnectButtonPushed( obj, ~, ~ )

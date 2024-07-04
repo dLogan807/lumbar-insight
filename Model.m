@@ -4,10 +4,10 @@ classdef Model < handle
     properties
         % Application data.
 
-        IMUDevices (2, 1)
+        IMUDevices (1, 2) IMUInterface = [ShimmerIMU("temp"), ShimmerIMU("temp")]
         BluetoothDevices table
 
-        Cameras (:, 1) Camera
+        Cameras (1, :) Camera
 
         CurrentAngle double
         MaximumAngle double
@@ -19,6 +19,7 @@ classdef Model < handle
         DeviceListUpdated
 
         DeviceConnected
+        DeviceConnectFailed
         DeviceDisconnected
         DeviceConfigured
 
@@ -40,12 +41,17 @@ classdef Model < handle
             notify( obj, "DeviceListUpdated" )
         end
 
-        function connectDevice( deviceName, deviceType, obj )
-            % CONNECTDEVICE Attempt device connection, notify controller 
+        function connectDevice( obj, deviceName, deviceType, deviceIndex )
+            % CONNECTDEVICE Attempt device connection, notify controller
             
-            ShimmerIMU(deviceName)
-        
-            connected = obj.IMUDevices(deviceIndex).connect;
+            connected = false;
+
+            if (deviceType == DeviceTypes.Shimmer)
+                obj.IMUDevices(deviceIndex) = ShimmerIMU(deviceName);
+                connected = obj.IMUDevices(deviceIndex).connect;
+            else
+                disp("Device of type " + string(deviceType) + " is not implemented.");
+            end
 
             if (connected)
                 notify( obj, "DeviceConnected" )
@@ -55,7 +61,7 @@ classdef Model < handle
 
         end % connectDevice
 
-        function disconnectDevice( deviceName, obj ) 
+        function disconnectDevice( obj, deviceName ) 
 
             deviceIndex = getDeviceIndexByName(deviceName);
         
@@ -69,7 +75,7 @@ classdef Model < handle
 
         end % disconnectDevice
 
-        function configureDevice( deviceName, obj ) 
+        function configureDevice( obj, deviceName ) 
             % Define settings for device
 
             deviceIndex = getDeviceIndexByName(deviceName);

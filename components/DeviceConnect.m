@@ -3,7 +3,7 @@ classdef DeviceConnect < matlab.ui.componentcontainer.ComponentContainer
 
     properties
         DeviceName string
-        DeviceType
+        DeviceType DeviceTypes
         Connected logical
     end
     
@@ -27,14 +27,18 @@ classdef DeviceConnect < matlab.ui.componentcontainer.ComponentContainer
                 "RowHeight", { 22 }, ...
                 "ColumnWidth", {"2x", "1x", "1x"} );
         
-            % Create edit field for entering color value
+            % Create edit field for entering device name
             comp.DeviceNameEditField = uieditfield(comp.Grid, "Placeholder", "Device name");
+            comp.DeviceNameEditField.ValueChangedFcn = @comp.deviceNameChanged;
             comp.DeviceNameEditField.Layout.Column = 1;
 
             comp.DeviceTypeDropDown = uidropdown(comp.Grid, "Items", string([enumeration("DeviceTypes")]));
             comp.DeviceTypeDropDown.Editable = "off";
+            comp.DeviceTypeDropDown.ValueChangedFcn = @comp.deviceTypeChanged;
             comp.DeviceTypeDropDown.Layout.Column = 2;
-        
+
+            comp.DeviceType = DeviceTypes.Shimmer;
+
             % Create button to confirm color change
             comp.DeviceConnectButton = uibutton(comp.Grid, "Text", "Connect" );
             comp.DeviceConnectButton.ButtonPushedFcn = @comp.stateChanged;
@@ -63,6 +67,14 @@ classdef DeviceConnect < matlab.ui.componentcontainer.ComponentContainer
             else
                 notify(obj,'Connect');
             end
+        end
+
+        function deviceTypeChanged( obj, ~, ~)
+            obj.DeviceType = obj.DeviceTypeDropDown.Value;
+        end
+
+        function deviceNameChanged( obj, ~, ~)
+            obj.DeviceName = obj.DeviceNameEditField.Value;
         end
     end
 end

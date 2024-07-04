@@ -1,4 +1,4 @@
-classdef (Abstract) IMUInterface < handle
+classdef IMUInterface < handle
     %IMUINTERFACE Abstract class for creating an IMU object
     
     properties (Abstract, SetAccess = protected)

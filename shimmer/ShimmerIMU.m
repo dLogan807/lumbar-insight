@@ -6,7 +6,7 @@ classdef ShimmerIMU < IMUInterface
         Driver ShimmerDriver
     end
 
-    properties
+    properties (SetAccess = protected)
         Name
         IsConnected
         IsStreaming
