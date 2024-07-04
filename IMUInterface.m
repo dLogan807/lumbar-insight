@@ -19,10 +19,10 @@ classdef IMUInterface < handle
         configure(obj)
         % Configure the device
 
-        startSession(obj)
+        startStreaming(obj)
         % Start streaming data
 
-        endSession(obj)
+        stopStreaming(obj)
         % Stop streaming data
     end
 end

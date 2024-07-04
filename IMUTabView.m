@@ -19,9 +19,6 @@ classdef IMUTabView < matlab.ui.componentcontainer.ComponentContainer
 
         CalibrateStandingPositionButton CalibrationButton
         CalibrateFullFlexionButton CalibrationButton
-
-        StandingPositionLabel matlab.ui.control.Label
-        MaxFlexionLabel matlab.ui.control.Label
     end
 
     events ( NotifyAccess = private )

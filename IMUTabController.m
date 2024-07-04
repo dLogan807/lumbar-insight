@@ -48,6 +48,10 @@ classdef IMUTabController < handle
                 "DeviceListUpdated", @obj.onDeviceListUpdated );
             obj.Listener(end+1) = listener( obj.Model, ... 
                 "DevicesConnectedChanged", @obj.onDevicesChanged );
+            obj.Listener(end+1) = listener( obj.Model, ... 
+                "StandingAngleCalibrated", @obj.onStandingAngleCalibrated );
+            obj.Listener(end+1) = listener( obj.Model, ... 
+                "FullFlexionAngleCalibrated", @obj.onFullFlexionAngleCalibrated );
             
         end % constructor
         
@@ -122,14 +126,25 @@ classdef IMUTabController < handle
             else
                 obj.IMUTabView.Device2BatteryLabel.Text = "Device not connected. No battery information.";
             end
+
+            obj.IMUTabView.CalibrateStandingPositionButton.Enable = obj.Model.twoIMUDevicesConnected;
+            obj.IMUTabView.CalibrateFullFlexionButton.Enable = obj.Model.twoIMUDevicesConnected;
         end
 
         function onCalibrateStandingPushed( obj, ~, ~ )
-            disp("standing!");
+            obj.Model.calibrateStandingAngle;
         end
 
         function onCalibrateFullFlexionPushed( obj, ~, ~ )
-            disp("full flexion!");
+            obj.Model.calibrateFullFlexionAngle;
+        end
+
+        function onStandingAngleCalibrated( obj, ~, ~ )
+            obj.IMUTabView.CalibrateStandingPositionButton.StatusText = obj.Model.StandingAngle + "°";
+        end
+
+        function onFullFlexionAngleCalibrated( obj, ~, ~ )
+            obj.IMUTabView.CalibrateFullFlexionButton.StatusText = obj.Model.FullFlexionAngle + "°";
         end
 
         function formattedDevices = statusHTMLToText( ~, deviceTable )

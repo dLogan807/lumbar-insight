@@ -36,7 +36,7 @@ classdef ShimmerIMU < IMUInterface
 
             state = obj.Driver.State;
 
-            if (~strcmp(state, 'Streaming'))
+            if (strcmp(state, 'Streaming'))
                 isStreaming = true;
             end
         end
@@ -93,16 +93,16 @@ classdef ShimmerIMU < IMUInterface
             obj.Driver.setgyroinusecalibration(1);                                    % Enable gyro in-use calibration
         end
 
-        function started = startSession(obj)
+        function started = startStreaming(obj)
             % STARTSESSION Start streaming data
 
             started = obj.Driver.start;
         end
 
-        function ended = endSession(obj)
+        function stopped = stopStreaming(obj)
             % ENDSESSION Stop streaming data
 
-            ended = obj.Driver.stop;
+            stopped = obj.Driver.stop;
         end
     end
 end

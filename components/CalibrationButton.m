@@ -4,6 +4,7 @@ classdef CalibrationButton < matlab.ui.componentcontainer.ComponentContainer
     properties
         ButtonLabel string
         StatusText string
+        Enable logical = false
     end
     
     properties (Access = private, Transient, NonCopyable)
@@ -28,7 +29,8 @@ classdef CalibrationButton < matlab.ui.componentcontainer.ComponentContainer
                 "ColumnSpacing", 22 );
 
             % Create calibration button
-            comp.CalibrateButton = uibutton(comp.Grid);
+            comp.CalibrateButton = uibutton(comp.Grid, ...
+                "Enable", "off");
             comp.CalibrateButton.ButtonPushedFcn = @comp.calibrationButtonPushed;
             comp.CalibrateButton.Layout.Column = 1;
 
@@ -40,7 +42,19 @@ classdef CalibrationButton < matlab.ui.componentcontainer.ComponentContainer
 
         function update( comp )
             %Update component properties
-            comp.CalibrateButton.Text = comp.ButtonLabel;
+            if (comp.ButtonLabel ~= "")
+                comp.CalibrateButton.Text = comp.ButtonLabel;
+            end
+
+            if (comp.StatusText ~= "")
+                comp.CalibrationLabel.Text = comp.StatusText;
+            end
+
+            if (comp.Enable)
+                comp.CalibrateButton.Enable = "on";
+            else
+                comp.CalibrateButton.Enable = "off";
+            end
         end
     end
 

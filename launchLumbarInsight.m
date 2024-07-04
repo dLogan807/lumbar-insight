@@ -24,10 +24,10 @@ managementTab = uitab(tabgroup,"Title","Session Management");
 % Create the model.
 model = Model;
 
-% Create the IMU view.
+% Create the views
 imuTabView = IMUTabView( "Parent", imuTab );
 
-% Create the IMU controller.
+% Create the controllers
 IMUTabController( model, imuTabView );
 
 % Return the figure handle if requested.

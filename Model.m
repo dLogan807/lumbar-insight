@@ -20,16 +20,17 @@ classdef Model < handle
 
         DevicesConnectedChanged
 
+        StandingAngleCalibrated
+        FullFlexionAngleCalibrated
+
         SessionStarted
         SessionEnded
-
-        QuaternionUpdated
 
     end % events ( NotifyAccess = private )
     
     methods
 
-        function set.BluetoothDevices ( obj, deviceList )
+        function set.BluetoothDevices( obj, deviceList )
             % SET.BLUETOOTHDEVICES Set table of bluetooth devices, notify
             % controller
 
@@ -51,46 +52,76 @@ classdef Model < handle
                 disp("Device of type " + string(deviceType) + " is not implemented.");
             end
 
-            notify( obj, "DevicesConnectedChanged" )
-
             if (connected)
                 obj.IMUDevices(deviceIndex).configure;
+                obj.IMUDevices(deviceIndex).startStreaming;
             end
+
+            notify( obj, "DevicesConnectedChanged" )
 
         end % connectDevice
 
         function disconnectDevice( obj, deviceIndex )
             % DISCONNECTDEVICE Disconnect a device
-        
+
             obj.IMUDevices(deviceIndex).disconnect;
 
             notify( obj, "DevicesConnectedChanged" )
 
         end % disconnectDevice
 
+        function devicesConnected = twoIMUDevicesConnected( obj )
+            devicesConnected = (obj.IMUDevices(1).IsConnected && obj.IMUDevices(2).IsConnected);
+        end
+
         function batteryInfo = getBatteryInfo( obj, deviceIndex )
             % GETBATTERYINFO Get battery information of the IMU
             batteryInfo = obj.IMUDevices(deviceIndex).BatteryInfo;
         end
 
-        function startSession( obj ) 
-        
-            obj.IMUDevices(1).startSession;
-            obj.IMUDevices(2).startSession;
+        function calibrateStandingAngle( obj )
+            quaternion1 = obj.IMUDevices(1).LatestQuaternion;
+            quaternion2 = obj.IMUDevices(2).LatestQuaternion;
 
-            notify( obj, "SessionStarted" )
+            obj.StandingAngle = calculateAngle(obj, quaternion1, quaternion2);
+
+            notify( obj, "StandingAngleCalibrated" )
+        end
+
+        function calibrateFullFlexionAngle( obj )
+            quaternion1 = obj.IMUDevices(1).LatestQuaternion;
+            quaternion2 = obj.IMUDevices(2).LatestQuaternion;
+
+            obj.FullFlexionAngle = calculateAngle(obj, quaternion1, quaternion2);
+
+            notify( obj, "FullFlexionAngleCalibrated")
+        end
+        
+    end % methods
+
+    methods (Access = private)
+        function startStreaming( obj ) 
+        
+            obj.IMUDevices(1).startStreaming;
+            obj.IMUDevices(2).startStreaming;
 
         end % startSession
 
         function endSession( obj ) 
         
-            obj.IMUDevices(1).endSession;
-            obj.IMUDevices(2).endSession;
-
-            notify( obj, "SessionEnded" )
+            obj.IMUDevices(1).stopStreaming;
+            obj.IMUDevices(2).stopStreaming;
 
         end % endSession
-        
-    end % methods
+
+        function angle = calculateAngle( obj, quaternion1, quaternion2)
+            % CALCULATEANGLE Calculate the angle between two quaternions
+            % https://au.mathworks.com/matlabcentral/answers/415936-angle-between-2-quaternions?s_tid=answers_rc1-2_p2_MLT
+            
+            z = quatmultiply(quatconj(quaternion1), quaternion2);
+    
+            angle = 2*acosd(z(1));
+        end % calculateAngle
+    end
 
 end % classdef
