@@ -28,6 +28,15 @@ classdef IMUTabController < handle
             % Listen for changes to the view. 
             obj.Listener(end+1) = listener( obj.IMUTabView, ... 
                 "BTScanButtonPushed", @obj.onBTScanButtonPushed );
+            
+            obj.Listener(end+1) = listener( obj.IMUTabView, ... 
+                "Device1ConnectButtonPushed", @obj.onDevice1ConnectButtonPushed );
+            obj.Listener(end+1) = listener( obj.IMUTabView, ... 
+                "Device2ConnectButtonPushed", @obj.onDevice2ConnectButtonPushed );
+            obj.Listener(end+1) = listener( obj.IMUTabView, ... 
+                "Device1DisconnectButtonPushed", @obj.onDevice1DisconnectButtonPushed );
+            obj.Listener(end+1) = listener( obj.IMUTabView, ... 
+                "Device2DisconnectButtonPushed", @obj.onDevice2DisconnectButtonPushed );
 
             % Listen for changes to the model data.
             obj.Listener(end+1) = listener( obj.Model, ... 
@@ -39,7 +48,7 @@ classdef IMUTabController < handle
     
     methods ( Access = protected )
         
-        function setup( obj )
+        function setup( ~ )
             %SETUP Initialize the controller.
             
         end % setup
@@ -72,6 +81,22 @@ classdef IMUTabController < handle
         function onDeviceListUpdated( obj, ~, ~ )
             obj.IMUTabView.setBTDeviceListData(obj.Model.BluetoothDevices);
             obj.IMUTabView.SetBTScanButtonState("Devices Retrieved");
+        end
+
+        function onDevice1ConnectButtonPushed( obj, ~, ~ )
+            disp("Controller: connect 1 pushed");
+        end
+
+        function onDevice2ConnectButtonPushed( obj, ~, ~ )
+            disp("Controller: connect 2 pushed");
+        end
+
+        function onDevice1DisconnectButtonPushed( obj, ~, ~ )
+            disp("Controller: disconnect 1 pushed");
+        end
+
+        function onDevice2DisconnectButtonPushed( obj, ~, ~ )
+            disp("Controller: disconnect 2 pushed");
         end
 
         function formattedDevices = statusHTMLToText( ~, deviceTable )

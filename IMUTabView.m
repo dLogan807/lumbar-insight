@@ -17,6 +17,10 @@ classdef IMUTabView < matlab.ui.componentcontainer.ComponentContainer
     events ( NotifyAccess = private )
         % Event broadcast when view is interacted with
         BTScanButtonPushed
+        Device1ConnectButtonPushed
+        Device2ConnectButtonPushed
+        Device1DisconnectButtonPushed
+        Device2DisconnectButtonPushed
 
     end % events ( NotifyAccess = private )
 
@@ -44,14 +48,13 @@ classdef IMUTabView < matlab.ui.componentcontainer.ComponentContainer
 
             % Listen for changes in components
             obj.Listener(end+1) = listener( obj.DeviceConnect1, ... 
-                "Connect", @obj.onConnect );
+                "Connect", @obj.onDevice1Connect );
             obj.Listener(end+1) = listener( obj.DeviceConnect1, ... 
-                "Disconnect", @obj.onDisconnect );
+                "Disconnect", @obj.onDevice1Disconnect );
             obj.Listener(end+1) = listener( obj.DeviceConnect2, ... 
-                "Connect", @obj.onConnect );
+                "Connect", @obj.onDevice2Connect );
             obj.Listener(end+1) = listener( obj.DeviceConnect2, ... 
-                "Disconnect", @obj.onDisconnect );
-
+                "Disconnect", @obj.onDevice2Disconnect );
         end
 
         function SetBTScanButtonState( obj, state )
@@ -123,12 +126,20 @@ classdef IMUTabView < matlab.ui.componentcontainer.ComponentContainer
             notify( obj, "BTScanButtonPushed" )
         end
 
-        function onConnect(obj, ~, ~ )
-            disp("Connect");
+        function onDevice1Connect(obj, ~, ~ )
+            notify (obj, "Device1ConnectButtonPushed")
         end
 
-        function onDisconnect(obj, ~, ~ )
-            disp("Disconnect");
+        function onDevice1Disconnect(obj, ~, ~ )
+            disp(obj, "Device1DisconnectButtonPushed");
+        end
+
+        function onDevice2Connect(obj, ~, ~ )
+            notify (obj, "Device2ConnectButtonPushed")
+        end
+
+        function onDevice2Disconnect(obj, ~, ~ )
+            disp(obj, "Device2DisconnectButtonPushed");
         end
 
     end
