@@ -8,13 +8,21 @@ classdef IMUTabView < matlab.ui.componentcontainer.ComponentContainer
         Listener(:, 1) event.listener
 
         %Components
-        BTDeviceList
+        BTDeviceList 
         BTScanButton
+
+        CalibrateStartingPositionButton matlab.ui.control.Button 
+        StartingPositionLabel matlab.ui.control.Label
+        CalibrateMaxFlexionButton matlab.ui.control.Button 
+        MaxFlexionLabel matlab.ui.control.Label
     end
 
     properties
         DeviceConnect1 DeviceConnect
         DeviceConnect2 DeviceConnect
+
+        Device1BatteryLabel matlab.ui.control.Label
+        Device2BatteryLabel matlab.ui.control.Label
     end
 
     events ( NotifyAccess = private )
@@ -113,6 +121,13 @@ classdef IMUTabView < matlab.ui.componentcontainer.ComponentContainer
             obj.DeviceConnect2.Layout.Row = 5;
             obj.DeviceConnect2.Layout.Column = 1;
 
+            obj.Device1BatteryLabel = uilabel("Parent", gridLayout, "Text", "Device not connected. No battery information.");
+            obj.Device1BatteryLabel.Layout.Row = 4;
+            obj.Device1BatteryLabel.Layout.Column = 2;
+
+            obj.Device2BatteryLabel = uilabel("Parent", gridLayout, "Text", "Device not connected. No battery information.");
+            obj.Device2BatteryLabel.Layout.Row = 5;
+            obj.Device2BatteryLabel.Layout.Column = 2;
         end
 
         function update( ~ )

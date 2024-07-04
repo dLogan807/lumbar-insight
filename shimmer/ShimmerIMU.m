@@ -11,7 +11,7 @@ classdef ShimmerIMU < IMUInterface
         IsConnected
         IsStreaming
         LatestQuaternion
-        BatteryVoltage
+        BatteryInfo
     end
     
     methods
@@ -41,8 +41,14 @@ classdef ShimmerIMU < IMUInterface
             end
         end
 
-        function batteryVoltage = get.BatteryVoltage( obj )
-            batteryVoltage = obj.Driver.getbatteryvoltage( obj );
+        function batteryInfo = get.BatteryInfo( obj )
+            state = obj.Driver.State;
+
+            if (strcmp(state, 'Connected'))
+                batteryInfo = obj.Name + " | " + obj.Driver.getbatteryvoltage + "mV / 3700mV";
+            else
+                batteryInfo = obj.Name + " must not be streaming. No information available.";
+            end
         end
 
         function latestQuaternion = get.LatestQuaternion(obj)
@@ -100,4 +106,3 @@ classdef ShimmerIMU < IMUInterface
         end
     end
 end
-

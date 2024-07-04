@@ -6,7 +6,7 @@ classdef IMUInterface < handle
         IsConnected logical
         IsStreaming logical
         LatestQuaternion
-        BatteryVoltage string
+        BatteryInfo string
     end
     
     methods (Abstract)

@@ -42,7 +42,7 @@ classdef IMUTabController < handle
             obj.Listener(end+1) = listener( obj.Model, ... 
                 "DeviceListUpdated", @obj.onDeviceListUpdated );
             obj.Listener(end+1) = listener( obj.Model, ... 
-                "DevicesConnectedChanged", @obj.deviceConnected );
+                "DevicesConnectedChanged", @obj.devicesChanged );
             
         end % constructor
         
@@ -101,10 +101,22 @@ classdef IMUTabController < handle
             obj.Model.disconnectDevice(2);
         end
 
-        function deviceConnected( obj, ~, ~ )
+        function devicesChanged( obj, ~, ~ )
             %DEVICECONNECTED Update connect UI state
             obj.IMUTabView.DeviceConnect1.Connected = obj.Model.IMUDevices(1).IsConnected;
             obj.IMUTabView.DeviceConnect2.Connected = obj.Model.IMUDevices(2).IsConnected;
+
+            if (obj.Model.IMUDevices(1).IsConnected)
+                obj.IMUTabView.Device1BatteryLabel.Text = obj.Model.getBatteryInfo(1);
+            else
+                obj.IMUTabView.Device1BatteryLabel.Text = "Device not connected. No battery information.";
+            end
+
+            if (obj.Model.IMUDevices(2).IsConnected)
+                obj.IMUTabView.Device2BatteryLabel.Text = obj.Model.getBatteryInfo(2);
+            else
+                obj.IMUTabView.Device2BatteryLabel.Text = "Device not connected. No battery information.";
+            end
         end
 
         function formattedDevices = statusHTMLToText( ~, deviceTable )

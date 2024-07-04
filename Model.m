@@ -66,6 +66,10 @@ classdef Model < handle
 
         end % disconnectDevice
 
+        function batteryInfo = getBatteryInfo( obj, deviceIndex )
+            batteryInfo = obj.IMUDevices(deviceIndex).BatteryInfo;
+        end
+
         function startSession( obj ) 
         
             obj.IMUDevices(1).startSession;
