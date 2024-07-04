@@ -1,6 +1,3 @@
-% Class modified from the official Shimmer MATLAB Instrumentation Driver.
-% Shimmer. (2022). Shimmer Matlab Instrumentation Driver. https://github.com/ShimmerEngineering/Shimmer-MATLAB-ID
-
 classdef ShimmerEnabledSensorsMacrosClass < handle
     
     % SETENABLEDSENSORSMACROSCLASS - Defines macros for setenabledsensors
@@ -29,10 +26,14 @@ classdef ShimmerEnabledSensorsMacrosClass < handle
     %         EXG224BIT = 'EXG2 24BIT';       % EXG2 24BIT for Shimmer3
     %         EXG216BIT = 'EXG2 16BIT';       % EXG2 16BIT for Shimmer3
     %         GSR = 'GSR';                    % GSR
+    %         EXPA0 = 'ExpBoard_A0';          % External Expansion Board A0 for Shimmer2r
+    %         EXPA7 = 'ExpBoard_A7';          % External Expansion Board A7 for Shimmer2r
     %         EXTA7 = 'EXT A7';               % External ADC A7 for Shimmer3
     %         EXTA6 = 'EXT A6';               % External ADC A6 for Shimmer3
     %         EXTA15 = 'EXT A15';             % External ADC A15 for Shimmer3
+    %         STRAIN = 'Strain Gauge';        % Strain Gauge for Shimmer2r
     %         BRIDGE = 'Bridge Amplifier';    % Bridge Amplifier for Shimmer3
+    %         HEART = 'Heart Rate';           % Heart Rate for Shimmer2r
     %         BATT = 'BattVolt';              % Battery Voltage
     %         INTA1 = 'INT A1';               % Internal ADC for Shimmer3
     %         INTA12 = 'INT A12';             % Internal ADC for Shimmer3
@@ -67,10 +68,14 @@ classdef ShimmerEnabledSensorsMacrosClass < handle
         EXG224BIT = 'EXG2 24BIT';       % EXG2 24BIT for Shimmer3
         EXG216BIT = 'EXG2 16BIT';       % EXG2 16BIT for Shimmer3
         GSR = 'GSR';                    % GSR
+        EXPA0 = 'ExpBoard_A0';          % External Expansion Board A0 for Shimmer2r
+        EXPA7 = 'ExpBoard_A7';          % External Expansion Board A7 for Shimmer2r
         EXTA7 = 'EXT A7';               % External ADC A7 for Shimmer3
         EXTA6 = 'EXT A6';               % External ADC A6 for Shimmer3
         EXTA15 = 'EXT A15';             % External ADC A15 for Shimmer3
+        STRAIN = 'Strain Gauge';        % Strain Gauge for Shimmer2r
         BRIDGE = 'Bridge Amplifier';    % Bridge Amplifier for Shimmer3
+        HEART = 'Heart Rate';           % Heart Rate for Shimmer2r
         BATT = 'BattVolt';              % Battery Voltage
         INTA1 = 'INT A1';               % Internal ADC for Shimmer3
         INTA12 = 'INT A12';             % Internal ADC for Shimmer3
