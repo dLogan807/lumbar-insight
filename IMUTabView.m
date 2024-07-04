@@ -79,7 +79,7 @@ classdef IMUTabView < matlab.ui.componentcontainer.ComponentContainer
 
             gridLayout = uigridlayout( ...
                 "Parent", obj, ...
-                "RowHeight", {22, 22, "1x", "1x"}, ...
+                "RowHeight", {22, 22, "1x", 35, 35}, ...
                 "ColumnWidth", {"1x", "1x"} );
 
             % Create view components.
@@ -100,7 +100,12 @@ classdef IMUTabView < matlab.ui.componentcontainer.ComponentContainer
             obj.BTDeviceList.Layout.Column = 1;
 
             obj.DeviceConnect1 = DeviceConnect("Parent", gridLayout);
+            obj.DeviceConnect1.Layout.Row = 4;
+            obj.DeviceConnect1.Layout.Column = 1;
+            
             obj.DeviceConnect2 = DeviceConnect("Parent", gridLayout);
+            obj.DeviceConnect2.Layout.Row = 5;
+            obj.DeviceConnect2.Layout.Column = 1;
 
         end
 

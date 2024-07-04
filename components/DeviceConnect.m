@@ -25,13 +25,14 @@ classdef DeviceConnect < matlab.ui.componentcontainer.ComponentContainer
             comp.Grid = uigridlayout( ...
                 "Parent", comp, ...
                 "RowHeight", { 22 }, ...
-                "ColumnWidth", {"3x", "1x", "1x"} );
+                "ColumnWidth", {"2x", "1x", "1x"} );
         
             % Create edit field for entering color value
             comp.DeviceNameEditField = uieditfield(comp.Grid, "Placeholder", "Device name");
             comp.DeviceNameEditField.Layout.Column = 1;
 
             comp.DeviceTypeDropDown = uidropdown(comp.Grid, "Items", string([enumeration("DeviceTypes")]));
+            comp.DeviceTypeDropDown.Editable = "off";
             comp.DeviceTypeDropDown.Layout.Column = 2;
         
             % Create button to confirm color change
