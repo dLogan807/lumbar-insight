@@ -38,11 +38,16 @@ classdef IMUTabController < handle
             obj.Listener(end+1) = listener( obj.IMUTabView, ... 
                 "Device2DisconnectButtonPushed", @obj.onDevice2DisconnectButtonPushed );
 
+            obj.Listener(end+1) = listener( obj.IMUTabView, ... 
+                "CalibrateStandingPushed", @obj.onCalibrateStandingPushed );
+            obj.Listener(end+1) = listener( obj.IMUTabView, ... 
+                "CalibrateFullFlexionPushed", @obj.onCalibrateFullFlexionPushed );
+
             % Listen for changes to the model data.
             obj.Listener(end+1) = listener( obj.Model, ... 
                 "DeviceListUpdated", @obj.onDeviceListUpdated );
             obj.Listener(end+1) = listener( obj.Model, ... 
-                "DevicesConnectedChanged", @obj.devicesChanged );
+                "DevicesConnectedChanged", @obj.onDevicesChanged );
             
         end % constructor
         
@@ -101,8 +106,8 @@ classdef IMUTabController < handle
             obj.Model.disconnectDevice(2);
         end
 
-        function devicesChanged( obj, ~, ~ )
-            %DEVICECONNECTED Update connect UI state
+        function onDevicesChanged( obj, ~, ~ )
+            % DEVICESCHANGED Update connect UI state
             obj.IMUTabView.DeviceConnect1.Connected = obj.Model.IMUDevices(1).IsConnected;
             obj.IMUTabView.DeviceConnect2.Connected = obj.Model.IMUDevices(2).IsConnected;
 
@@ -117,6 +122,14 @@ classdef IMUTabController < handle
             else
                 obj.IMUTabView.Device2BatteryLabel.Text = "Device not connected. No battery information.";
             end
+        end
+
+        function onCalibrateStandingPushed( obj, ~, ~ )
+            disp("standing!");
+        end
+
+        function onCalibrateFullFlexionPushed( obj, ~, ~ )
+            disp("full flexion!");
         end
 
         function formattedDevices = statusHTMLToText( ~, deviceTable )

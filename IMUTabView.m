@@ -2,19 +2,12 @@ classdef IMUTabView < matlab.ui.componentcontainer.ComponentContainer
     %IMUTABVIEW Visualizes the data, responding to any relevant model events.
 
     properties ( Access = private )
-        % Line object used to visualize the model data.
-        Line(1, 1) matlab.graphics.primitive.Line
         % Listener object used to respond dynamically to controller or component events.
         Listener(:, 1) event.listener
 
         %Components
         BTDeviceList 
         BTScanButton
-
-        CalibrateStartingPositionButton matlab.ui.control.Button 
-        StartingPositionLabel matlab.ui.control.Label
-        CalibrateMaxFlexionButton matlab.ui.control.Button 
-        MaxFlexionLabel matlab.ui.control.Label
     end
 
     properties
@@ -23,16 +16,25 @@ classdef IMUTabView < matlab.ui.componentcontainer.ComponentContainer
 
         Device1BatteryLabel matlab.ui.control.Label
         Device2BatteryLabel matlab.ui.control.Label
+
+        CalibrateStandingPositionButton CalibrationButton
+        CalibrateFullFlexionButton CalibrationButton
+
+        StandingPositionLabel matlab.ui.control.Label
+        MaxFlexionLabel matlab.ui.control.Label
     end
 
     events ( NotifyAccess = private )
         % Event broadcast when view is interacted with
         BTScanButtonPushed
+
         Device1ConnectButtonPushed
         Device2ConnectButtonPushed
         Device1DisconnectButtonPushed
         Device2DisconnectButtonPushed
 
+        CalibrateStandingPushed
+        CalibrateFullFlexionPushed
     end % events ( NotifyAccess = private )
 
     methods
@@ -66,6 +68,10 @@ classdef IMUTabView < matlab.ui.componentcontainer.ComponentContainer
                 "Connect", @obj.onDevice2Connect );
             obj.Listener(end+1) = listener( obj.DeviceConnect2, ... 
                 "Disconnect", @obj.onDevice2Disconnect );
+            obj.Listener(end+1) = listener( obj.CalibrateStandingPositionButton, ... 
+                "CalibrateButtonPushed", @obj.onCalibrateStandingPushed );
+            obj.Listener(end+1) = listener( obj.CalibrateFullFlexionButton, ... 
+                "CalibrateButtonPushed", @obj.onCalibrateFullFlexionPushed );
         end
 
         function SetBTScanButtonState( obj, state )
@@ -99,7 +105,8 @@ classdef IMUTabView < matlab.ui.componentcontainer.ComponentContainer
 
             % Create view components.
             btDeviceListLabel = uilabel("Parent", gridLayout, ...
-                "Text", "Available Bluetooth Devices", "FontWeight", "bold");
+                "Text", "Available Bluetooth Devices", ...
+                "FontWeight", "bold");
             btDeviceListLabel.Layout.Row = 1;
             btDeviceListLabel.Layout.Column = 1;
 
@@ -115,7 +122,8 @@ classdef IMUTabView < matlab.ui.componentcontainer.ComponentContainer
             obj.BTDeviceList.Layout.Column = 1;
 
             deviceConnectLabel = uilabel("Parent", gridLayout, ...
-                "Text", "Device Connection", "FontWeight", "bold");
+                "Text", "Device Connection", ...
+                "FontWeight", "bold");
             deviceConnectLabel.Layout.Row = 8;
             deviceConnectLabel.Layout.Column = 1;
 
@@ -128,7 +136,8 @@ classdef IMUTabView < matlab.ui.componentcontainer.ComponentContainer
             obj.DeviceConnect2.Layout.Column = 1;
 
             batteryInformationLabel = uilabel("Parent", gridLayout, ...
-                "Text", "Device Battery Information", "FontWeight", "bold");
+                "Text", "Device Battery Information", ...
+                "FontWeight", "bold");
             batteryInformationLabel.Layout.Row = 1;
             batteryInformationLabel.Layout.Column = 2;
 
@@ -146,6 +155,16 @@ classdef IMUTabView < matlab.ui.componentcontainer.ComponentContainer
                 "Text", "Calibration", "FontWeight", "bold");
             calibrationLabel.Layout.Row = 4;
             calibrationLabel.Layout.Column = 2;
+
+            obj.CalibrateStandingPositionButton = CalibrationButton("Parent", gridLayout, ...
+                "ButtonLabel", "Calibrate Standing Position");
+            obj.CalibrateStandingPositionButton.Layout.Row = 5;
+            obj.CalibrateStandingPositionButton.Layout.Column = 2;
+
+            obj.CalibrateFullFlexionButton = CalibrationButton("Parent", gridLayout, ...
+                "ButtonLabel", "Calibrate Full Flexion");
+            obj.CalibrateFullFlexionButton.Layout.Row = 6;
+            obj.CalibrateFullFlexionButton.Layout.Column = 2;
         end
 
         function update( ~ )
@@ -159,22 +178,29 @@ classdef IMUTabView < matlab.ui.componentcontainer.ComponentContainer
             notify( obj, "BTScanButtonPushed" )
         end
 
-        function onDevice1Connect(obj, ~, ~ )
+        function onDevice1Connect( obj, ~, ~ )
             notify( obj, "Device1ConnectButtonPushed")
         end
 
-        function onDevice1Disconnect(obj, ~, ~ )
+        function onDevice1Disconnect (obj, ~, ~ )
             notify( obj, "Device1DisconnectButtonPushed");
         end
 
-        function onDevice2Connect(obj, ~, ~ )
+        function onDevice2Connect( obj, ~, ~ )
             notify( obj, "Device2ConnectButtonPushed")
         end
 
-        function onDevice2Disconnect(obj, ~, ~ )
+        function onDevice2Disconnect( obj, ~, ~ )
             notify( obj, "Device2DisconnectButtonPushed");
         end
 
+        function onCalibrateStandingPushed( obj, ~, ~ )
+            notify( obj, "CalibrateStandingPushed");
+        end
+
+        function onCalibrateFullFlexionPushed( obj, ~, ~ )
+            notify( obj, "CalibrateFullFlexionPushed");
+        end
     end
 
 end

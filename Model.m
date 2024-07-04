@@ -10,8 +10,8 @@ classdef Model < handle
         Cameras (1, :) Camera
 
         CurrentAngle double
-        MaximumAngle double
-        CorrectionAngle double
+        FullFlexionAngle double
+        StandingAngle double
     end % properties ( SetAccess = private )
     
     events ( NotifyAccess = private )

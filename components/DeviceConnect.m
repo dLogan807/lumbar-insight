@@ -33,6 +33,7 @@ classdef DeviceConnect < matlab.ui.componentcontainer.ComponentContainer
             comp.DeviceNameEditField.ValueChangedFcn = @comp.deviceNameChanged;
             comp.DeviceNameEditField.Layout.Column = 1;
 
+            % Create drop down to select device type
             comp.DeviceTypeDropDown = uidropdown(comp.Grid, "Items", string([enumeration("DeviceTypes")]));
             comp.DeviceTypeDropDown.Editable = "off";
             comp.DeviceTypeDropDown.ValueChangedFcn = @comp.deviceTypeChanged;
@@ -40,7 +41,7 @@ classdef DeviceConnect < matlab.ui.componentcontainer.ComponentContainer
 
             comp.DeviceType = DeviceTypes.Shimmer;
 
-            % Create button to confirm color change
+            % Create button to connect
             comp.DeviceConnectButton = uibutton(comp.Grid, "Text", "Connect" );
             comp.DeviceConnectButton.ButtonPushedFcn = @comp.stateChanged;
             comp.DeviceConnectButton.Layout.Column = 3;
