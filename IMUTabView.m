@@ -78,7 +78,6 @@ classdef IMUTabView < matlab.ui.componentcontainer.ComponentContainer
                 obj.BTScanButton.Value = false;
                 obj.BTScanButton.Enable = true;
             end
-
         end
 
         function setBTDeviceListData( obj, tableData )
@@ -93,12 +92,14 @@ classdef IMUTabView < matlab.ui.componentcontainer.ComponentContainer
 
             gridLayout = uigridlayout( ...
                 "Parent", obj, ...
-                "RowHeight", {22, 22, "1x", 35, 35}, ...
-                "ColumnWidth", {"1x", "1x"} );
+                "RowHeight", {22, 22, 22, 22, 35, 35, "1x", 22, 35, 35}, ...
+                "ColumnWidth", {"1x", "1x"}, ...
+                "Padding", 20, ...
+                "ColumnSpacing", 50 );
 
             % Create view components.
             btDeviceListLabel = uilabel("Parent", gridLayout, ...
-                "Text", "Available Bluetooth Devices" );
+                "Text", "Available Bluetooth Devices", "FontWeight", "bold");
             btDeviceListLabel.Layout.Row = 1;
             btDeviceListLabel.Layout.Column = 1;
 
@@ -110,30 +111,41 @@ classdef IMUTabView < matlab.ui.componentcontainer.ComponentContainer
 
             obj.BTDeviceList = uitable("Parent", gridLayout, ...
                 "Enable", "off" );
-            obj.BTDeviceList.Layout.Row = 3;
+            obj.BTDeviceList.Layout.Row = [3, 7];
             obj.BTDeviceList.Layout.Column = 1;
 
+            deviceConnectLabel = uilabel("Parent", gridLayout, ...
+                "Text", "Device Connection", "FontWeight", "bold");
+            deviceConnectLabel.Layout.Row = 8;
+            deviceConnectLabel.Layout.Column = 1;
+
             obj.DeviceConnect1 = DeviceConnect("Parent", gridLayout);
-            obj.DeviceConnect1.Layout.Row = 4;
+            obj.DeviceConnect1.Layout.Row = 9;
             obj.DeviceConnect1.Layout.Column = 1;
             
             obj.DeviceConnect2 = DeviceConnect("Parent", gridLayout);
-            obj.DeviceConnect2.Layout.Row = 5;
+            obj.DeviceConnect2.Layout.Row = 10;
             obj.DeviceConnect2.Layout.Column = 1;
 
-            obj.Device1BatteryLabel = uilabel("Parent", gridLayout, "Text", "Device not connected. No battery information.");
-            obj.Device1BatteryLabel.Layout.Row = 4;
+            batteryInformationLabel = uilabel("Parent", gridLayout, ...
+                "Text", "Device Battery Information", "FontWeight", "bold");
+            batteryInformationLabel.Layout.Row = 1;
+            batteryInformationLabel.Layout.Column = 2;
+
+            obj.Device1BatteryLabel = uilabel("Parent", gridLayout, ...
+                "Text", "Device not connected. No battery information.");
+            obj.Device1BatteryLabel.Layout.Row = 2;
             obj.Device1BatteryLabel.Layout.Column = 2;
 
-            obj.Device2BatteryLabel = uilabel("Parent", gridLayout, "Text", "Device not connected. No battery information.");
-            obj.Device2BatteryLabel.Layout.Row = 5;
+            obj.Device2BatteryLabel = uilabel("Parent", gridLayout, ...
+                "Text", "Device not connected. No battery information.");
+            obj.Device2BatteryLabel.Layout.Row = 3;
             obj.Device2BatteryLabel.Layout.Column = 2;
         end
 
         function update( ~ )
             %UPDATE Update the view. This method is empty because there are
             %no public properties of the view.
-
         end
 
     end

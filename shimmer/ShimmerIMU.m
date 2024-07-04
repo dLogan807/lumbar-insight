@@ -45,7 +45,7 @@ classdef ShimmerIMU < IMUInterface
             state = obj.Driver.State;
 
             if (strcmp(state, 'Connected'))
-                batteryInfo = obj.Name + " | " + obj.Driver.getbatteryvoltage + "mV / 3700mV";
+                batteryInfo = obj.Name + " (" + obj.Driver.getbatteryvoltage + "mV / 3700mV)";
             else
                 batteryInfo = obj.Name + " must not be streaming. No information available.";
             end

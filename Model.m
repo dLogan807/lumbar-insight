@@ -39,7 +39,8 @@ classdef Model < handle
         end
 
         function connectDevice( obj, deviceName, deviceType, deviceIndex )
-            % CONNECTDEVICE Attempt device connection, notify controller
+            % CONNECTDEVICE Attempt device connection, notify controller,
+            % and configure device
 
             connected = false;
 
@@ -58,7 +59,8 @@ classdef Model < handle
 
         end % connectDevice
 
-        function disconnectDevice( obj, deviceIndex ) 
+        function disconnectDevice( obj, deviceIndex )
+            % DISCONNECTDEVICE Disconnect a device
         
             obj.IMUDevices(deviceIndex).disconnect;
 
@@ -67,6 +69,7 @@ classdef Model < handle
         end % disconnectDevice
 
         function batteryInfo = getBatteryInfo( obj, deviceIndex )
+            % GETBATTERYINFO Get battery information of the IMU
             batteryInfo = obj.IMUDevices(deviceIndex).BatteryInfo;
         end
 
