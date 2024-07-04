@@ -4,14 +4,14 @@ classdef IMUTabView < matlab.ui.componentcontainer.ComponentContainer
     properties ( Access = private )
         % Line object used to visualize the model data.
         Line(1, 1) matlab.graphics.primitive.Line
-        % Listener object used to respond dynamically to controller events.
-        Listener(:, 1) event.listener {mustBeScalarOrEmpty}
+        % Listener object used to respond dynamically to controller or component events.
+        Listener(:, 1) event.listener
 
         %Components
         BTDeviceList
         BTScanButton
-        DeviceConnect1 DeviceConnect
-        DeviceConnect2 DeviceConnect
+        DeviceConnect1 matlab.ui.componentcontainer.ComponentContainer
+        DeviceConnect2 matlab.ui.componentcontainer.ComponentContainer
     end
 
     events ( NotifyAccess = private )
@@ -41,6 +41,16 @@ classdef IMUTabView < matlab.ui.componentcontainer.ComponentContainer
 
             % Set any user-specified properties.
             set( obj, namedArgs )
+
+            % Listen for changes in components
+            obj.Listener(end+1) = listener( obj.DeviceConnect1, ... 
+                "Connect", @obj.onConnect );
+            obj.Listener(end+1) = listener( obj.DeviceConnect1, ... 
+                "Disconnect", @obj.onDisconnect );
+            obj.Listener(end+1) = listener( obj.DeviceConnect2, ... 
+                "Connect", @obj.onConnect );
+            obj.Listener(end+1) = listener( obj.DeviceConnect2, ... 
+                "Disconnect", @obj.onDisconnect );
 
         end
 
@@ -90,6 +100,7 @@ classdef IMUTabView < matlab.ui.componentcontainer.ComponentContainer
             obj.BTDeviceList.Layout.Column = 1;
 
             obj.DeviceConnect1 = DeviceConnect("Parent", gridLayout);
+            obj.DeviceConnect2 = DeviceConnect("Parent", gridLayout);
 
         end
 
@@ -105,6 +116,14 @@ classdef IMUTabView < matlab.ui.componentcontainer.ComponentContainer
 
         function onBTScanButtonPushed( obj, ~, ~ )
             notify( obj, "BTScanButtonPushed" )
+        end
+
+        function onConnect(obj, ~, ~ )
+            disp("Connect");
+        end
+
+        function onDisconnect(obj, ~, ~ )
+            disp("Disconnect");
         end
 
     end

@@ -1,13 +1,13 @@
 classdef DeviceConnect < matlab.ui.componentcontainer.ComponentContainer
-    %DEVICECONNECT Component for connecting to a device
+    %DEVICECONNECT UI component for connecting to a device
 
     properties
         DeviceName string
-        DeviceType DeviceType
+        DeviceType
         Connected logical
     end
     
-    properties (Access = private,Transient,NonCopyable)
+    properties (Access = private, Transient, NonCopyable)
         Grid matlab.ui.container.GridLayout 
         DeviceNameEditField matlab.ui.control.EditField
         DeviceTypeDropDown matlab.ui.control.DropDown
@@ -19,8 +19,8 @@ classdef DeviceConnect < matlab.ui.componentcontainer.ComponentContainer
         Disconnect
     end
 
-    methods
-        function setup(comp) 
+    methods (Access = protected)
+        function setup( comp ) 
             % Create grid layout to manage building blocks 
             comp.Grid = uigridlayout( ...
                 "Parent", comp, ...
@@ -28,11 +28,16 @@ classdef DeviceConnect < matlab.ui.componentcontainer.ComponentContainer
                 "ColumnWidth", {"3x", "1x", "1x"} );
         
             % Create edit field for entering color value
-            comp.DeviceNameEditField = uieditfield(comp.Grid); 
+            comp.DeviceNameEditField = uieditfield(comp.Grid, "Placeholder", "Device name");
+            comp.DeviceNameEditField.Layout.Column = 1;
+
+            comp.DeviceTypeDropDown = uidropdown(comp.Grid, "Items", string([enumeration("DeviceTypes")]));
+            comp.DeviceTypeDropDown.Layout.Column = 2;
         
             % Create button to confirm color change
-            comp.Button = uibutton(comp.Grid,'Text',char(9998), ... 
-                'ButtonPushedFcn',@(o,e) comp.stateChanged()); 
+            comp.DeviceConnectButton = uibutton(comp.Grid, "Text", "Connect" );
+            comp.DeviceConnectButton.ButtonPushedFcn = @comp.stateChanged;
+            comp.DeviceConnectButton.Layout.Column = 3;
         end
 
         function update( comp )
@@ -51,11 +56,11 @@ classdef DeviceConnect < matlab.ui.componentcontainer.ComponentContainer
     end
 
     methods (Access = private)
-        function stateChanged( comp )
-            if (comp.Connected)
-                notify(comp, 'Disconnect');
+        function stateChanged( obj, ~, ~ )
+            if (obj.Connected)
+                notify(obj, 'Disconnect');
             else
-                notify(comp,'Connect');
+                notify(obj,'Connect');
             end
         end
     end
