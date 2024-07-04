@@ -48,14 +48,16 @@ classdef DeviceConnect < matlab.ui.componentcontainer.ComponentContainer
         function update( comp )
             %Update component properties
 
+            comp.DeviceConnectButton.Enable = "on";
+
             if (comp.Connected)
-                comp.DeviceNameEditField.Editable = false;
+                comp.DeviceNameEditField.Enable = "off";
                 comp.DeviceConnectButton.Text = "Disconnect";
-                comp.DeviceTypeDropDown.Editable = false;
+                comp.DeviceTypeDropDown.Enable = "off";
             else
-                comp.DeviceNameEditField.Editable = true;
+                comp.DeviceNameEditField.Enable = "on";
                 comp.DeviceConnectButton.Text = "Connect";
-                comp.DeviceTypeDropDown.Editable = true;
+                comp.DeviceTypeDropDown.Enable = "on";
             end
         end
     end
@@ -63,9 +65,11 @@ classdef DeviceConnect < matlab.ui.componentcontainer.ComponentContainer
     methods (Access = private)
         function stateChanged( obj, ~, ~ )
             if (obj.Connected)
-                notify(obj, 'Disconnect');
+                notify(obj, 'Disconnect' );
             else
-                notify(obj,'Connect');
+                obj.DeviceConnectButton.Text = "Connecting";
+                obj.DeviceConnectButton.Enable = "off";
+                notify(obj,'Connect' );
             end
         end
 

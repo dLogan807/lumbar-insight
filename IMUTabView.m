@@ -62,7 +62,7 @@ classdef IMUTabView < matlab.ui.componentcontainer.ComponentContainer
 
         function SetBTScanButtonState( obj, state )
             if (strcmp(state, "Scanning"))
-                obj.BTScanButton.Text = "Scanning...";
+                obj.BTScanButton.Text = "Scanning";
                 obj.BTScanButton.Value = true;
                 obj.BTScanButton.Enable = false;
             else
@@ -130,19 +130,19 @@ classdef IMUTabView < matlab.ui.componentcontainer.ComponentContainer
         end
 
         function onDevice1Connect(obj, ~, ~ )
-            notify (obj, "Device1ConnectButtonPushed")
+            notify( obj, "Device1ConnectButtonPushed")
         end
 
         function onDevice1Disconnect(obj, ~, ~ )
-            disp(obj, "Device1DisconnectButtonPushed");
+            notify( obj, "Device1DisconnectButtonPushed");
         end
 
         function onDevice2Connect(obj, ~, ~ )
-            notify (obj, "Device2ConnectButtonPushed")
+            notify( obj, "Device2ConnectButtonPushed")
         end
 
         function onDevice2Disconnect(obj, ~, ~ )
-            disp(obj, "Device2DisconnectButtonPushed");
+            notify( obj, "Device2DisconnectButtonPushed");
         end
 
     end

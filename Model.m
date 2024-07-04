@@ -18,10 +18,7 @@ classdef Model < handle
         % Events broadcast when the model is altered.
         DeviceListUpdated
 
-        DeviceConnected
-        DeviceConnectFailed
-        DeviceDisconnected
-        DeviceConfigured
+        DevicesConnectedChanged
 
         SessionStarted
         SessionEnded
@@ -43,7 +40,7 @@ classdef Model < handle
 
         function connectDevice( obj, deviceName, deviceType, deviceIndex )
             % CONNECTDEVICE Attempt device connection, notify controller
-            
+
             connected = false;
 
             if (deviceType == DeviceTypes.Shimmer)
@@ -53,38 +50,21 @@ classdef Model < handle
                 disp("Device of type " + string(deviceType) + " is not implemented.");
             end
 
+            notify( obj, "DevicesConnectedChanged" )
+
             if (connected)
-                notify( obj, "DeviceConnected" )
-            else
-                notify( obj, "DeviceConnectFailed" )
+                obj.IMUDevices(deviceIndex).configure;
             end
 
         end % connectDevice
 
-        function disconnectDevice( obj, deviceName ) 
-
-            deviceIndex = getDeviceIndexByName(deviceName);
+        function disconnectDevice( obj, deviceIndex ) 
         
-            disconnected = obj.IMUDevices(deviceIndex).disconnect;
+            obj.IMUDevices(deviceIndex).disconnect;
 
-            if (disconnected)
-                notify( obj, "DeviceDisconnected" )
-            else
-                notify( obj, "DeviceDisconnectFailed" )
-            end
+            notify( obj, "DevicesConnectedChanged" )
 
         end % disconnectDevice
-
-        function configureDevice( obj, deviceName ) 
-            % Define settings for device
-
-            deviceIndex = getDeviceIndexByName(deviceName);
-            
-            obj.IMUDevices(deviceIndex);
-
-            notify( obj, "DeviceConfigured" )
-
-        end % configureDevice
 
         function startSession( obj ) 
         
@@ -106,21 +86,4 @@ classdef Model < handle
         
     end % methods
 
-    methods (Access = private)
-
-        function deviceIndex = getDeviceIndexByName( deviceName, obj )
-
-            if (strcmp(obj.IMUDevices(1).Name, deviceName))
-                deviceIndex = 1;
-            elseif (strcmp(obj.IMUDevices(2).Name, deviceName))
-                deviceIndex = 2;
-            else
-                deviceIndex = -1;
-                warning("Unable to retrieve index of Device by name.");
-            end
-
-        end % deviceIndex
-
-    end % private methods
-    
 end % classdef

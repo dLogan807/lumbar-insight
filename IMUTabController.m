@@ -41,6 +41,8 @@ classdef IMUTabController < handle
             % Listen for changes to the model data.
             obj.Listener(end+1) = listener( obj.Model, ... 
                 "DeviceListUpdated", @obj.onDeviceListUpdated );
+            obj.Listener(end+1) = listener( obj.Model, ... 
+                "DevicesConnectedChanged", @obj.deviceConnected );
             
         end % constructor
         
@@ -84,25 +86,29 @@ classdef IMUTabController < handle
         end
 
         function onDevice1ConnectButtonPushed( obj, ~, ~ )
-            disp("Controller: connect 1 pushed");
             obj.Model.connectDevice(obj.IMUTabView.DeviceConnect1.DeviceName, obj.IMUTabView.DeviceConnect1.DeviceType, 1);
         end
 
         function onDevice2ConnectButtonPushed( obj, ~, ~ )
-            disp("Controller: connect 2 pushed");
             obj.Model.connectDevice(obj.IMUTabView.DeviceConnect2.DeviceName, obj.IMUTabView.DeviceConnect2.DeviceType, 2);
         end
 
         function onDevice1DisconnectButtonPushed( obj, ~, ~ )
-            disp("Controller: disconnect 1 pushed");
+            obj.Model.disconnectDevice(1);
         end
 
         function onDevice2DisconnectButtonPushed( obj, ~, ~ )
-            disp("Controller: disconnect 2 pushed");
+            obj.Model.disconnectDevice(2);
+        end
+
+        function deviceConnected( obj, ~, ~ )
+            %DEVICECONNECTED Update connect UI state
+            obj.IMUTabView.DeviceConnect1.Connected = obj.Model.IMUDevices(1).IsConnected;
+            obj.IMUTabView.DeviceConnect2.Connected = obj.Model.IMUDevices(2).IsConnected;
         end
 
         function formattedDevices = statusHTMLToText( ~, deviceTable )
-            %ONDEVICELISTUPDATED Convert any HTML <a> elements to plaintext
+            %STATUSHTMLTOTEXT Convert any HTML <a> elements to plaintext
             
             rows = height(deviceTable);
             for row = 1:rows
