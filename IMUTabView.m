@@ -141,11 +141,14 @@ classdef IMUTabView < matlab.ui.componentcontainer.ComponentContainer
                 "Text", "Device not connected. No battery information.");
             obj.Device2BatteryLabel.Layout.Row = 3;
             obj.Device2BatteryLabel.Layout.Column = 2;
+
+            calibrationLabel = uilabel("Parent", gridLayout, ...
+                "Text", "Calibration", "FontWeight", "bold");
+            calibrationLabel.Layout.Row = 4;
+            calibrationLabel.Layout.Column = 2;
         end
 
         function update( ~ )
-            %UPDATE Update the view. This method is empty because there are
-            %no public properties of the view.
         end
 
     end
