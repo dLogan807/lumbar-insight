@@ -26,9 +26,11 @@ model = Model;
 
 % Create the views
 imuTabView = IMUTabView( "Parent", imuTab );
+sessionTabView = SessionTabView( "Parent", sessionTab );
 
 % Create the controllers
 IMUTabController( model, imuTabView );
+SessionTabController( model, sessionTabView);
 
 % Return the figure handle if requested.
 if nargout > 0

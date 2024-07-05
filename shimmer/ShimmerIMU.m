@@ -44,10 +44,16 @@ classdef ShimmerIMU < IMUInterface
         function batteryInfo = get.BatteryInfo( obj )
             state = obj.Driver.State;
 
-            if (strcmp(state, 'Connected'))
-                batteryInfo = obj.Name + " (" + obj.Driver.getbatteryvoltage + "mV / 3700mV)";
-            else
-                batteryInfo = obj.Name + " must not be streaming. No information available.";
+            wasStreaming = strcmp(state, 'Streaming');
+
+            if (wasStreaming)
+                obj.stopStreaming;
+            end
+
+            batteryInfo = obj.Name + " (" + obj.Driver.getbatteryvoltage + "mV / 3700mV)";
+
+            if (wasStreaming)
+                obj.startStreaming;
             end
         end
 
@@ -95,13 +101,11 @@ classdef ShimmerIMU < IMUInterface
 
         function started = startStreaming(obj)
             % STARTSESSION Start streaming data
-
             started = obj.Driver.start;
         end
 
         function stopped = stopStreaming(obj)
             % ENDSESSION Stop streaming data
-
             stopped = obj.Driver.stop;
         end
     end

@@ -27,7 +27,6 @@ function orientation3D(shimmer1, shimmer2, captureDuration)
 %  OUTPUT: none
 
 addpath('./quaternion/')                                                   % directory containing quaternion functions
-addpath('./shimmerResources/')                                             % directory containing supporting functions
 
 % Note: these constants are only relevant to this examplescript and are not used
 % by the ShimmerHandle Class

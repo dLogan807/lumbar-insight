@@ -54,7 +54,6 @@ classdef Model < handle
 
             if (connected)
                 obj.IMUDevices(deviceIndex).configure;
-                obj.IMUDevices(deviceIndex).startStreaming;
             end
 
             notify( obj, "DevicesConnectedChanged" )
@@ -80,6 +79,14 @@ classdef Model < handle
         end
 
         function calibrateStandingAngle( obj )
+            if (~obj.IMUDevices(1).IsStreaming)
+                obj.IMUDevices(1).startStreaming;
+            end
+
+            if (~obj.IMUDevices(2).IsStreaming)
+                obj.IMUDevices(2).startStreaming;
+            end
+
             quaternion1 = obj.IMUDevices(1).LatestQuaternion;
             quaternion2 = obj.IMUDevices(2).LatestQuaternion;
 
