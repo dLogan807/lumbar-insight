@@ -29,8 +29,9 @@ classdef SessionTabController < handle
             obj.Listener(end+1) = listener( obj.SessionTabView, ... 
                 "ThresholdSliderValueChanged", @obj.onThresholdSliderValueChanged );
             obj.Listener(end+1) = listener( obj.SessionTabView, ... 
-                "SessionControlButtonPushed", @obj.onSessionControlButtonPushed );
-
+                "SessionStartButtonPushed", @obj.onSessionStartButtonPushed );
+            obj.Listener(end+1) = listener( obj.SessionTabView, ... 
+                "SessionStopButtonPushed", @obj.onSessionStopButtonPushed );
 
             % Listen for changes to the model data.
 
@@ -56,18 +57,23 @@ classdef SessionTabController < handle
     
     methods ( Access = private )
 
-        function ThresholdSliderValueChanged( obj, ~, ~ )
+        function onThresholdSliderValueChanged( obj, ~, ~ )
             obj.Model.ThresholdAnglePercentage = obj.SessionTabView.AngleThresholdSlider.Value;
         end
 
-        function onSessionControlButtonPushed( obj, ~, ~ )
-            delay = 0.5;
-            limit = 60;
+        function onSessionStartButtonPushed( obj, ~, ~ )
+            obj.SessionTabView.SessionStartButton.Enable = "off";
+            obj.SessionTabView.SessionStopButton.Enable = "on";
+            obj.Model.SessionInProgress = true;
+
+            delay = 0.1;
+            xDuration = 30;
 
             elapsedTime = 0;
+            hold(obj.SessionTabView.LumbarAngleGraph, "on");
             tic; % Start timer
 
-            while ( elapsedTime < limit )
+            while ( obj.Model.SessionInProgress )
                 pause(delay);
 
                 latestAngle = obj.Model.LatestAngle;
@@ -82,9 +88,26 @@ classdef SessionTabController < handle
                     obj.SessionTabView.LargestAngleLabel.Text = "Largest Angle: " + latestAngle + "°";
                 end
 
+                plot(obj.SessionTabView.LumbarAngleGraph, elapsedTime, latestAngle, 'black--x');
+
+                if (elapsedTime > xDuration)
+                    obj.SessionTabView.LumbarAngleGraph.XLim = [(elapsedTime - xDuration) elapsedTime];
+                end
+
+                drawnow;
+
                 elapsedTime = elapsedTime + toc;                                                              % Stop timer and add to elapsed time
                 tic;
             end
+
+            hold(obj.SessionTabView.LumbarAngleGraph, "off");
+
+            obj.SessionTabView.SessionStartButton.Enable = "on";
+            obj.SessionTabView.SessionStopButton.Enable = "off";
+        end
+
+        function onSessionStopButtonPushed( obj, ~, ~ )
+            obj.Model.SessionInProgress = false;
         end
 
     end % methods ( Access = private )

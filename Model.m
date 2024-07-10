@@ -15,7 +15,9 @@ classdef Model < handle
 
         FullFlexionAngle double
         StandingAngle double
-        ThresholdAnglePercentage uint8 = 80;
+        ThresholdAnglePercentage uint8 = 80
+
+        SessionInProgress logical = false
     end
     
     events ( NotifyAccess = private )
@@ -43,11 +45,11 @@ classdef Model < handle
             notify( obj, "DeviceListUpdated" )
         end
 
-        function currentAngle = get.LatestAngle( obj )
+        function latestAngle = get.LatestAngle( obj )
             quaternion1 = obj.IMUDevices(1).LatestQuaternion;
             quaternion2 = obj.IMUDevices(2).LatestQuaternion;
 
-            currentAngle = calculateAngle(obj, quaternion1, quaternion2);
+            latestAngle = calculateAngle(obj, quaternion1, quaternion2);
         end
 
         function connectDevice( obj, deviceName, deviceType, deviceIndex )
@@ -132,14 +134,14 @@ classdef Model < handle
             obj.IMUDevices(1).startStreaming;
             obj.IMUDevices(2).startStreaming;
 
-        end % startSession
+        end % startStreaming
 
-        function endSession( obj ) 
+        function stopStreaming( obj ) 
         
             obj.IMUDevices(1).stopStreaming;
             obj.IMUDevices(2).stopStreaming;
 
-        end % endSession
+        end % stopStreaming
     end
 
 end % classdef

@@ -61,15 +61,21 @@ classdef ShimmerIMU < IMUInterface
             if (obj.IsStreaming)
                 [shimmerData,shimmerSignalNameArray,~,~] = obj.Driver.getdata('c');
 
-                shimmerQuaternionChannels(1) = find(ismember(shimmerSignalNameArray, 'Quaternion 0'));                  % Find Quaternion signal indices.
-                shimmerQuaternionChannels(2) = find(ismember(shimmerSignalNameArray, 'Quaternion 1'));
-                shimmerQuaternionChannels(3) = find(ismember(shimmerSignalNameArray, 'Quaternion 2'));
-                shimmerQuaternionChannels(4) = find(ismember(shimmerSignalNameArray, 'Quaternion 3'));
-    
-                latestQuaternion = shimmerData(end, shimmerQuaternionChannels);
-            else
-                latestQuaternion = [0.5 0.5 0.5 0.5];
+                if (~isempty(shimmerData))
+                    shimmerQuaternionChannels(1) = find(ismember(shimmerSignalNameArray, 'Quaternion 0'));                  % Find Quaternion signal indices.
+                    shimmerQuaternionChannels(2) = find(ismember(shimmerSignalNameArray, 'Quaternion 1'));
+                    shimmerQuaternionChannels(3) = find(ismember(shimmerSignalNameArray, 'Quaternion 2'));
+                    shimmerQuaternionChannels(4) = find(ismember(shimmerSignalNameArray, 'Quaternion 3'));
+
+                    latestQuaternion = shimmerData(end, shimmerQuaternionChannels);
+
+                    return;
+                end
             end
+
+            latestQuaternion = [0.5 0.5 0.5 0.5];
+
+            disp("Data could not be retrieved from " + obj.Name);
         end
 
         function connected = connect(obj)

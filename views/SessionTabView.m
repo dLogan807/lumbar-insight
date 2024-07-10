@@ -10,19 +10,23 @@ classdef SessionTabView < matlab.ui.componentcontainer.ComponentContainer
     end
 
     properties
+        LumbarAngleGraph matlab.ui.control.UIAxes
+
         TimeAboveMaxLabel matlab.ui.control.Label
         SmallestAngleLabel matlab.ui.control.Label
         LargestAngleLabel matlab.ui.control.Label
 
         AngleThresholdSlider matlab.ui.control.Slider
 
-        SessionControlButton matlab.ui.control.Button
+        SessionStartButton matlab.ui.control.Button
+        SessionStopButton matlab.ui.control.Button
     end
 
     events ( NotifyAccess = private )
         % Event broadcast when view is interacted with
         ThresholdSliderValueChanged
-        SessionControlButtonPushed
+        SessionStartButtonPushed
+        SessionStopButtonPushed
 
     end % events ( NotifyAccess = private )
         
@@ -66,11 +70,13 @@ classdef SessionTabView < matlab.ui.componentcontainer.ComponentContainer
                 "ColumnSpacing", 50 );
 
             % Create view components.
-            lumbarAngleGraph = uiaxes( "Parent", gridLayout );
-            lumbarAngleGraph.XLabel.String = 'Time (Seconds)';
-            lumbarAngleGraph.YLabel.String = 'Lumbosacral Angle';
-            lumbarAngleGraph.Layout.Row = 1;
-            lumbarAngleGraph.Layout.Column = 1;
+            obj.LumbarAngleGraph = uiaxes( "Parent", gridLayout );
+            obj.LumbarAngleGraph.XLabel.String = 'Time (Seconds)';
+            obj.LumbarAngleGraph.YLabel.String = 'Lumbosacral Angle (Degrees)';
+            obj.LumbarAngleGraph.YLim = [0 360];
+            obj.LumbarAngleGraph.XLim = [0 inf];
+            obj.LumbarAngleGraph.Layout.Row = 1;
+            obj.LumbarAngleGraph.Layout.Column = 1;
 
             sliderLabel = uilabel( "Parent", gridLayout, ...
                 "Text", "Percentage threshold of maximum angle" );
@@ -98,9 +104,17 @@ classdef SessionTabView < matlab.ui.componentcontainer.ComponentContainer
             obj.LargestAngleLabel.Layout.Row = 6;
             obj.LargestAngleLabel.Layout.Column = 1;
 
-            obj.SessionControlButton = uibutton( "Parent", gridLayout, ...
+            obj.SessionStartButton = uibutton( "Parent", gridLayout, ...
                 "Text", "Start Session", ...
-                "ButtonPushedFcn", @obj.onSessionControlButtonPushed );
+                "ButtonPushedFcn", @obj.onSessionStartButtonPushed );
+            obj.SessionStartButton.Layout.Row = 4;
+            obj.SessionStartButton.Layout.Column = 2;
+
+            obj.SessionStopButton = uibutton( "Parent", gridLayout, ...
+                "Text", "Stop Session", ...
+                "ButtonPushedFcn", @obj.onSessionStopButtonPushed );
+            obj.SessionStopButton.Layout.Row = 5;
+            obj.SessionStopButton.Layout.Column = 2;
 
         end
 
@@ -114,8 +128,12 @@ classdef SessionTabView < matlab.ui.componentcontainer.ComponentContainer
             notify( obj, "ThresholdSliderValueChanged" )
         end
 
-        function onSessionControlButtonPushed( obj, ~, ~ )
-            notify( obj, "SessionControlButtonPushed" )
+        function onSessionStartButtonPushed( obj, ~, ~ )
+            notify( obj, "SessionStartButtonPushed" )
+        end
+
+        function onSessionStopButtonPushed( obj, ~, ~ )
+            notify( obj, "SessionStopButtonPushed" )
         end
 
     end
