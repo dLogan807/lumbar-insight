@@ -29,8 +29,8 @@ imuTabView = IMUTabView( "Parent", imuTab );
 sessionTabView = SessionTabView( "Parent", sessionTab );
 
 % Create the controllers
-IMUTabController( model, imuTabView );
-SessionTabController( model, sessionTabView);
+imuTabController = IMUTabController( model, imuTabView );
+SessionTabController( imuTabController.Model, sessionTabView);
 
 % Return the figure handle if requested.
 if nargout > 0

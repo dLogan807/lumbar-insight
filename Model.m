@@ -27,7 +27,7 @@ classdef Model < handle
         SessionEnded
 
     end % events ( NotifyAccess = private )
-    
+
     methods
 
         function set.BluetoothDevices( obj, deviceList )

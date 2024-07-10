@@ -2,14 +2,17 @@ classdef IMUTabController < handle
     %IMUTABCONTROLLER Provides an interactive control to generate new data.
 
     properties ( Access = private )
-        % Application data model.
-        Model(1, 1) Model
         % IMU View
         IMUTabView IMUTabView
         % Listener object used to respond dynamically to view events.
         Listener(:, 1) event.listener
     end % properties ( Access = private )
     
+    properties ( GetAccess = public, SetAccess = private )
+        % Application data model.
+        Model(1, 1) Model
+    end
+
     methods
         
         function obj = IMUTabController( model, imuTabView )
