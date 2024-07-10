@@ -105,7 +105,6 @@ if (shimmer1.connect && shimmer2.connect)                                  % TRU
             
         end
         
-        elapsedTime = elapsedTime + toc;                                                                  % Stop timer
         fprintf(shimmer1.name + ' percentage of received packets: %d \n',shimmer1.getpercentageofpacketsreceived(shimmer1AllData(:,1))); % Detect lost packets
         fprintf(shimmer2.name + ' percentage of received packets: %d \n',shimmer1.getpercentageofpacketsreceived(shimmer1AllData(:,1)));
         shimmer1.stop;                                                                                     % Stop data streaming

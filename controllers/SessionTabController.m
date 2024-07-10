@@ -26,6 +26,10 @@ classdef SessionTabController < handle
             obj.SessionTabView = sessionTabView;
 
             % Listen for changes to the view. 
+            obj.Listener(end+1) = listener( obj.SessionTabView, ... 
+                "ThresholdSliderValueChanged", @obj.onThresholdSliderValueChanged );
+            obj.Listener(end+1) = listener( obj.SessionTabView, ... 
+                "SessionControlButtonPushed", @obj.onSessionControlButtonPushed );
 
 
             % Listen for changes to the model data.
@@ -51,6 +55,37 @@ classdef SessionTabController < handle
     end % methods ( Access = protected )
     
     methods ( Access = private )
+
+        function ThresholdSliderValueChanged( obj, ~, ~ )
+            obj.Model.ThresholdAnglePercentage = obj.SessionTabView.AngleThresholdSlider.Value;
+        end
+
+        function onSessionControlButtonPushed( obj, ~, ~ )
+            delay = 0.5;
+            limit = 60;
+
+            elapsedTime = 0;
+            tic; % Start timer
+
+            while ( elapsedTime < limit )
+                pause(delay);
+
+                latestAngle = obj.Model.LatestAngle;
+
+                if (obj.Model.SmallestAngle == -1 || latestAngle < obj.Model.SmallestAngle)
+                    obj.Model.SmallestAngle = latestAngle;
+                    obj.SessionTabView.SmallestAngleLabel.Text = "Smallest Angle: " + latestAngle + "°";
+                end
+
+                if (obj.Model.LargestAngle == -1 || latestAngle > obj.Model.LargestAngle)
+                    obj.Model.LargestAngle = latestAngle;
+                    obj.SessionTabView.LargestAngleLabel.Text = "Largest Angle: " + latestAngle + "°";
+                end
+
+                elapsedTime = elapsedTime + toc;                                                              % Stop timer and add to elapsed time
+                tic;
+            end
+        end
 
     end % methods ( Access = private )
     

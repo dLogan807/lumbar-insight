@@ -10,14 +10,22 @@ classdef SessionTabView < matlab.ui.componentcontainer.ComponentContainer
     end
 
     properties
+        TimeAboveMaxLabel matlab.ui.control.Label
+        SmallestAngleLabel matlab.ui.control.Label
+        LargestAngleLabel matlab.ui.control.Label
 
+        AngleThresholdSlider matlab.ui.control.Slider
+
+        SessionControlButton matlab.ui.control.Button
     end
 
     events ( NotifyAccess = private )
         % Event broadcast when view is interacted with
+        ThresholdSliderValueChanged
+        SessionControlButtonPushed
 
     end % events ( NotifyAccess = private )
-
+        
     methods
 
         function obj = SessionTabView( namedArgs )
@@ -69,25 +77,31 @@ classdef SessionTabView < matlab.ui.componentcontainer.ComponentContainer
             sliderLabel.Layout.Row = 2;
             sliderLabel.Layout.Column = 1;
 
-            angleThresholdSlider = uislider( "Parent", gridLayout, ...
-                "Value", 80);
-            angleThresholdSlider.Layout.Row = 3;
-            angleThresholdSlider.Layout.Column = 1;
+            obj.AngleThresholdSlider = uislider( "Parent", gridLayout, ...
+                "Value", 80, ...
+                "ValueChangedFcn", @obj.onThresholdSliderValueChanged);
+            obj.AngleThresholdSlider.Layout.Row = 3;
+            obj.AngleThresholdSlider.Layout.Column = 1;
 
-            timeAboveMaxLabel = uilabel( "Parent", gridLayout, ...
+            obj.TimeAboveMaxLabel = uilabel( "Parent", gridLayout, ...
                 "Text", "Time above threshold angle: 0s");
-            timeAboveMaxLabel.Layout.Row = 4;
-            timeAboveMaxLabel.Layout.Column = 1;
+            obj.TimeAboveMaxLabel.Layout.Row = 4;
+            obj.TimeAboveMaxLabel.Layout.Column = 1;
 
-            smallestAngleLabel = uilabel( "Parent", gridLayout, ...
+            obj.SmallestAngleLabel = uilabel( "Parent", gridLayout, ...
                 "Text", "Smallest angle:");
-            smallestAngleLabel.Layout.Row = 5;
-            smallestAngleLabel.Layout.Column = 1;
+            obj.SmallestAngleLabel.Layout.Row = 5;
+            obj.SmallestAngleLabel.Layout.Column = 1;
 
-            largestAngleLabel = uilabel( "Parent", gridLayout, ...
+            obj.LargestAngleLabel = uilabel( "Parent", gridLayout, ...
                 "Text", "Largest angle:");
-            largestAngleLabel.Layout.Row = 6;
-            largestAngleLabel.Layout.Column = 1;
+            obj.LargestAngleLabel.Layout.Row = 6;
+            obj.LargestAngleLabel.Layout.Column = 1;
+
+            obj.SessionControlButton = uibutton( "Parent", gridLayout, ...
+                "Text", "Start Session", ...
+                "ButtonPushedFcn", @obj.onSessionControlButtonPushed );
+
         end
 
         function update( ~ )
@@ -96,7 +110,13 @@ classdef SessionTabView < matlab.ui.componentcontainer.ComponentContainer
     end
 
     methods ( Access = private )
+        function onThresholdSliderValueChanged( obj, ~, ~ )
+            notify( obj, "ThresholdSliderValueChanged" )
+        end
 
+        function onSessionControlButtonPushed( obj, ~, ~ )
+            notify( obj, "SessionControlButtonPushed" )
+        end
 
     end
 

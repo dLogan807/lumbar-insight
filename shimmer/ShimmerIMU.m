@@ -68,7 +68,7 @@ classdef ShimmerIMU < IMUInterface
     
                 latestQuaternion = shimmerData(end, shimmerQuaternionChannels);
             else
-                latestQuaternion = [0.5, 0.5, 0.5, 0.5];
+                latestQuaternion = [0.5 0.5 0.5 0.5];
             end
         end
 

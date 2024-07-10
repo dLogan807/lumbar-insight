@@ -9,10 +9,14 @@ classdef Model < handle
 
         Cameras (1, :) Camera
 
-        CurrentAngle double
+        LatestAngle double
+        SmallestAngle double = -1
+        LargestAngle double = -1
+
         FullFlexionAngle double
         StandingAngle double
-    end % properties ( SetAccess = private )
+        ThresholdAnglePercentage uint8 = 80;
+    end
     
     events ( NotifyAccess = private )
         % Events broadcast when the model is altered.
@@ -37,6 +41,13 @@ classdef Model < handle
             obj.BluetoothDevices = deviceList;
 
             notify( obj, "DeviceListUpdated" )
+        end
+
+        function currentAngle = get.LatestAngle( obj )
+            quaternion1 = obj.IMUDevices(1).LatestQuaternion;
+            quaternion2 = obj.IMUDevices(2).LatestQuaternion;
+
+            currentAngle = calculateAngle(obj, quaternion1, quaternion2);
         end
 
         function connectDevice( obj, deviceName, deviceType, deviceIndex )
@@ -103,10 +114,19 @@ classdef Model < handle
 
             notify( obj, "FullFlexionAngleCalibrated")
         end
-        
+
     end % methods
 
     methods (Access = private)
+        function angle = calculateAngle( ~, quaternion1, quaternion2)
+            % CALCULATEANGLE Calculate the angle between two quaternions
+            % https://au.mathworks.com/matlabcentral/answers/415936-angle-between-2-quaternions?s_tid=answers_rc1-2_p2_MLT
+            
+            z = quatmultiply(quatconj(quaternion1), quaternion2);
+    
+            angle = 2*acosd(z(1));
+        end % calculateAngle
+
         function startStreaming( obj ) 
         
             obj.IMUDevices(1).startStreaming;
@@ -120,15 +140,6 @@ classdef Model < handle
             obj.IMUDevices(2).stopStreaming;
 
         end % endSession
-
-        function angle = calculateAngle( obj, quaternion1, quaternion2)
-            % CALCULATEANGLE Calculate the angle between two quaternions
-            % https://au.mathworks.com/matlabcentral/answers/415936-angle-between-2-quaternions?s_tid=answers_rc1-2_p2_MLT
-            
-            z = quatmultiply(quatconj(quaternion1), quaternion2);
-    
-            angle = 2*acosd(z(1));
-        end % calculateAngle
     end
 
 end % classdef

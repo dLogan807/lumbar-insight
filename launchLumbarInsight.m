@@ -39,8 +39,6 @@ if nargout > 0
 end % if
 
 function onTabChanged( ~, ~, ~ )
-
-    disp("Tab changed!");
     
 end % onTabChanged
 
