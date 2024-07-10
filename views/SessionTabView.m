@@ -52,13 +52,42 @@ classdef SessionTabView < matlab.ui.componentcontainer.ComponentContainer
 
             gridLayout = uigridlayout( ...
                 "Parent", obj, ...
-                "RowHeight", {22, 22, 22, 22, 35, 35, "1x", 22, 35, 35}, ...
+                "RowHeight", {"1x", 22, 40, 22, 22, 22}, ...
                 "ColumnWidth", {"1x", "1x"}, ...
                 "Padding", 20, ...
                 "ColumnSpacing", 50 );
 
             % Create view components.
-            
+            lumbarAngleGraph = uiaxes( "Parent", gridLayout );
+            lumbarAngleGraph.XLabel.String = 'Time (Seconds)';
+            lumbarAngleGraph.YLabel.String = 'Lumbosacral Angle';
+            lumbarAngleGraph.Layout.Row = 1;
+            lumbarAngleGraph.Layout.Column = 1;
+
+            sliderLabel = uilabel( "Parent", gridLayout, ...
+                "Text", "Percentage threshold of maximum angle" );
+            sliderLabel.Layout.Row = 2;
+            sliderLabel.Layout.Column = 1;
+
+            angleThresholdSlider = uislider( "Parent", gridLayout, ...
+                "Value", 80);
+            angleThresholdSlider.Layout.Row = 3;
+            angleThresholdSlider.Layout.Column = 1;
+
+            timeAboveMaxLabel = uilabel( "Parent", gridLayout, ...
+                "Text", "Time above threshold angle: 0s");
+            timeAboveMaxLabel.Layout.Row = 4;
+            timeAboveMaxLabel.Layout.Column = 1;
+
+            smallestAngleLabel = uilabel( "Parent", gridLayout, ...
+                "Text", "Smallest angle:");
+            smallestAngleLabel.Layout.Row = 5;
+            smallestAngleLabel.Layout.Column = 1;
+
+            largestAngleLabel = uilabel( "Parent", gridLayout, ...
+                "Text", "Largest angle:");
+            largestAngleLabel.Layout.Row = 6;
+            largestAngleLabel.Layout.Column = 1;
         end
 
         function update( ~ )
