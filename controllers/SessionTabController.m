@@ -59,6 +59,7 @@ classdef SessionTabController < handle
 
         function onThresholdSliderValueChanged( obj, ~, ~ )
             obj.Model.ThresholdAnglePercentage = obj.SessionTabView.AngleThresholdSlider.Value;
+            disp("Model: " + obj.Model.ThresholdAnglePercentage);
         end
 
         function onSessionStartButtonPushed( obj, ~, ~ )
@@ -66,12 +67,16 @@ classdef SessionTabController < handle
             obj.SessionTabView.SessionStopButton.Enable = "on";
             obj.Model.SessionInProgress = true;
 
+            cla(obj.SessionTabView.LumbarAngleGraph);
+
             delay = 0.1;
             xDuration = 30;
 
             elapsedTime = 0;
-            hold(obj.SessionTabView.LumbarAngleGraph, "on");
             tic; % Start timer
+
+            lumbarAngleLine = animatedline(obj.SessionTabView.LumbarAngleGraph);
+            thresholdLine = animatedline(obj.SessionTabView.LumbarAngleGraph, "Color", "r");
 
             while ( obj.Model.SessionInProgress )
                 pause(delay);
@@ -88,7 +93,8 @@ classdef SessionTabController < handle
                     obj.SessionTabView.LargestAngleLabel.Text = "Largest Angle: " + latestAngle + "°";
                 end
 
-                plot(obj.SessionTabView.LumbarAngleGraph, elapsedTime, latestAngle, 'black--x');
+                addpoints(lumbarAngleLine, elapsedTime, latestAngle);
+                addpoints(thresholdLine, elapsedTime, (obj.Model.FullFlexionAngle * obj.Model.ThresholdAnglePercentage));
 
                 if (elapsedTime > xDuration)
                     obj.SessionTabView.LumbarAngleGraph.XLim = [(elapsedTime - xDuration) elapsedTime];
@@ -100,14 +106,12 @@ classdef SessionTabController < handle
                 tic;
             end
 
-            hold(obj.SessionTabView.LumbarAngleGraph, "off");
-
             obj.SessionTabView.SessionStartButton.Enable = "on";
-            obj.SessionTabView.SessionStopButton.Enable = "off";
         end
 
         function onSessionStopButtonPushed( obj, ~, ~ )
             obj.Model.SessionInProgress = false;
+            obj.SessionTabView.SessionStopButton.Enable = "off";
         end
 
     end % methods ( Access = private )

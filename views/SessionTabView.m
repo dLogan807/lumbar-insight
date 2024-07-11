@@ -85,6 +85,7 @@ classdef SessionTabView < matlab.ui.componentcontainer.ComponentContainer
 
             obj.AngleThresholdSlider = uislider( "Parent", gridLayout, ...
                 "Value", 80, ...
+                "", "", ...
                 "ValueChangedFcn", @obj.onThresholdSliderValueChanged);
             obj.AngleThresholdSlider.Layout.Row = 3;
             obj.AngleThresholdSlider.Layout.Column = 1;
@@ -125,6 +126,7 @@ classdef SessionTabView < matlab.ui.componentcontainer.ComponentContainer
 
     methods ( Access = private )
         function onThresholdSliderValueChanged( obj, ~, ~ )
+            disp("View: " + obj.AngleThresholdSlider.Value);
             notify( obj, "ThresholdSliderValueChanged" )
         end
 

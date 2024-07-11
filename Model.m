@@ -15,7 +15,7 @@ classdef Model < handle
 
         FullFlexionAngle double
         StandingAngle double
-        ThresholdAnglePercentage uint8 = 80
+        ThresholdAnglePercentage uint8 = 0.8
 
         SessionInProgress logical = false
     end
@@ -50,6 +50,10 @@ classdef Model < handle
             quaternion2 = obj.IMUDevices(2).LatestQuaternion;
 
             latestAngle = calculateAngle(obj, quaternion1, quaternion2);
+        end
+
+        function set.ThresholdAnglePercentage( obj, thresholdPercentage )
+            obj.ThresholdAnglePercentage = double(thresholdPercentage) * 0.01;
         end
 
         function connectDevice( obj, deviceName, deviceType, deviceIndex )
