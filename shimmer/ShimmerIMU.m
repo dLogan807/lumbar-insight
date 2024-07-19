@@ -2,8 +2,9 @@ classdef ShimmerIMU < IMUInterface
     %SHIMMERIMU Class implmenting IMU Interface, utilising the Shimmer
     %driver
     
-    properties (Access = private)
+    properties (GetAccess = private, SetAccess = immutable)
         Driver ShimmerDriver
+        LowBatteryVoltageLevel int8 = 3700
     end
 
     properties (SetAccess = protected)
@@ -50,7 +51,12 @@ classdef ShimmerIMU < IMUInterface
                 obj.stopStreaming;
             end
 
-            batteryInfo = obj.Name + " (" + obj.Driver.getbatteryvoltage + "mV / 3700mV)";
+            batteryVoltage = obj.Driver.getbatteryvoltage;
+            if (batteryVoltage <= obj.LowBatteryVoltageLevel)
+                batteryInfo = obj.Name + " battery low! (" + obj.Driver.getbatteryvoltage + "mV)";
+            else
+                batteryInfo = obj.Name + " (" + obj.Driver.getbatteryvoltage + "mV)";
+            end
 
             if (wasStreaming)
                 obj.startStreaming;

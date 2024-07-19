@@ -59,7 +59,6 @@ classdef SessionTabController < handle
 
         function onThresholdSliderValueChanged( obj, ~, ~ )
             obj.Model.ThresholdAnglePercentage = obj.SessionTabView.AngleThresholdSlider.Value;
-            disp("Model: " + obj.Model.ThresholdAnglePercentage);
         end
 
         function onSessionStartButtonPushed( obj, ~, ~ )
@@ -68,6 +67,7 @@ classdef SessionTabController < handle
             obj.Model.SessionInProgress = true;
 
             cla(obj.SessionTabView.LumbarAngleGraph);
+            resetSessionData( obj );
 
             delay = 0.1;
             xDuration = 30;
@@ -83,30 +83,48 @@ classdef SessionTabController < handle
 
                 latestAngle = obj.Model.LatestAngle;
 
-                if (obj.Model.SmallestAngle == -1 || latestAngle < obj.Model.SmallestAngle)
-                    obj.Model.SmallestAngle = latestAngle;
-                    obj.SessionTabView.SmallestAngleLabel.Text = "Smallest Angle: " + latestAngle + "°";
-                end
+                updateCeilingAngles( obj, latestAngle );
 
-                if (obj.Model.LargestAngle == -1 || latestAngle > obj.Model.LargestAngle)
-                    obj.Model.LargestAngle = latestAngle;
-                    obj.SessionTabView.LargestAngleLabel.Text = "Largest Angle: " + latestAngle + "°";
-                end
-
+                % Plot lines
                 addpoints(lumbarAngleLine, elapsedTime, latestAngle);
-                addpoints(thresholdLine, elapsedTime, (obj.Model.FullFlexionAngle * obj.Model.ThresholdAnglePercentage));
 
+                thresholdAngle = (obj.Model.FullFlexionAngle * obj.Model.ThresholdAnglePercentage);
+                addpoints(thresholdLine, elapsedTime, thresholdAngle);
+
+                % Move along x-axis
                 if (elapsedTime > xDuration)
                     obj.SessionTabView.LumbarAngleGraph.XLim = [(elapsedTime - xDuration) elapsedTime];
                 end
 
-                drawnow;
+                if (latestAngle > thresholdAngle)
+                    obj.Model.timeAboveThresholdAngle = obj.Model.timeAboveThresholdAngle + toc;
+
+                    obj.SessionTabView.TimeAboveMaxLabel.Text = "Time above threshold angle: " + obj.Model.timeAboveThresholdAngle + "s";
+                end
 
                 elapsedTime = elapsedTime + toc;                                                              % Stop timer and add to elapsed time
                 tic;
             end
 
             obj.SessionTabView.SessionStartButton.Enable = "on";
+        end
+
+        function updateCeilingAngles( obj, latestAngle )
+            if (obj.Model.SmallestAngle == -1 || latestAngle < obj.Model.SmallestAngle)
+                obj.Model.SmallestAngle = latestAngle;
+                obj.SessionTabView.SmallestAngleLabel.Text = "Smallest Angle: " + latestAngle + "°";
+            end
+
+            if (obj.Model.LargestAngle == -1 || latestAngle > obj.Model.LargestAngle)
+                obj.Model.LargestAngle = latestAngle;
+                obj.SessionTabView.LargestAngleLabel.Text = "Largest Angle: " + latestAngle + "°";
+            end
+        end
+
+        function resetSessionData( obj )
+            obj.SessionTabView.SmallestAngleLabel.Text = "Smallest Angle: No data";
+            obj.SessionTabView.LargestAngleLabel.Text = "Largest Angle: No data";
+            obj.SessionTabView.TimeAboveMaxLabel.Text = "Time above threshold angle: 0s";
         end
 
         function onSessionStopButtonPushed( obj, ~, ~ )

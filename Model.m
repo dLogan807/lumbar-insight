@@ -16,6 +16,7 @@ classdef Model < handle
         FullFlexionAngle double
         StandingAngle double
         ThresholdAnglePercentage uint8 = 0.8
+        timeAboveThresholdAngle = 0
 
         SessionInProgress logical = false
     end
@@ -69,10 +70,6 @@ classdef Model < handle
                 disp("Device of type " + string(deviceType) + " is not implemented.");
             end
 
-            if (connected)
-                obj.IMUDevices(deviceIndex).configure;
-            end
-
             notify( obj, "DevicesConnectedChanged" )
 
         end % connectDevice
@@ -124,14 +121,37 @@ classdef Model < handle
     end % methods
 
     methods (Access = private)
-        function angle = calculateAngle( ~, quaternion1, quaternion2)
+        function angle = calculateAngle( obj, quaternion1, quaternion2)
             % CALCULATEANGLE Calculate the angle between two quaternions
             % https://au.mathworks.com/matlabcentral/answers/415936-angle-between-2-quaternions?s_tid=answers_rc1-2_p2_MLT
             
-            z = quatmultiply(quatconj(quaternion1), quaternion2);
+            quat3dDifference = getQuat3dDifference( obj, quaternion1, quaternion2 );
     
-            angle = 2*acosd(z(1));
+            angle = 2*acosd(quat3dDifference(1));
         end % calculateAngle
+
+        function quat3dDifference = getQuat3dDifference( ~, quaternion1, quaternion2 )
+            quat3dDifference = quatmultiply(quatconj(quaternion1), quaternion2);
+        end
+
+        function isNegative = isNegativeAngle( ~, quat3dDiffernce )
+            %https://en.wikipedia.org/wiki/Conversion_between_quaternions_and_Euler_angles
+            % roll (x-axis rotation)
+            sinr_cosp = 2 * (q.w * q.x + q.y * q.z);
+            cosr_cosp = 1 - 2 * (q.x * q.x + q.y * q.y);
+            roll = atan2(sinr_cosp, cosr_cosp);
+        
+            % pitch (y-axis rotation)
+            sinp = sqrt(1 + 2 * (q.w * q.y - q.x * q.z));
+            cosp = sqrt(1 - 2 * (q.w * q.y - q.x * q.z));
+            pitch = 2 * atan2(sinp, cosp) - pi / 2;
+        
+            % yaw (z-axis rotation)
+            siny_cosp = 2 * (q.w * q.z + q.x * q.y);
+            cosy_cosp = 1 - 2 * (q.y * q.y + q.z * q.z);
+            yaw = atan2(siny_cosp, cosy_cosp);
+                
+        end
 
         function startStreaming( obj ) 
         
