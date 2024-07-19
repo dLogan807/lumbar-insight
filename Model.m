@@ -93,27 +93,27 @@ classdef Model < handle
         end
 
         function calibrateStandingAngle( obj )
-            if (~obj.IMUDevices(1).IsStreaming)
-                obj.IMUDevices(1).startStreaming;
-            end
-
-            if (~obj.IMUDevices(2).IsStreaming)
-                obj.IMUDevices(2).startStreaming;
-            end
+            obj.IMUDevices(1).startStreaming;
+            obj.IMUDevices(2).startStreaming;
 
             quaternion1 = obj.IMUDevices(1).LatestQuaternion;
             quaternion2 = obj.IMUDevices(2).LatestQuaternion;
 
-            obj.StandingAngle = calculateAngle(obj, quaternion1, quaternion2);
+            quat3dDifference = getQuat3dDifference( obj, quaternion1, quaternion2 );
+            obj.StandingAngle = calculateAngle(obj, quat3dDifference);
 
             notify( obj, "StandingAngleCalibrated" )
         end
 
         function calibrateFullFlexionAngle( obj )
+            obj.IMUDevices(1).startStreaming;
+            obj.IMUDevices(2).startStreaming;
+
             quaternion1 = obj.IMUDevices(1).LatestQuaternion;
             quaternion2 = obj.IMUDevices(2).LatestQuaternion;
 
-            obj.FullFlexionAngle = calculateAngle(obj, quaternion1, quaternion2);
+            quat3dDifference = getQuat3dDifference( obj, quaternion1, quaternion2 );
+            obj.FullFlexionAngle = calculateAngle(obj, quat3dDifference);
 
             notify( obj, "FullFlexionAngleCalibrated")
         end
@@ -121,13 +121,22 @@ classdef Model < handle
     end % methods
 
     methods (Access = private)
-        function angle = calculateAngle( obj, quaternion1, quaternion2)
+        function angle = calculateAngle( ~, quat3dDifference)
             % CALCULATEANGLE Calculate the angle between two quaternions
             % https://au.mathworks.com/matlabcentral/answers/415936-angle-between-2-quaternions?s_tid=answers_rc1-2_p2_MLT
-            
-            quat3dDifference = getQuat3dDifference( obj, quaternion1, quaternion2 );
     
             angle = 2*acosd(quat3dDifference(1));
+        end % calculateAngle
+
+        function angle = calculateAngleRelatively( obj, quat3dDifference)
+            % CALCULATEANGLE Calculate the angle between two quaternions
+            % https://au.mathworks.com/matlabcentral/answers/415936-angle-between-2-quaternions?s_tid=answers_rc1-2_p2_MLT
+    
+            angle = 2*acosd(quat3dDifference(1));
+
+            if (isNegativeAngle( obj, quat3dDifference ))
+                angle = angle * -1;
+            end
         end % calculateAngle
 
         function quat3dDifference = getQuat3dDifference( ~, quaternion1, quaternion2 )
@@ -137,19 +146,31 @@ classdef Model < handle
         function isNegative = isNegativeAngle( ~, quat3dDiffernce )
             %https://en.wikipedia.org/wiki/Conversion_between_quaternions_and_Euler_angles
             % roll (x-axis rotation)
-            sinr_cosp = 2 * (q.w * q.x + q.y * q.z);
-            cosr_cosp = 1 - 2 * (q.x * q.x + q.y * q.y);
+
+            w = quat3dDiffernce(1);
+            x = quat3dDiffernce(2);
+            y = quat3dDiffernce(3);
+            z = quat3dDiffernce(4);
+            
+            sinr_cosp = 2 * (w * x + y * z);
+            cosr_cosp = 1 - 2 * (x * x + y * y);
             roll = atan2(sinr_cosp, cosr_cosp);
         
             % pitch (y-axis rotation)
-            sinp = sqrt(1 + 2 * (q.w * q.y - q.x * q.z));
-            cosp = sqrt(1 - 2 * (q.w * q.y - q.x * q.z));
+            sinp = sqrt(1 + 2 * (w * y - x * z));
+            cosp = sqrt(1 - 2 * (w * y - x * z));
             pitch = 2 * atan2(sinp, cosp) - pi / 2;
         
             % yaw (z-axis rotation)
-            siny_cosp = 2 * (q.w * q.z + q.x * q.y);
-            cosy_cosp = 1 - 2 * (q.y * q.y + q.z * q.z);
+            siny_cosp = 2 * (w * z + x * y);
+            cosy_cosp = 1 - 2 * (y * y + z * z);
             yaw = atan2(siny_cosp, cosy_cosp);
+
+            if (roll < 0)
+                isNegative = true;
+            else
+                isNegative = false;
+            end
                 
         end
 

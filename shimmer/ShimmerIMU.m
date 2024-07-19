@@ -113,12 +113,20 @@ classdef ShimmerIMU < IMUInterface
 
         function started = startStreaming(obj)
             % STARTSESSION Start streaming data
-            started = obj.Driver.start;
+            if (obj.IsStreaming)
+                started = true;
+            else
+                started = obj.Driver.start;
+            end
         end
 
         function stopped = stopStreaming(obj)
             % ENDSESSION Stop streaming data
-            stopped = obj.Driver.stop;
+            if (obj.IsStreaming)
+                stopped = obj.Driver.stop;
+            else
+                stopped = true;
+            end
         end
     end
 end
