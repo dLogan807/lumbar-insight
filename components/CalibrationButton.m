@@ -5,6 +5,8 @@ classdef CalibrationButton < matlab.ui.componentcontainer.ComponentContainer
         ButtonLabel string
         StatusText string
         Enable logical = false
+
+        FontSize double = 12
     end
     
     properties (Access = private, Transient, NonCopyable)
@@ -38,8 +40,6 @@ classdef CalibrationButton < matlab.ui.componentcontainer.ComponentContainer
             obj.CalibrationLabel = uilabel(obj.GridLayout, ...
                 "Text", "Not calibrated.");
             obj.CalibrationLabel.Layout.Column = 2;
-
-            setFontSize( obj, 14 );
         end
 
         function update( obj )
@@ -57,12 +57,8 @@ classdef CalibrationButton < matlab.ui.componentcontainer.ComponentContainer
             else
                 obj.CalibrateButton.Enable = "off";
             end
-        end
-    end
 
-    methods ( Access = public )
-        function setFontSize( obj, fontSize )
-            set(findall(obj.GridLayout,'-property','FontSize'), 'FontSize', fontSize);
+            set(findall(obj.GridLayout,'-property','FontSize'),'FontSize', obj.FontSize);
         end
     end
 

@@ -13,6 +13,8 @@ classdef IMUTabView < matlab.ui.componentcontainer.ComponentContainer
     end
 
     properties
+        FontSize double = 12
+
         % Components
         DeviceConnect1 DeviceConnect
         DeviceConnect2 DeviceConnect
@@ -131,11 +133,13 @@ classdef IMUTabView < matlab.ui.componentcontainer.ComponentContainer
             obj.DeviceConnectLabel.Layout.Row = 8;
             obj.DeviceConnectLabel.Layout.Column = 1;
 
-            obj.DeviceConnect1 = DeviceConnect("Parent", obj.GridLayout);
+            obj.DeviceConnect1 = DeviceConnect("Parent", obj.GridLayout, ...
+                "FontSize", obj.FontSize );
             obj.DeviceConnect1.Layout.Row = 9;
             obj.DeviceConnect1.Layout.Column = 1;
             
-            obj.DeviceConnect2 = DeviceConnect("Parent", obj.GridLayout);
+            obj.DeviceConnect2 = DeviceConnect("Parent", obj.GridLayout, ...
+                "FontSize", obj.FontSize );
             obj.DeviceConnect2.Layout.Row = 10;
             obj.DeviceConnect2.Layout.Column = 1;
 
@@ -161,27 +165,22 @@ classdef IMUTabView < matlab.ui.componentcontainer.ComponentContainer
             obj.CalibrationLabel.Layout.Column = 2;
 
             obj.CalibrateStandingPositionButton = CalibrationButton("Parent", obj.GridLayout, ...
-                "ButtonLabel", "Calibrate Standing Position");
+                "ButtonLabel", "Calibrate Standing Position", ...
+                "FontSize", obj.FontSize );
             obj.CalibrateStandingPositionButton.Layout.Row = 5;
             obj.CalibrateStandingPositionButton.Layout.Column = 2;
 
             obj.CalibrateFullFlexionButton = CalibrationButton("Parent", obj.GridLayout, ...
-                "ButtonLabel", "Calibrate Full Flexion");
+                "ButtonLabel", "Calibrate Full Flexion", ...
+                "FontSize", obj.FontSize );
             obj.CalibrateFullFlexionButton.Layout.Row = 6;
             obj.CalibrateFullFlexionButton.Layout.Column = 2;
-
-            setFontSize(obj, 14);
         end
 
-        function update( ~ )
+        function update( obj )
+            set(findall(obj.GridLayout,'-property','FontSize'), 'FontSize', obj.FontSize);
         end
 
-    end
-
-    methods ( Access = public )
-        function setFontSize( obj, fontSize )
-            set(findall(obj.GridLayout,'-property','FontSize'), 'FontSize', fontSize);
-        end
     end
 
     methods ( Access = private )

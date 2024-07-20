@@ -11,6 +11,8 @@ classdef SessionTabView < matlab.ui.componentcontainer.ComponentContainer
     end
 
     properties
+        FontSize double = 12
+
         % Components
         LumbarAngleGraph matlab.ui.control.UIAxes
 
@@ -140,19 +142,12 @@ classdef SessionTabView < matlab.ui.componentcontainer.ComponentContainer
                 "FaceColor","#bfda69", ...
                 "EdgeColor","none", ...
                 "Position", [0 -90 10 270] );
-
-             setFontSize(obj, 14);
         end
 
-        function update( ~ )
+        function update( obj )
+            set(findall(obj.GridLayout,'-property','FontSize'),'FontSize', obj.FontSize);
         end
 
-    end
-
-    methods ( Access = public )
-        function setFontSize( obj, fontSize )
-            set(findall(obj.GridLayout,'-property','FontSize'),'FontSize', fontSize);
-        end
     end
 
     methods ( Access = private )

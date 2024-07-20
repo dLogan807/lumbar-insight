@@ -5,6 +5,8 @@ classdef DeviceConnect < matlab.ui.componentcontainer.ComponentContainer
         DeviceName string
         DeviceType DeviceTypes
         Connected logical
+
+        FontSize double = 12
     end
     
     properties (Access = private, Transient, NonCopyable)
@@ -45,8 +47,6 @@ classdef DeviceConnect < matlab.ui.componentcontainer.ComponentContainer
             obj.DeviceConnectButton = uibutton(obj.GridLayout, "Text", "Connect" );
             obj.DeviceConnectButton.ButtonPushedFcn = @obj.stateChanged;
             obj.DeviceConnectButton.Layout.Column = 3;
-
-            setFontSize( obj, 14 );
         end
 
         function update( obj )
@@ -63,12 +63,8 @@ classdef DeviceConnect < matlab.ui.componentcontainer.ComponentContainer
                 obj.DeviceConnectButton.Text = "Connect";
                 obj.DeviceTypeDropDown.Enable = "on";
             end
-        end
-    end
 
-    methods ( Access = public )
-        function setFontSize( obj, fontSize )
-            set(findall(obj.GridLayout,'-property','FontSize'), 'FontSize', fontSize);
+            set(findall(obj.GridLayout,'-property','FontSize'),'FontSize', obj.FontSize);
         end
     end
 
