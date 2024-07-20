@@ -5,8 +5,10 @@ arguments
     f(1, 1) matlab.ui.Figure = uifigure()
 end % arguments
 
-% Rename figure.
+% Configure figure
 f.Name = "Lumbar Insight";
+f.Position = [50 100 900 500];
+f.WindowState = "maximized";
 
 % Create the layout.
 g = uigridlayout( ...
