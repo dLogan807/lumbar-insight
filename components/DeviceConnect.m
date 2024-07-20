@@ -8,7 +8,7 @@ classdef DeviceConnect < matlab.ui.componentcontainer.ComponentContainer
     end
     
     properties (Access = private, Transient, NonCopyable)
-        Grid matlab.ui.container.GridLayout 
+        GridLayout matlab.ui.container.GridLayout 
         DeviceNameEditField matlab.ui.control.EditField
         DeviceTypeDropDown matlab.ui.control.DropDown
         DeviceConnectButton matlab.ui.control.Button 
@@ -20,47 +20,55 @@ classdef DeviceConnect < matlab.ui.componentcontainer.ComponentContainer
     end
 
     methods (Access = protected)
-        function setup( comp ) 
+        function setup( obj ) 
             % Create grid layout to manage building blocks 
-            comp.Grid = uigridlayout( ...
-                "Parent", comp, ...
+            obj.GridLayout = uigridlayout( ...
+                "Parent", obj, ...
                 "RowHeight", { 22 }, ...
                 "ColumnWidth", {"2x", "1x", "1x"} , ...
                 "Padding", 0 );
         
             % Create edit field for entering device name
-            comp.DeviceNameEditField = uieditfield(comp.Grid, "Placeholder", "Device name");
-            comp.DeviceNameEditField.ValueChangedFcn = @comp.deviceNameChanged;
-            comp.DeviceNameEditField.Layout.Column = 1;
+            obj.DeviceNameEditField = uieditfield(obj.GridLayout, "Placeholder", "Device name");
+            obj.DeviceNameEditField.ValueChangedFcn = @obj.deviceNameChanged;
+            obj.DeviceNameEditField.Layout.Column = 1;
 
             % Create drop down to select device type
-            comp.DeviceTypeDropDown = uidropdown(comp.Grid, "Items", string([enumeration("DeviceTypes")]));
-            comp.DeviceTypeDropDown.Editable = "off";
-            comp.DeviceTypeDropDown.ValueChangedFcn = @comp.deviceTypeChanged;
-            comp.DeviceTypeDropDown.Layout.Column = 2;
+            obj.DeviceTypeDropDown = uidropdown(obj.GridLayout, "Items", string([enumeration("DeviceTypes")]));
+            obj.DeviceTypeDropDown.Editable = "off";
+            obj.DeviceTypeDropDown.ValueChangedFcn = @obj.deviceTypeChanged;
+            obj.DeviceTypeDropDown.Layout.Column = 2;
 
-            comp.DeviceType = DeviceTypes.Shimmer;
+            obj.DeviceType = DeviceTypes.Shimmer;
 
             % Create button to connect
-            comp.DeviceConnectButton = uibutton(comp.Grid, "Text", "Connect" );
-            comp.DeviceConnectButton.ButtonPushedFcn = @comp.stateChanged;
-            comp.DeviceConnectButton.Layout.Column = 3;
+            obj.DeviceConnectButton = uibutton(obj.GridLayout, "Text", "Connect" );
+            obj.DeviceConnectButton.ButtonPushedFcn = @obj.stateChanged;
+            obj.DeviceConnectButton.Layout.Column = 3;
+
+            setFontSize( obj, 14 );
         end
 
-        function update( comp )
+        function update( obj )
             %Update component properties
 
-            comp.DeviceConnectButton.Enable = "on";
+            obj.DeviceConnectButton.Enable = "on";
 
-            if (comp.Connected)
-                comp.DeviceNameEditField.Enable = "off";
-                comp.DeviceConnectButton.Text = "Disconnect";
-                comp.DeviceTypeDropDown.Enable = "off";
+            if (obj.Connected)
+                obj.DeviceNameEditField.Enable = "off";
+                obj.DeviceConnectButton.Text = "Disconnect";
+                obj.DeviceTypeDropDown.Enable = "off";
             else
-                comp.DeviceNameEditField.Enable = "on";
-                comp.DeviceConnectButton.Text = "Connect";
-                comp.DeviceTypeDropDown.Enable = "on";
+                obj.DeviceNameEditField.Enable = "on";
+                obj.DeviceConnectButton.Text = "Connect";
+                obj.DeviceTypeDropDown.Enable = "on";
             end
+        end
+    end
+
+    methods ( Access = public )
+        function setFontSize( obj, fontSize )
+            set(findall(obj.GridLayout,'-property','FontSize'), 'FontSize', fontSize);
         end
     end
 

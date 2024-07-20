@@ -57,7 +57,7 @@ classdef Model < handle
             obj.ThresholdAnglePercentage = double(thresholdPercentage) * 0.01;
         end
 
-        function connectDevice( obj, deviceName, deviceType, deviceIndex )
+        function connected = connectDevice( obj, deviceName, deviceType, deviceIndex )
             % CONNECTDEVICE Attempt device connection, notify controller,
             % and configure device
 

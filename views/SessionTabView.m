@@ -5,11 +5,13 @@ classdef SessionTabView < matlab.ui.componentcontainer.ComponentContainer
         % Listener object used to respond dynamically to controller or component events.
         Listener(:, 1) event.listener
 
-        %Components
+        GridLayout
+        % Components
         
     end
 
     properties
+        % Components
         LumbarAngleGraph matlab.ui.control.UIAxes
 
         TimeAboveMaxLabel matlab.ui.control.Label
@@ -64,7 +66,7 @@ classdef SessionTabView < matlab.ui.componentcontainer.ComponentContainer
         function setup( obj )
             %SETUP Initialize the view.
 
-            gridLayout = uigridlayout( ...
+            obj.GridLayout = uigridlayout( ...
                 "Parent", obj, ...
                 "RowHeight", {"1x", 22, 40, 22, 22, 22}, ...
                 "ColumnWidth", {"2x", "1x"}, ...
@@ -72,7 +74,7 @@ classdef SessionTabView < matlab.ui.componentcontainer.ComponentContainer
                 "ColumnSpacing", 50 );
 
             % Create view components.
-            obj.LumbarAngleGraph = uiaxes( "Parent", gridLayout );
+            obj.LumbarAngleGraph = uiaxes( "Parent", obj.GridLayout );
             obj.LumbarAngleGraph.XLabel.String = 'Time (Seconds)';
             obj.LumbarAngleGraph.YLabel.String = 'Lumbosacral Angle (Degrees)';
             obj.LumbarAngleGraph.YLim = [0 360];
@@ -80,46 +82,46 @@ classdef SessionTabView < matlab.ui.componentcontainer.ComponentContainer
             obj.LumbarAngleGraph.Layout.Row = 1;
             obj.LumbarAngleGraph.Layout.Column = 1;
 
-            sliderLabel = uilabel( "Parent", gridLayout, ...
+            sliderLabel = uilabel( "Parent", obj.GridLayout, ...
                 "Text", "Percentage threshold of maximum angle" );
             sliderLabel.Layout.Row = 2;
             sliderLabel.Layout.Column = 1;
 
-            obj.AngleThresholdSlider = uislider( "Parent", gridLayout, ...
+            obj.AngleThresholdSlider = uislider( "Parent", obj.GridLayout, ...
                 "Value", 80, ...
                 "ValueChangedFcn", @obj.onThresholdSliderValueChanged);
             obj.AngleThresholdSlider.Layout.Row = 3;
             obj.AngleThresholdSlider.Layout.Column = 1;
 
-            obj.TimeAboveMaxLabel = uilabel( "Parent", gridLayout, ...
+            obj.TimeAboveMaxLabel = uilabel( "Parent", obj.GridLayout, ...
                 "Text", "Time above threshold angle: 0s");
             obj.TimeAboveMaxLabel.Layout.Row = 4;
             obj.TimeAboveMaxLabel.Layout.Column = 1;
 
-            obj.SmallestAngleLabel = uilabel( "Parent", gridLayout, ...
+            obj.SmallestAngleLabel = uilabel( "Parent", obj.GridLayout, ...
                 "Text", "Smallest angle:");
             obj.SmallestAngleLabel.Layout.Row = 5;
             obj.SmallestAngleLabel.Layout.Column = 1;
 
-            obj.LargestAngleLabel = uilabel( "Parent", gridLayout, ...
+            obj.LargestAngleLabel = uilabel( "Parent", obj.GridLayout, ...
                 "Text", "Largest angle:");
             obj.LargestAngleLabel.Layout.Row = 6;
             obj.LargestAngleLabel.Layout.Column = 1;
 
-            obj.SessionStartButton = uibutton( "Parent", gridLayout, ...
+            obj.SessionStartButton = uibutton( "Parent", obj.GridLayout, ...
                 "Text", "Start Session", ...
                 "ButtonPushedFcn", @obj.onSessionStartButtonPushed );
             obj.SessionStartButton.Layout.Row = 4;
             obj.SessionStartButton.Layout.Column = 2;
 
-            obj.SessionStopButton = uibutton( "Parent", gridLayout, ...
+            obj.SessionStopButton = uibutton( "Parent", obj.GridLayout, ...
                 "Text", "Stop Session", ...
                 "Enable", "off", ...
                 "ButtonPushedFcn", @obj.onSessionStopButtonPushed );
             obj.SessionStopButton.Layout.Row = 5;
             obj.SessionStopButton.Layout.Column = 2;
 
-            obj.IndicatorGraph = uiaxes( "Parent", gridLayout );
+            obj.IndicatorGraph = uiaxes( "Parent", obj.GridLayout );
             obj.IndicatorGraph.YLabel.String = 'Lumbosacral Angle (Degrees)';
             obj.IndicatorGraph.YLim = [-90 180];
             obj.IndicatorGraph.XLim = [0 10];
@@ -139,11 +141,18 @@ classdef SessionTabView < matlab.ui.componentcontainer.ComponentContainer
                 "EdgeColor","none", ...
                 "Position", [0 -90 10 270] );
 
+             setFontSize(obj, 14);
         end
 
         function update( ~ )
         end
 
+    end
+
+    methods ( Access = public )
+        function setFontSize( obj, fontSize )
+            set(findall(obj.GridLayout,'-property','FontSize'),'FontSize', fontSize);
+        end
     end
 
     methods ( Access = private )

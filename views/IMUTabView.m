@@ -5,17 +5,24 @@ classdef IMUTabView < matlab.ui.componentcontainer.ComponentContainer
         % Listener object used to respond dynamically to controller or component events.
         Listener(:, 1) event.listener
 
+        GridLayout
+
         %Components
         BTDeviceList 
         BTScanButton
     end
 
     properties
+        % Components
         DeviceConnect1 DeviceConnect
         DeviceConnect2 DeviceConnect
 
         Device1BatteryLabel matlab.ui.control.Label
         Device2BatteryLabel matlab.ui.control.Label
+        BTDeviceListLabel matlab.ui.control.Label
+        DeviceConnectLabel matlab.ui.control.Label
+        BatteryInformationLabel matlab.ui.control.Label
+        CalibrationLabel matlab.ui.control.Label
 
         CalibrateStandingPositionButton CalibrationButton
         CalibrateFullFlexionButton CalibrationButton
@@ -93,7 +100,7 @@ classdef IMUTabView < matlab.ui.componentcontainer.ComponentContainer
         function setup( obj )
             %SETUP Initialize the view.
 
-            gridLayout = uigridlayout( ...
+            obj.GridLayout = uigridlayout( ...
                 "Parent", obj, ...
                 "RowHeight", {22, 22, 22, 22, 35, 35, "1x", 22, 35, 35}, ...
                 "ColumnWidth", {"1x", "1x"}, ...
@@ -101,72 +108,80 @@ classdef IMUTabView < matlab.ui.componentcontainer.ComponentContainer
                 "ColumnSpacing", 50 );
 
             % Create view components.
-            btDeviceListLabel = uilabel("Parent", gridLayout, ...
+            obj.BTDeviceListLabel = uilabel("Parent", obj.GridLayout, ...
                 "Text", "Available Bluetooth Devices", ...
                 "FontWeight", "bold");
-            btDeviceListLabel.Layout.Row = 1;
-            btDeviceListLabel.Layout.Column = 1;
+            obj.BTDeviceListLabel.Layout.Row = 1;
+            obj.BTDeviceListLabel.Layout.Column = 1;
 
-            obj.BTScanButton = uibutton(gridLayout, "State", ...
+            obj.BTScanButton = uibutton(obj.GridLayout, "State", ...
                 "Text", "Scan for Devices" );
             obj.BTScanButton.Layout.Row = 2;
             obj.BTScanButton.Layout.Column = 1;
             obj.BTScanButton.ValueChangedFcn = @obj.onBTScanButtonPushed;
 
-            obj.BTDeviceList = uitable("Parent", gridLayout, ...
+            obj.BTDeviceList = uitable("Parent", obj.GridLayout, ...
                 "Enable", "off" );
             obj.BTDeviceList.Layout.Row = [3, 7];
             obj.BTDeviceList.Layout.Column = 1;
 
-            deviceConnectLabel = uilabel("Parent", gridLayout, ...
+            obj.DeviceConnectLabel = uilabel("Parent", obj.GridLayout, ...
                 "Text", "Device Connection", ...
                 "FontWeight", "bold");
-            deviceConnectLabel.Layout.Row = 8;
-            deviceConnectLabel.Layout.Column = 1;
+            obj.DeviceConnectLabel.Layout.Row = 8;
+            obj.DeviceConnectLabel.Layout.Column = 1;
 
-            obj.DeviceConnect1 = DeviceConnect("Parent", gridLayout);
+            obj.DeviceConnect1 = DeviceConnect("Parent", obj.GridLayout);
             obj.DeviceConnect1.Layout.Row = 9;
             obj.DeviceConnect1.Layout.Column = 1;
             
-            obj.DeviceConnect2 = DeviceConnect("Parent", gridLayout);
+            obj.DeviceConnect2 = DeviceConnect("Parent", obj.GridLayout);
             obj.DeviceConnect2.Layout.Row = 10;
             obj.DeviceConnect2.Layout.Column = 1;
 
-            batteryInformationLabel = uilabel("Parent", gridLayout, ...
+            obj.BatteryInformationLabel = uilabel("Parent", obj.GridLayout, ...
                 "Text", "Device Battery Information", ...
                 "FontWeight", "bold");
-            batteryInformationLabel.Layout.Row = 1;
-            batteryInformationLabel.Layout.Column = 2;
+            obj.BatteryInformationLabel.Layout.Row = 1;
+            obj.BatteryInformationLabel.Layout.Column = 2;
 
-            obj.Device1BatteryLabel = uilabel("Parent", gridLayout, ...
+            obj.Device1BatteryLabel = uilabel("Parent", obj.GridLayout, ...
                 "Text", "Device not connected. No battery information.");
             obj.Device1BatteryLabel.Layout.Row = 2;
             obj.Device1BatteryLabel.Layout.Column = 2;
 
-            obj.Device2BatteryLabel = uilabel("Parent", gridLayout, ...
+            obj.Device2BatteryLabel = uilabel("Parent", obj.GridLayout, ...
                 "Text", "Device not connected. No battery information.");
             obj.Device2BatteryLabel.Layout.Row = 3;
             obj.Device2BatteryLabel.Layout.Column = 2;
 
-            calibrationLabel = uilabel("Parent", gridLayout, ...
+            obj.CalibrationLabel = uilabel("Parent", obj.GridLayout, ...
                 "Text", "Calibration", "FontWeight", "bold");
-            calibrationLabel.Layout.Row = 4;
-            calibrationLabel.Layout.Column = 2;
+            obj.CalibrationLabel.Layout.Row = 4;
+            obj.CalibrationLabel.Layout.Column = 2;
 
-            obj.CalibrateStandingPositionButton = CalibrationButton("Parent", gridLayout, ...
+            obj.CalibrateStandingPositionButton = CalibrationButton("Parent", obj.GridLayout, ...
                 "ButtonLabel", "Calibrate Standing Position");
             obj.CalibrateStandingPositionButton.Layout.Row = 5;
             obj.CalibrateStandingPositionButton.Layout.Column = 2;
 
-            obj.CalibrateFullFlexionButton = CalibrationButton("Parent", gridLayout, ...
+            obj.CalibrateFullFlexionButton = CalibrationButton("Parent", obj.GridLayout, ...
                 "ButtonLabel", "Calibrate Full Flexion");
             obj.CalibrateFullFlexionButton.Layout.Row = 6;
             obj.CalibrateFullFlexionButton.Layout.Column = 2;
+
+            setFontSize(obj, 14);
         end
 
         function update( ~ )
         end
 
+    end
+
+    methods ( Access = public )
+        function setFontSize( obj, fontSize )
+            set(findall(obj.GridLayout,'-property','FontSize'), 'FontSize', fontSize);
+        end
     end
 
     methods ( Access = private )

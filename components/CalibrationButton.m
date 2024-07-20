@@ -8,7 +8,7 @@ classdef CalibrationButton < matlab.ui.componentcontainer.ComponentContainer
     end
     
     properties (Access = private, Transient, NonCopyable)
-        Grid matlab.ui.container.GridLayout 
+        GridLayout matlab.ui.container.GridLayout 
         CalibrateButton matlab.ui.control.Button
         CalibrationLabel matlab.ui.control.Label
     end
@@ -19,42 +19,50 @@ classdef CalibrationButton < matlab.ui.componentcontainer.ComponentContainer
 
     methods (Access = protected)
 
-        function setup( comp ) 
+        function setup( obj ) 
             % Create grid layout to manage building blocks 
-            comp.Grid = uigridlayout( ...
-                "Parent", comp, ...
+            obj.GridLayout = uigridlayout( ...
+                "Parent", obj, ...
                 "RowHeight", { 22 }, ...
                 "ColumnWidth", {"1x", "1x"} , ...
                 "Padding", 0, ...
                 "ColumnSpacing", 22 );
 
             % Create calibration button
-            comp.CalibrateButton = uibutton(comp.Grid, ...
+            obj.CalibrateButton = uibutton(obj.GridLayout, ...
                 "Enable", "off");
-            comp.CalibrateButton.ButtonPushedFcn = @comp.calibrationButtonPushed;
-            comp.CalibrateButton.Layout.Column = 1;
+            obj.CalibrateButton.ButtonPushedFcn = @obj.calibrationButtonPushed;
+            obj.CalibrateButton.Layout.Column = 1;
 
             % Create status text label
-            comp.CalibrationLabel = uilabel(comp.Grid, ...
+            obj.CalibrationLabel = uilabel(obj.GridLayout, ...
                 "Text", "Not calibrated.");
-            comp.CalibrationLabel.Layout.Column = 2;
+            obj.CalibrationLabel.Layout.Column = 2;
+
+            setFontSize( obj, 14 );
         end
 
-        function update( comp )
+        function update( obj )
             %Update component properties
-            if (comp.ButtonLabel ~= "")
-                comp.CalibrateButton.Text = comp.ButtonLabel;
+            if (obj.ButtonLabel ~= "")
+                obj.CalibrateButton.Text = obj.ButtonLabel;
             end
 
-            if (comp.StatusText ~= "")
-                comp.CalibrationLabel.Text = comp.StatusText;
+            if (obj.StatusText ~= "")
+                obj.CalibrationLabel.Text = obj.StatusText;
             end
 
-            if (comp.Enable)
-                comp.CalibrateButton.Enable = "on";
+            if (obj.Enable)
+                obj.CalibrateButton.Enable = "on";
             else
-                comp.CalibrateButton.Enable = "off";
+                obj.CalibrateButton.Enable = "off";
             end
+        end
+    end
+
+    methods ( Access = public )
+        function setFontSize( obj, fontSize )
+            set(findall(obj.GridLayout,'-property','FontSize'), 'FontSize', fontSize);
         end
     end
 
