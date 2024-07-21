@@ -13,6 +13,8 @@ classdef CalibrationButton < matlab.ui.componentcontainer.ComponentContainer
         GridLayout matlab.ui.container.GridLayout 
         CalibrateButton matlab.ui.control.Button
         CalibrationLabel matlab.ui.control.Label
+
+        FontSet logical = false
     end
 
     events (HasCallbackProperty, NotifyAccess = protected) 
@@ -58,7 +60,10 @@ classdef CalibrationButton < matlab.ui.componentcontainer.ComponentContainer
                 obj.CalibrateButton.Enable = "off";
             end
 
-            set(findall(obj.GridLayout,'-property','FontSize'),'FontSize', obj.FontSize);
+            if (~obj.FontSet)
+                set(findall(obj.GridLayout,'-property','FontSize'),'FontSize', obj.FontSize);
+                obj.FontSet = true;
+            end
         end
     end
 
