@@ -137,25 +137,29 @@ classdef IMUTabController < handle
 
         function onDevicesChanged( obj, ~, ~ )
             % DEVICESCHANGED Update UI on device connect or disconnect
+            
+            setDeviceConnectState( obj, obj.Model.IMUDevices(1), obj.IMUTabView.DeviceConnect1 );
+            setDeviceConnectState( obj, obj.Model.IMUDevices(2), obj.IMUTabView.DeviceConnect2 );
 
-            if (obj.Model.IMUDevices(1).IsConnected)
-                obj.IMUTabView.DeviceConnect1.State = "Disconnect";
-                obj.IMUTabView.Device1BatteryLabel.Text = obj.Model.getBatteryInfo(1);
-            else
-                obj.IMUTabView.DeviceConnect1.State = "Connect";
-                obj.IMUTabView.Device1BatteryLabel.Text = "Device not connected. No battery information.";
-            end
-
-            if (obj.Model.IMUDevices(2).IsConnected)
-                obj.IMUTabView.DeviceConnect2.State = "Disconnect";
-                obj.IMUTabView.Device2BatteryLabel.Text = obj.Model.getBatteryInfo(2);
-            else
-                obj.IMUTabView.DeviceConnect2.State = "Connect";
-                obj.IMUTabView.Device2BatteryLabel.Text = "Device not connected. No battery information.";
-            end
+            obj.IMUTabView.Device1BatteryLabel.Text = obj.Model.getBatteryInfo(1);
+            obj.IMUTabView.Device2BatteryLabel.Text = obj.Model.getBatteryInfo(2);
 
             obj.IMUTabView.CalibrateStandingPositionButton.Enable = obj.Model.twoIMUDevicesConnected;
             obj.IMUTabView.CalibrateFullFlexionButton.Enable = obj.Model.twoIMUDevicesConnected;
+        end
+
+        function setDeviceConnectState( ~, imuDevice, deviceConnect )
+            arguments
+                ~
+                imuDevice IMUInterface
+                deviceConnect DeviceConnect
+            end
+
+            if (imuDevice.IsConnected)
+                deviceConnect.State = "Disconnect";
+            else
+                deviceConnect.State = "Connect";
+            end
         end
 
         function onCalibrateStandingPushed( obj, ~, ~ )
