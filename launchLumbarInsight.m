@@ -2,13 +2,11 @@ function varargout = launchLumbarInsight( f )
 %LAUNCHLUMBARINSIGHT Launch the application.
 
 arguments
-    f(1, 1) matlab.ui.Figure = uifigure()
+    f(1, 1) matlab.ui.Figure = uifigure( ...
+        "Name", "Lumbar Insight", ...
+        "Position", [50 100 900 500], ...
+        "WindowState", "maximized" );
 end % arguments
-
-% Configure figure
-f.Name = "Lumbar Insight";
-f.Position = [50 100 900 500];
-f.WindowState = "maximized";
 
 % Create the layout.
 g = uigridlayout( ...
