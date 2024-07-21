@@ -6,6 +6,8 @@ classdef IMUTabView < matlab.ui.componentcontainer.ComponentContainer
         Listener(:, 1) event.listener
 
         GridLayout
+
+        FontSet logical = false
     end
 
     properties
@@ -161,7 +163,10 @@ classdef IMUTabView < matlab.ui.componentcontainer.ComponentContainer
         end
 
         function update( obj )
-            set(findall(obj.GridLayout,'-property','FontSize'), 'FontSize', obj.FontSize);
+            if (~obj.FontSet)
+                set(findall(obj.GridLayout,'-property','FontSize'),'FontSize', obj.FontSize);
+                obj.FontSet = true;
+            end
         end
 
     end

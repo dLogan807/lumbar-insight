@@ -8,6 +8,7 @@ classdef SessionTabView < matlab.ui.componentcontainer.ComponentContainer
         GridLayout
         % Components
         
+        FontSet logical = false
     end
 
     properties
@@ -145,7 +146,10 @@ classdef SessionTabView < matlab.ui.componentcontainer.ComponentContainer
         end
 
         function update( obj )
-            set(findall(obj.GridLayout,'-property','FontSize'),'FontSize', obj.FontSize);
+            if (~obj.FontSet)
+                set(findall(obj.GridLayout,'-property','FontSize'),'FontSize', obj.FontSize);
+                obj.FontSet = true;
+            end
         end
 
     end

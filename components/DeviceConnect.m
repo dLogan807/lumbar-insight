@@ -16,6 +16,7 @@ classdef DeviceConnect < matlab.ui.componentcontainer.ComponentContainer
         DeviceConnectButton matlab.ui.control.Button 
 
         StateChanged logical = false
+        FontSet logical = false;
     end
 
     events (HasCallbackProperty, NotifyAccess = protected) 
@@ -53,7 +54,10 @@ classdef DeviceConnect < matlab.ui.componentcontainer.ComponentContainer
 
         function update( obj )
             %Update component properties
-            set(findall(obj.GridLayout,'-property','FontSize'),'FontSize', obj.FontSize);
+            if (~obj.FontSet)
+                set(findall(obj.GridLayout,'-property','FontSize'),'FontSize', obj.FontSize);
+                obj.FontSet = true;
+            end
 
             if (obj.StateChanged)
                 updateConnectButton( obj );
