@@ -80,7 +80,7 @@ classdef IMUTabController < handle
             % ONBTSCANBUTTONPUSHED Listener callback, responding to the view event
 
             % Retrieve bluetooth devices and update the model.
-            obj.IMUTabView.SetBTScanButtonState("Scanning");
+            setBTScanButtonScanning( obj, true );
 
             allDevices = bluetoothlist("Timeout", 15);
             allDevices.Address = [];
@@ -93,8 +93,20 @@ classdef IMUTabController < handle
         end
 
         function onDeviceListUpdated( obj, ~, ~ )
-            obj.IMUTabView.setBTDeviceListData(obj.Model.BluetoothDevices);
-            obj.IMUTabView.SetBTScanButtonState("Devices Retrieved");
+            obj.IMUTabView.BTDeviceList.Data = obj.Model.BluetoothDevices;
+            setBTScanButtonScanning( obj, false );
+        end
+
+        function setBTScanButtonScanning( obj, isScanning )
+            if (isScanning)
+                obj.IMUTabView.BTScanButton.Text = "Scanning";
+                obj.IMUTabView.BTScanButton.Value = true;
+                obj.IMUTabView.BTScanButton.Enable = false;
+            else
+                obj.IMUTabView.BTScanButton.Text = "Scan for Devices";
+                obj.IMUTabView.BTScanButton.Value = false;
+                obj.IMUTabView.BTScanButton.Enable = true;
+            end
         end
 
         function onDevice1ConnectButtonPushed( obj, ~, ~ )

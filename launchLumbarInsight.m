@@ -2,16 +2,17 @@ function varargout = launchLumbarInsight( f )
 %LAUNCHLUMBARINSIGHT Launch the application.
 
 arguments
+    % Create figure
     f(1, 1) matlab.ui.Figure = uifigure( ...
         "Name", "Lumbar Insight", ...
         "Position", [50 100 900 500], ...
         "WindowState", "maximized" );
 end % arguments
 
-% Create the layout.
+% Create the layout
 g = uigridlayout( ...
     "Parent", f, ...
-    "RowHeight", {"1x"}, ...
+    "RowHeight", {"1x" }, ...
     "ColumnWidth", "1x" );
 
 % Create tab group
@@ -21,7 +22,7 @@ cameraTab = uitab(tabgroup,"Title","Camera Configuration");
 sessionTab = uitab(tabgroup,"Title","Session");
 managementTab = uitab(tabgroup,"Title","Session Management");
 
-% Create the model.
+% Create the model
 model = Model;
 
 % Create the views
@@ -36,7 +37,7 @@ sessionTabView = SessionTabView( "Parent", sessionTab, ...
 imuTabController = IMUTabController( model, imuTabView );
 SessionTabController( imuTabController.Model, sessionTabView);
 
-% Return the figure handle if requested.
+% Return the figure handle if requested
 if nargout > 0
     nargoutchk( 1, 1 )
     varargout{1} = f;

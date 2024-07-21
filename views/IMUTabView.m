@@ -6,16 +6,15 @@ classdef IMUTabView < matlab.ui.componentcontainer.ComponentContainer
         Listener(:, 1) event.listener
 
         GridLayout
-
-        %Components
-        BTDeviceList 
-        BTScanButton
     end
 
     properties
         FontSize double = 12
 
         % Components
+        BTDeviceList 
+        BTScanButton
+        
         DeviceConnect1 DeviceConnect
         DeviceConnect2 DeviceConnect
 
@@ -78,22 +77,6 @@ classdef IMUTabView < matlab.ui.componentcontainer.ComponentContainer
                 "CalibrateButtonPushed", @obj.onCalibrateStandingPushed );
             obj.Listener(end+1) = listener( obj.CalibrateFullFlexionButton, ... 
                 "CalibrateButtonPushed", @obj.onCalibrateFullFlexionPushed );
-        end
-
-        function SetBTScanButtonState( obj, state )
-            if (strcmp(state, "Scanning"))
-                obj.BTScanButton.Text = "Scanning";
-                obj.BTScanButton.Value = true;
-                obj.BTScanButton.Enable = false;
-            else
-                obj.BTScanButton.Text = "Scan for Devices";
-                obj.BTScanButton.Value = false;
-                obj.BTScanButton.Enable = true;
-            end
-        end
-
-        function setBTDeviceListData( obj, tableData )
-            obj.BTDeviceList.Data = tableData;
         end
     end
 
