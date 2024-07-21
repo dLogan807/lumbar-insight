@@ -110,10 +110,20 @@ classdef IMUTabController < handle
         end
 
         function onDevice1ConnectButtonPushed( obj, ~, ~ )
+            obj.IMUTabView.DeviceConnect1.State = "Connecting";
+            if (obj.IMUTabView.DeviceConnect2.State == "Connect")
+                obj.IMUTabView.DeviceConnect2.State = "Waiting";
+            end
+
             obj.Model.connectDevice(obj.IMUTabView.DeviceConnect1.DeviceName, obj.IMUTabView.DeviceConnect1.DeviceType, 1);
         end
 
         function onDevice2ConnectButtonPushed( obj, ~, ~ )
+            obj.IMUTabView.DeviceConnect2.State = "Connecting";
+            if (obj.IMUTabView.DeviceConnect1.State == "Connect")
+                obj.IMUTabView.DeviceConnect1.State = "Waiting";
+            end
+
             obj.Model.connectDevice(obj.IMUTabView.DeviceConnect2.DeviceName, obj.IMUTabView.DeviceConnect2.DeviceType, 2);
         end
 
@@ -126,19 +136,21 @@ classdef IMUTabController < handle
         end
 
         function onDevicesChanged( obj, ~, ~ )
-            % DEVICESCHANGED Update connect UI state
-            obj.IMUTabView.DeviceConnect1.Connected = obj.Model.IMUDevices(1).IsConnected;
-            obj.IMUTabView.DeviceConnect2.Connected = obj.Model.IMUDevices(2).IsConnected;
+            % DEVICESCHANGED Update UI on device connect or disconnect
 
             if (obj.Model.IMUDevices(1).IsConnected)
+                obj.IMUTabView.DeviceConnect1.State = "Disconnect";
                 obj.IMUTabView.Device1BatteryLabel.Text = obj.Model.getBatteryInfo(1);
             else
+                obj.IMUTabView.DeviceConnect1.State = "Connect";
                 obj.IMUTabView.Device1BatteryLabel.Text = "Device not connected. No battery information.";
             end
 
             if (obj.Model.IMUDevices(2).IsConnected)
+                obj.IMUTabView.DeviceConnect2.State = "Disconnect";
                 obj.IMUTabView.Device2BatteryLabel.Text = obj.Model.getBatteryInfo(2);
             else
+                obj.IMUTabView.DeviceConnect2.State = "Connect";
                 obj.IMUTabView.Device2BatteryLabel.Text = "Device not connected. No battery information.";
             end
 
