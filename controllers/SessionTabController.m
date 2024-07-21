@@ -34,7 +34,8 @@ classdef SessionTabController < handle
                 "SessionStopButtonPushed", @obj.onSessionStopButtonPushed );
 
             % Listen for changes to the model data.
-
+            obj.Listener(end+1) = listener( obj.Model, ...
+                "DevicesConnectedChanged", @obj.onDevicesConnectedChanged );
             
         end % constructor
         
@@ -57,6 +58,20 @@ classdef SessionTabController < handle
     
     methods ( Access = private )
 
+        function onDevicesConnectedChanged( obj, ~, ~ )
+            %ONDEVICESCONNECTEDCHANGED Enable start button depending on
+            %devices connected.
+
+            if (obj.Model.twoIMUDevicesConnected)
+                obj.SessionTabView.SessionStartButton.Enable = "on";
+            else
+                obj.SessionTabView.SessionStartButton.Enable = "off";
+                if (obj.Model.SessionInProgress)
+                    obj.Model.stopSession( obj );
+                end
+            end
+        end
+
         function onThresholdSliderValueChanged( obj, ~, ~ )
             obj.Model.ThresholdAnglePercentage = obj.SessionTabView.AngleThresholdSlider.Value;
         end
@@ -64,7 +79,8 @@ classdef SessionTabController < handle
         function onSessionStartButtonPushed( obj, ~, ~ )
             obj.SessionTabView.SessionStartButton.Enable = "off";
             obj.SessionTabView.SessionStopButton.Enable = "on";
-            obj.Model.SessionInProgress = true;
+
+            obj.Model.startSession( obj );
 
             cla(obj.SessionTabView.LumbarAngleGraph);
             resetSessionData( obj );
@@ -128,7 +144,7 @@ classdef SessionTabController < handle
         end
 
         function onSessionStopButtonPushed( obj, ~, ~ )
-            obj.Model.SessionInProgress = false;
+            obj.Model.stopSession( obj );
             obj.SessionTabView.SessionStopButton.Enable = "off";
         end
 

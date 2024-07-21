@@ -4,9 +4,6 @@ classdef SessionTabView < matlab.ui.componentcontainer.ComponentContainer
     properties ( Access = private )
         % Listener object used to respond dynamically to controller or component events.
         Listener(:, 1) event.listener
-
-        GridLayout
-        % Components
         
         FontSet logical = false
     end
@@ -15,6 +12,8 @@ classdef SessionTabView < matlab.ui.componentcontainer.ComponentContainer
         FontSize double = 12
 
         % Components
+        GridLayout matlab.ui.container.GridLayout
+
         LumbarAngleGraph matlab.ui.control.UIAxes
 
         TimeAboveMaxLabel matlab.ui.control.Label
@@ -113,6 +112,7 @@ classdef SessionTabView < matlab.ui.componentcontainer.ComponentContainer
 
             obj.SessionStartButton = uibutton( "Parent", obj.GridLayout, ...
                 "Text", "Start Session", ...
+                "Enable", "off", ...
                 "ButtonPushedFcn", @obj.onSessionStartButtonPushed );
             obj.SessionStartButton.Layout.Row = 4;
             obj.SessionStartButton.Layout.Column = 2;

@@ -17,7 +17,9 @@ classdef Model < handle
         StandingAngle double
         ThresholdAnglePercentage uint8 = 0.8
         timeAboveThresholdAngle = 0
+    end
 
+    properties (SetAccess = private)
         SessionInProgress logical = false
     end
     
@@ -102,6 +104,9 @@ classdef Model < handle
             quat3dDifference = getQuat3dDifference( obj, quaternion1, quaternion2 );
             obj.StandingAngle = calculateAngle(obj, quat3dDifference);
 
+            obj.IMUDevices(1).stopStreaming;
+            obj.IMUDevices(2).stopStreaming;
+
             notify( obj, "StandingAngleCalibrated" )
         end
 
@@ -115,8 +120,29 @@ classdef Model < handle
             quat3dDifference = getQuat3dDifference( obj, quaternion1, quaternion2 );
             obj.FullFlexionAngle = calculateAngle(obj, quat3dDifference);
 
+            obj.IMUDevices(1).stopStreaming;
+            obj.IMUDevices(2).stopStreaming;
+
             notify( obj, "FullFlexionAngleCalibrated")
         end
+
+        function startSession( obj ) 
+        
+            obj.IMUDevices(1).startStreaming;
+            obj.IMUDevices(2).startStreaming;
+
+            obj.SessionInProgress = true;
+
+        end % startStreaming
+
+        function stopSession( obj ) 
+        
+            obj.IMUDevices(1).stopStreaming;
+            obj.IMUDevices(2).stopStreaming;
+
+            obj.SessionInProgress = false;
+
+        end % stopStreaming
 
     end % methods
 
@@ -174,19 +200,6 @@ classdef Model < handle
                 
         end
 
-        function startStreaming( obj ) 
-        
-            obj.IMUDevices(1).startStreaming;
-            obj.IMUDevices(2).startStreaming;
-
-        end % startStreaming
-
-        function stopStreaming( obj ) 
-        
-            obj.IMUDevices(1).stopStreaming;
-            obj.IMUDevices(2).stopStreaming;
-
-        end % stopStreaming
     end
 
 end % classdef
