@@ -62,7 +62,7 @@ classdef SessionTabController < handle
             %ONDEVICESCONNECTEDCHANGED Enable start button depending on
             %devices connected.
 
-            if (obj.Model.twoIMUDevicesConnected)
+            if (obj.Model.bothIMUDevicesConnected)
                 obj.SessionTabView.SessionStartButton.Enable = "on";
             else
                 obj.SessionTabView.SessionStartButton.Enable = "off";

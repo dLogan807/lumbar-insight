@@ -63,7 +63,6 @@ classdef DeviceConfig < matlab.ui.componentcontainer.ComponentContainer
             end
 
             if (obj.StateChanged)
-                updateConfigureButton( obj );
                 updateOverallState( obj );
 
                 obj.StateChanged = false;
@@ -72,32 +71,27 @@ classdef DeviceConfig < matlab.ui.componentcontainer.ComponentContainer
             end
         end
 
-        function updateConfigureButton( obj )
-
-            obj.DeviceConfigButton.Text = string(obj.State);
-
+        function updateOverallState( obj )
             if (obj.State == "Configure")
-                obj.DeviceConfigButton.Enable = "on";
+                obj.SamplingRateLabel.Text = obj.DeviceName + " Sampling Rate (Hz)";
                 obj.SamplingRateDropDown.Enable = "on";
+                obj.DeviceConfigButton.Text = "Configure";
+                obj.SamplingRateDropDown.Items = string(obj.AvailableSamplingRates);
+                obj.SamplingRate = str2double(obj.SamplingRateDropDown.Value);
+                obj.DeviceConfigButton.Enable = "on";
             elseif (obj.State == "Configuring")
                 obj.DeviceConfigButton.Enable = "off";
+                obj.DeviceConfigButton.Text = "Configuring";
                 obj.SamplingRateDropDown.Enable = "off";
             elseif ( obj.State == "Waiting" )
+                obj.DeviceConfigButton.Text = "Waiting";
                 obj.DeviceConfigButton.Enable = "off";
-            end
-        end
-
-        function updateOverallState( obj )
-            if (strcmp(obj.DeviceName, ""))
-                obj.SamplingRateLabel = "Device not connected. Sampling Rate (Hz)";
+            elseif ( obj.State == "Disconnected" )
+                obj.SamplingRateLabel.Text = "Device not connected. Sampling Rate (Hz)";
                 obj.SamplingRateDropDown.Enable = "off";
                 obj.SamplingRateDropDown.Items = "Unavailable";
                 obj.DeviceConfigButton.Enable = "off";
-            else
-                obj.SamplingRateLabel = obj.DeviceName + " Sampling Rate (Hz)";
-                obj.SamplingRateDropDown.Enable = "on";
-                obj.SamplingRateDropDown.Items = obj.AvailableSamplingRates;
-                obj.DeviceConfigButton.Enable = "on";
+                obj.DeviceConfigButton.Text = "Configure";
             end
         end
     end
@@ -110,7 +104,7 @@ classdef DeviceConfig < matlab.ui.componentcontainer.ComponentContainer
         function set.State( obj, state )
             arguments
                 obj
-                state ConfigureButtonStates
+                state ConfigButtonStates
             end
 
             obj.State = state;
@@ -131,7 +125,7 @@ classdef DeviceConfig < matlab.ui.componentcontainer.ComponentContainer
         end
 
         function samplingRateChanged( obj, ~, ~)
-            obj.SamplingRate = obj.SamplingRateDropDown.Value;
+            obj.SamplingRate = str2double(obj.SamplingRateDropDown.Value);
         end
     end
 end

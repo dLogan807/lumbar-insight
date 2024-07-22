@@ -9,12 +9,12 @@ classdef ShimmerIMU < IMUInterface
 
     properties (SetAccess = protected)
         Name
-        IsConnected
-        IsStreaming
-        IsConfigured
+        IsConnected = false
+        IsStreaming = false
+        IsConfigured = false
         LatestQuaternion
         BatteryInfo
-        SamplingRates = [60, 120]
+        SamplingRates = [60 120]
     end
     
     methods
@@ -124,7 +124,7 @@ classdef ShimmerIMU < IMUInterface
 
             SensorMacros = ShimmerEnabledSensorsMacrosClass;                          % assign user friendly macros for setenabledsensors
 
-            if (setSamplingRate(samplingRate))
+            if (setSamplingRate(obj, samplingRate))
     	        obj.Driver.setinternalboard('9DOF');                                      % Set the shimmer internal daughter board to '9DOF'
                 obj.Driver.disableallsensors;                                             % disable all sensors
                 obj.Driver.setenabledsensors(SensorMacros.GYRO,1,SensorMacros.MAG,1,...   % Enable the gyroscope, magnetometer and accelerometer.
@@ -145,7 +145,7 @@ classdef ShimmerIMU < IMUInterface
             %SETSAMPLINGRATE Sets the sampling rate and then sets sensors 
             % as closely as possible to it
 
-            if (obj.SamplingRates == samplingRate)
+            if (ismember(samplingRate, obj.SamplingRates))
                 isNumber = ~strcmp(obj.Driver.setsamplingrate( samplingRate ), 'Nan');
                 if (isNumber)
                     rateSet = true;

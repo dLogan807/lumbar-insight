@@ -42,6 +42,11 @@ classdef IMUTabController < handle
                 "Device2DisconnectButtonPushed", @obj.onDevice2DisconnectButtonPushed );
 
             obj.Listener(end+1) = listener( obj.IMUTabView, ... 
+                "Device1ConfigureButtonPushed", @obj.onDevice1ConfigureButtonPushed );
+            obj.Listener(end+1) = listener( obj.IMUTabView, ... 
+                "Device2ConfigureButtonPushed", @obj.onDevice2ConfigureButtonPushed );
+
+            obj.Listener(end+1) = listener( obj.IMUTabView, ... 
                 "CalibrateStandingPushed", @obj.onCalibrateStandingPushed );
             obj.Listener(end+1) = listener( obj.IMUTabView, ... 
                 "CalibrateFullFlexionPushed", @obj.onCalibrateFullFlexionPushed );
@@ -51,6 +56,10 @@ classdef IMUTabController < handle
                 "DeviceListUpdated", @obj.onDeviceListUpdated );
             obj.Listener(end+1) = listener( obj.Model, ... 
                 "DevicesConnectedChanged", @obj.onDevicesChanged );
+
+            obj.Listener(end+1) = listener( obj.Model, ... 
+                "DevicesConfiguredChanged", @obj.onDevicesConfiguredChanged );
+
             obj.Listener(end+1) = listener( obj.Model, ... 
                 "StandingAngleCalibrated", @obj.onStandingAngleCalibrated );
             obj.Listener(end+1) = listener( obj.Model, ... 
@@ -144,8 +153,10 @@ classdef IMUTabController < handle
             obj.IMUTabView.Device1BatteryLabel.Text = obj.Model.getBatteryInfo(1);
             obj.IMUTabView.Device2BatteryLabel.Text = obj.Model.getBatteryInfo(2);
 
-            obj.IMUTabView.CalibrateStandingPositionButton.Enable = obj.Model.bothIMUDevicesConnected;
-            obj.IMUTabView.CalibrateFullFlexionButton.Enable = obj.Model.bothIMUDevicesConnected;
+            setDeviceConfigState( obj, obj.Model.IMUDevices(1), obj.IMUTabView.DeviceConfig1 );
+            setDeviceConfigState( obj, obj.Model.IMUDevices(2), obj.IMUTabView.DeviceConfig2 );
+
+            updateCalibrationEnabled( obj );
         end
 
         function setDeviceConnectState( ~, imuDevice, deviceConnect )
@@ -160,6 +171,54 @@ classdef IMUTabController < handle
             else
                 deviceConnect.State = "Connect";
             end
+        end
+
+        function onDevicesConfiguredChanged( obj, ~, ~ )
+            setDeviceConfigState( obj, obj.Model.IMUDevices(1), obj.IMUTabView.DeviceConfig1 );
+            setDeviceConfigState( obj, obj.Model.IMUDevices(2), obj.IMUTabView.DeviceConfig2 );
+
+            updateCalibrationEnabled( obj );
+        end
+
+        function updateCalibrationEnabled( obj )
+            if (obj.Model.bothIMUDevicesConfigured)
+                obj.IMUTabView.CalibrateStandingPositionButton.Enable = true;
+                obj.IMUTabView.CalibrateFullFlexionButton.Enable = true;
+            else
+                obj.IMUTabView.CalibrateStandingPositionButton.Enable = false;
+                obj.IMUTabView.CalibrateFullFlexionButton.Enable = false;
+            end
+        end
+
+        function setDeviceConfigState( ~, imuDevice, deviceConfig )
+            arguments
+                ~
+                imuDevice IMUInterface
+                deviceConfig DeviceConfig
+            end
+
+            if (imuDevice.IsConnected)
+                deviceConfig.setDeviceInfo(imuDevice.Name, imuDevice.SamplingRates);
+                deviceConfig.State = "Configure";
+            else
+                deviceConfig.State = "Disconnected";
+            end
+        end
+
+        function onDevice1ConfigureButtonPushed( obj, ~, ~ )
+            obj.IMUTabView.DeviceConfig1.State = "Configuring";
+            obj.IMUTabView.DeviceConfig2.State = "Waiting";
+
+            samplingRate = obj.IMUTabView.DeviceConfig1.SamplingRate;
+            obj.Model.configure(1, samplingRate);
+        end
+
+        function onDevice2ConfigureButtonPushed( obj, ~, ~ )
+            obj.IMUTabView.DeviceConfig2.State = "Configuring";
+            obj.IMUTabView.DeviceConfig1.State = "Waiting";
+
+            samplingRate = obj.IMUTabView.DeviceConfig2.SamplingRate;
+            obj.Model.configure(2, samplingRate);
         end
 
         function onCalibrateStandingPushed( obj, ~, ~ )

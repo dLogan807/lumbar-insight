@@ -28,6 +28,7 @@ classdef Model < handle
         DeviceListUpdated
 
         DevicesConnectedChanged
+        DevicesConfiguredChanged
 
         StandingAngleCalibrated
         FullFlexionAngleCalibrated
@@ -96,6 +97,14 @@ classdef Model < handle
         function batteryInfo = getBatteryInfo( obj, deviceIndex )
             % GETBATTERYINFO Get battery information of the IMU
             batteryInfo = obj.IMUDevices(deviceIndex).BatteryInfo;
+        end
+
+        function configure( obj, deviceIndex, samplingRate )
+            device = obj.IMUDevices(deviceIndex);
+
+            device.configure(samplingRate);
+
+            notify( obj, "DevicesConfiguredChanged" )
         end
 
         function calibrateStandingAngle( obj )
