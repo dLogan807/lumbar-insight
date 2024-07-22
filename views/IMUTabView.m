@@ -45,6 +45,9 @@ classdef IMUTabView < matlab.ui.componentcontainer.ComponentContainer
         Device1DisconnectButtonPushed
         Device2DisconnectButtonPushed
 
+        Device1ConfigureButtonPushed
+        Device2ConfigureButtonPushed
+
         CalibrateStandingPushed
         CalibrateFullFlexionPushed
     end % events ( NotifyAccess = private )
@@ -80,6 +83,10 @@ classdef IMUTabView < matlab.ui.componentcontainer.ComponentContainer
                 "Connect", @obj.onDevice2Connect );
             obj.Listener(end+1) = listener( obj.DeviceConnect2, ... 
                 "Disconnect", @obj.onDevice2Disconnect );
+            obj.Listener(end+1) = listener( obj.DeviceConfig1, ...
+                "Configure", @obj.onDevice1Configure );
+            obj.Listener(end+1) = listener( obj.DeviceConfig1, ...
+                "Configure", @obj.onDevice2Configure );
             obj.Listener(end+1) = listener( obj.CalibrateStandingPositionButton, ... 
                 "CalibrateButtonPushed", @obj.onCalibrateStandingPushed );
             obj.Listener(end+1) = listener( obj.CalibrateFullFlexionButton, ... 
@@ -217,6 +224,14 @@ classdef IMUTabView < matlab.ui.componentcontainer.ComponentContainer
 
         function onDevice2Disconnect( obj, ~, ~ )
             notify( obj, "Device2DisconnectButtonPushed");
+        end
+
+        function onDevice1Configure( obj, ~, ~ )
+            notify( obj, "Device1ConfigureButtonPushed");
+        end
+
+        function onDevice2Configure( obj, ~, ~ )
+            notify( obj, "Device2ConfigureButtonPushed");
         end
 
         function onCalibrateStandingPushed( obj, ~, ~ )
