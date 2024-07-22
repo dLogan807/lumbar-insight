@@ -107,6 +107,22 @@ classdef Model < handle
             notify( obj, "DevicesConfiguredChanged" )
         end
 
+        function samplingRate = lowestSamplingRate( obj )
+            %LOWESTSAMPLINGRATE Retrieve the lowest sampling rate of the
+            %IMUs
+
+            samplingRate = -1;
+
+            if (obj.IMUDevices(1).IsConfigured)
+                samplingRate = obj.IMUDevices(1).SamplingRate;
+            end
+
+            device2Rate = obj.IMUDevices(2).SamplingRate;
+            if (obj.IMUDevices(2).IsConfigured && (device2Rate < samplingRate))
+                samplingRate = device2Rate;
+            end
+        end
+
         function calibrateStandingAngle( obj )
             quaternion1 = obj.IMUDevices(1).LatestQuaternion;
             quaternion2 = obj.IMUDevices(2).LatestQuaternion;

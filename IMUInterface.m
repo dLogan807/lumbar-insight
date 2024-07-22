@@ -9,6 +9,7 @@ classdef IMUInterface < handle
         LatestQuaternion
         BatteryInfo string
         SamplingRates (1, :) double
+        SamplingRate double
     end
     
     methods (Abstract)

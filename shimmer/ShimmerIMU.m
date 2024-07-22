@@ -15,6 +15,7 @@ classdef ShimmerIMU < IMUInterface
         LatestQuaternion
         BatteryInfo
         SamplingRates = [60 120]
+        SamplingRate = -1
     end
     
     methods
@@ -116,6 +117,7 @@ classdef ShimmerIMU < IMUInterface
             % DISCONNECT Disconnect from the Shimmer
 
             obj.IsConfigured = false;
+            obj.SamplingRate = -1;
             disconnected = obj.Driver.disconnect;
         end
 
@@ -149,6 +151,7 @@ classdef ShimmerIMU < IMUInterface
                 isNumber = ~strcmp(obj.Driver.setsamplingrate( samplingRate ), 'Nan');
                 if (isNumber)
                     rateSet = true;
+                    obj.SamplingRate = samplingRate;
                 else
                     rateSet = false;
                 end
