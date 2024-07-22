@@ -22,11 +22,16 @@ classdef IMUTabView < matlab.ui.componentcontainer.ComponentContainer
 
         Device1BatteryLabel matlab.ui.control.Label
         Device2BatteryLabel matlab.ui.control.Label
+
         BTDeviceListLabel matlab.ui.control.Label
         DeviceConnectLabel matlab.ui.control.Label
         BatteryInformationLabel matlab.ui.control.Label
-        CalibrationLabel matlab.ui.control.Label
 
+        ConfigurationLabel matlab.ui.control.Label
+        DeviceConfig1 DeviceConfig
+        DeviceConfig2 DeviceConfig
+
+        CalibrationLabel matlab.ui.control.Label
         CalibrateStandingPositionButton CalibrationButton
         CalibrateFullFlexionButton CalibrationButton
     end
@@ -92,9 +97,11 @@ classdef IMUTabView < matlab.ui.componentcontainer.ComponentContainer
                 "RowHeight", {22, 22, 22, 22, 35, 35, 22, 35, 35, "1x", 22, 35, 35}, ...
                 "ColumnWidth", {"1x", "1x"}, ...
                 "Padding", 20, ...
-                "ColumnSpacing", 50 );
+                "ColumnSpacing", 100 );
 
-            % Create view components.
+            % Create view components
+
+            % Bluetooth scanning components
             obj.BTDeviceListLabel = uilabel("Parent", obj.GridLayout, ...
                 "Text", "Available Bluetooth Devices", ...
                 "FontWeight", "bold");
@@ -112,6 +119,7 @@ classdef IMUTabView < matlab.ui.componentcontainer.ComponentContainer
             obj.BTDeviceList.Layout.Row = [3, 10];
             obj.BTDeviceList.Layout.Column = 1;
 
+            % Connection components
             obj.DeviceConnectLabel = uilabel("Parent", obj.GridLayout, ...
                 "Text", "Connection", ...
                 "FontWeight", "bold");
@@ -128,6 +136,7 @@ classdef IMUTabView < matlab.ui.componentcontainer.ComponentContainer
             obj.DeviceConnect2.Layout.Row = 13;
             obj.DeviceConnect2.Layout.Column = 1;
 
+            % Battery components
             obj.BatteryInformationLabel = uilabel("Parent", obj.GridLayout, ...
                 "Text", "Battery Information", ...
                 "FontWeight", "bold");
@@ -144,6 +153,23 @@ classdef IMUTabView < matlab.ui.componentcontainer.ComponentContainer
             obj.Device2BatteryLabel.Layout.Row = 3;
             obj.Device2BatteryLabel.Layout.Column = 2;
 
+            % Configuration components
+            obj.ConfigurationLabel = uilabel("Parent", obj.GridLayout, ...
+                "Text", "Configuration", "FontWeight", "bold");
+            obj.ConfigurationLabel.Layout.Row = 4;
+            obj.ConfigurationLabel.Layout.Column = 2;
+
+            obj.DeviceConfig1 = DeviceConfig("Parent", obj.GridLayout, ...
+                "FontSize", obj.FontSize );
+            obj.DeviceConfig1.Layout.Row = 5;
+            obj.DeviceConfig1.Layout.Column = 2;
+
+            obj.DeviceConfig2 = DeviceConfig("Parent", obj.GridLayout, ...
+                "FontSize", obj.FontSize );
+            obj.DeviceConfig2.Layout.Row = 6;
+            obj.DeviceConfig2.Layout.Column = 2;
+
+            % Calibration components
             obj.CalibrationLabel = uilabel("Parent", obj.GridLayout, ...
                 "Text", "Calibration", "FontWeight", "bold");
             obj.CalibrationLabel.Layout.Row = 7;

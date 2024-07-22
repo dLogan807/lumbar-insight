@@ -11,6 +11,7 @@ classdef ShimmerIMU < IMUInterface
         Name
         IsConnected
         IsStreaming
+        IsConfigured
         LatestQuaternion
         BatteryInfo
         SamplingRates = [60, 120]
@@ -114,6 +115,7 @@ classdef ShimmerIMU < IMUInterface
         function disconnected = disconnect(obj)
             % DISCONNECT Disconnect from the Shimmer
 
+            obj.IsConfigured = false;
             disconnected = obj.Driver.disconnect;
         end
 
@@ -131,8 +133,10 @@ classdef ShimmerIMU < IMUInterface
                 obj.Driver.setorientation3D(1);                                           % Enable orientation3D
                 obj.Driver.setgyroinusecalibration(1);                                    % Enable gyro in-use calibration
 
+                obj.IsConfigured = true;
                 configured = true;
             else
+                obj.IsConfigured = false;
                 configured = false;
             end
         end

@@ -5,6 +5,7 @@ classdef IMUInterface < handle
         Name string
         IsConnected logical
         IsStreaming logical
+        IsConfigured logical
         LatestQuaternion
         BatteryInfo string
         SamplingRates (1, :) double

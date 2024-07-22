@@ -85,8 +85,12 @@ classdef Model < handle
 
         end % disconnectDevice
 
-        function devicesConnected = twoIMUDevicesConnected( obj )
+        function devicesConnected = bothIMUDevicesConnected( obj )
             devicesConnected = (obj.IMUDevices(1).IsConnected && obj.IMUDevices(2).IsConnected);
+        end
+
+        function devicesConfigured = bothIMUDevicesConfigured( obj )
+            devicesConfigured = (obj.IMUDevices(1).IsConfigured && obj.IMUDevices(2).IsConfigured);
         end
 
         function batteryInfo = getBatteryInfo( obj, deviceIndex )

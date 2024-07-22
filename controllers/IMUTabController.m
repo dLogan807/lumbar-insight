@@ -144,8 +144,8 @@ classdef IMUTabController < handle
             obj.IMUTabView.Device1BatteryLabel.Text = obj.Model.getBatteryInfo(1);
             obj.IMUTabView.Device2BatteryLabel.Text = obj.Model.getBatteryInfo(2);
 
-            obj.IMUTabView.CalibrateStandingPositionButton.Enable = obj.Model.twoIMUDevicesConnected;
-            obj.IMUTabView.CalibrateFullFlexionButton.Enable = obj.Model.twoIMUDevicesConnected;
+            obj.IMUTabView.CalibrateStandingPositionButton.Enable = obj.Model.bothIMUDevicesConnected;
+            obj.IMUTabView.CalibrateFullFlexionButton.Enable = obj.Model.bothIMUDevicesConnected;
         end
 
         function setDeviceConnectState( ~, imuDevice, deviceConnect )
