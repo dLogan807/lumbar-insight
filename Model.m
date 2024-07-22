@@ -124,6 +124,8 @@ classdef Model < handle
         end
 
         function calibrateStandingAngle( obj )
+            startStreamingBoth( obj );
+
             quaternion1 = obj.IMUDevices(1).LatestQuaternion;
             quaternion2 = obj.IMUDevices(2).LatestQuaternion;
 
@@ -134,6 +136,8 @@ classdef Model < handle
         end
 
         function calibrateFullFlexionAngle( obj )
+            startStreamingBoth( obj );
+    
             quaternion1 = obj.IMUDevices(1).LatestQuaternion;
             quaternion2 = obj.IMUDevices(2).LatestQuaternion;
 
@@ -143,10 +147,43 @@ classdef Model < handle
             notify( obj, "FullFlexionAngleCalibrated")
         end
 
+        function startStreamingBoth( obj )
+            %STARTSTREAMINGBOTH Start streaming on both devices, if
+            %possible
+
+            device1 = obj.IMUDevices(1);
+            device2 = obj.IMUDevices(2);
+
+            if (device1.IsConnected && ~device1.IsStreaming)
+                device1.startStreaming;
+            end
+
+            if (device2.IsConnected && ~device2.IsStreaming)
+                device2.startStreaming;
+            end
+
+            % Wait for data
+            pause(2);
+        end
+
+        function stopStreamingBoth( obj )
+            %STOPSTREAMINGBOTH Stop streaming on both devices
+
+            device1 = obj.IMUDevices(1);
+            device2 = obj.IMUDevices(2);
+
+            if (device1.IsConnected && device1.IsStreaming)
+                device1.stopStreaming;
+            end
+
+            if (device2.IsConnected && device2.IsStreaming)
+                device2.stopStreaming;
+            end
+        end
+
         function startSession( obj ) 
         
-            obj.IMUDevices(1).startStreaming;
-            obj.IMUDevices(2).startStreaming;
+            startStreamingBoth( obj );
 
             obj.SessionInProgress = true;
 
@@ -154,8 +191,7 @@ classdef Model < handle
 
         function stopSession( obj ) 
         
-            obj.IMUDevices(1).stopStreaming;
-            obj.IMUDevices(2).stopStreaming;
+            stopStreamingBoth( obj );
 
             obj.SessionInProgress = false;
 

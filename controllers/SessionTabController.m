@@ -85,7 +85,7 @@ classdef SessionTabController < handle
             cla(obj.SessionTabView.LumbarAngleGraph);
             resetSessionData( obj );
 
-            delay = 0.1;
+            delay = calculateDelay( obj );
             xDuration = 30;
 
             elapsedTime = 0;
@@ -123,6 +123,20 @@ classdef SessionTabController < handle
             end
 
             obj.SessionTabView.SessionStartButton.Enable = "on";
+        end
+
+        function delay = calculateDelay( obj)
+            %CALCULATEDELAY Calculate the delay from the lowest sampling
+            %rate
+
+            samplingRate = obj.Model.lowestSamplingRate;
+
+            if (samplingRate <= 0)
+                delay = 0.5;
+            else
+                delay = 1 / samplingRate;
+                disp("Delay: " + delay);
+            end
         end
 
         function updateCeilingAngles( obj, latestAngle )

@@ -184,9 +184,13 @@ classdef IMUTabController < handle
             if (obj.Model.bothIMUDevicesConfigured)
                 obj.IMUTabView.CalibrateStandingPositionButton.Enable = true;
                 obj.IMUTabView.CalibrateFullFlexionButton.Enable = true;
+
+                obj.Model.startStreamingBoth;
             else
                 obj.IMUTabView.CalibrateStandingPositionButton.Enable = false;
                 obj.IMUTabView.CalibrateFullFlexionButton.Enable = false;
+
+                obj.Model.stopStreamingBoth;
             end
         end
 
