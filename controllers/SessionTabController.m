@@ -67,7 +67,7 @@ classdef SessionTabController < handle
             else
                 obj.SessionTabView.SessionStartButton.Enable = "off";
                 if (obj.Model.SessionInProgress)
-                    obj.Model.stopSession( obj );
+                    obj.Model.stopSession;
                 end
             end
         end
@@ -80,7 +80,7 @@ classdef SessionTabController < handle
             obj.SessionTabView.SessionStartButton.Enable = "off";
             obj.SessionTabView.SessionStopButton.Enable = "on";
 
-            obj.Model.startSession( obj );
+            obj.Model.startSession;
 
             cla(obj.SessionTabView.LumbarAngleGraph);
             resetSessionData( obj );
@@ -144,7 +144,7 @@ classdef SessionTabController < handle
         end
 
         function onSessionStopButtonPushed( obj, ~, ~ )
-            obj.Model.stopSession( obj );
+            obj.Model.stopSession;
             obj.SessionTabView.SessionStopButton.Enable = "off";
         end
 

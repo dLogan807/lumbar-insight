@@ -7,6 +7,7 @@ classdef IMUInterface < handle
         IsStreaming logical
         LatestQuaternion
         BatteryInfo string
+        SamplingRates (1, :) double
     end
     
     methods (Abstract)
@@ -16,7 +17,7 @@ classdef IMUInterface < handle
         disconnect(obj)
         % Disconnect from the device
 
-        configure(obj)
+        configure(obj, samplingRate)
         % Configure the device
 
         startStreaming(obj)

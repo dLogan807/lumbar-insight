@@ -95,33 +95,21 @@ classdef Model < handle
         end
 
         function calibrateStandingAngle( obj )
-            obj.IMUDevices(1).startStreaming;
-            obj.IMUDevices(2).startStreaming;
-
             quaternion1 = obj.IMUDevices(1).LatestQuaternion;
             quaternion2 = obj.IMUDevices(2).LatestQuaternion;
 
             quat3dDifference = getQuat3dDifference( obj, quaternion1, quaternion2 );
             obj.StandingAngle = calculateAngle(obj, quat3dDifference);
 
-            obj.IMUDevices(1).stopStreaming;
-            obj.IMUDevices(2).stopStreaming;
-
             notify( obj, "StandingAngleCalibrated" )
         end
 
         function calibrateFullFlexionAngle( obj )
-            obj.IMUDevices(1).startStreaming;
-            obj.IMUDevices(2).startStreaming;
-
             quaternion1 = obj.IMUDevices(1).LatestQuaternion;
             quaternion2 = obj.IMUDevices(2).LatestQuaternion;
 
             quat3dDifference = getQuat3dDifference( obj, quaternion1, quaternion2 );
             obj.FullFlexionAngle = calculateAngle(obj, quat3dDifference);
-
-            obj.IMUDevices(1).stopStreaming;
-            obj.IMUDevices(2).stopStreaming;
 
             notify( obj, "FullFlexionAngleCalibrated")
         end

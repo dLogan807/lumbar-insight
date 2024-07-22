@@ -13,6 +13,7 @@ classdef ShimmerIMU < IMUInterface
         IsStreaming
         LatestQuaternion
         BatteryInfo
+        SamplingRates = [60, 120]
     end
     
     methods
@@ -69,24 +70,39 @@ classdef ShimmerIMU < IMUInterface
         end
 
         function latestQuaternion = get.LatestQuaternion(obj)
-            if (obj.IsStreaming)
-                [shimmerData,shimmerSignalNameArray,~,~] = obj.Driver.getdata('c');
+            wasStreaming = obj.IsStreaming;
 
-                if (~isempty(shimmerData))
-                    shimmerQuaternionChannels(1) = find(ismember(shimmerSignalNameArray, 'Quaternion 0'));                  % Find Quaternion signal indices.
-                    shimmerQuaternionChannels(2) = find(ismember(shimmerSignalNameArray, 'Quaternion 1'));
-                    shimmerQuaternionChannels(3) = find(ismember(shimmerSignalNameArray, 'Quaternion 2'));
-                    shimmerQuaternionChannels(4) = find(ismember(shimmerSignalNameArray, 'Quaternion 3'));
+            if (~wasStreaming)
+                obj.startStreaming;
 
-                    latestQuaternion = shimmerData(end, shimmerQuaternionChannels);
+                if (~obj.IsStreaming)
+                    latestQuaternion = [0.5 0.5 0.5 0.5];
+
+                    disp(obj.Name + " failed to start streaming data.");
 
                     return;
                 end
             end
 
-            latestQuaternion = [0.5 0.5 0.5 0.5];
+            [shimmerData,shimmerSignalNameArray,~,~] = obj.Driver.getdata('c');
 
-            disp("Data could not be retrieved from " + obj.Name);
+            if (~isempty(shimmerData))
+                shimmerQuaternionChannels(1) = find(ismember(shimmerSignalNameArray, 'Quaternion 0'));                  % Find Quaternion signal indices.
+                shimmerQuaternionChannels(2) = find(ismember(shimmerSignalNameArray, 'Quaternion 1'));
+                shimmerQuaternionChannels(3) = find(ismember(shimmerSignalNameArray, 'Quaternion 2'));
+                shimmerQuaternionChannels(4) = find(ismember(shimmerSignalNameArray, 'Quaternion 3'));
+
+                latestQuaternion = shimmerData(end, shimmerQuaternionChannels);
+            else
+                latestQuaternion = [0.5 0.5 0.5 0.5];
+
+                disp("Data could not be retrieved from " + obj.Name);
+            end
+
+            if (~wasStreaming)
+                obj.stopStreaming;
+            end
+
         end
 
         function connected = connect(obj)
@@ -101,19 +117,41 @@ classdef ShimmerIMU < IMUInterface
             disconnected = obj.Driver.disconnect;
         end
 
-        function configure(obj)
-            % CONFIGURE Configure the device
+        function configured = configure( obj, samplingRate )
+            % CONFIGURE Configures the Shimmer
 
             SensorMacros = ShimmerEnabledSensorsMacrosClass;                          % assign user friendly macros for setenabledsensors
-    
-            obj.Driver.setsamplingrate(51.2);                                         % Set the shimmer sampling rate to 51.2Hz
-    	    obj.Driver.setinternalboard('9DOF');                                      % Set the shimmer internal daughter board to '9DOF'
-            obj.Driver.disableallsensors;                                             % disable all sensors
-            obj.Driver.setenabledsensors(SensorMacros.GYRO,1,SensorMacros.MAG,1,...   % Enable the gyroscope, magnetometer and accelerometer.
-            SensorMacros.ACCEL,1);                                                  
-            obj.Driver.setaccelrange(0);                                              % Set the accelerometer range to 0 (+/- 1.5g for Shimmer2/2r, +/- 2.0g for Shimmer3)
-            obj.Driver.setorientation3D(1);                                           % Enable orientation3D
-            obj.Driver.setgyroinusecalibration(1);                                    % Enable gyro in-use calibration
+
+            if (setSamplingRate(samplingRate))
+    	        obj.Driver.setinternalboard('9DOF');                                      % Set the shimmer internal daughter board to '9DOF'
+                obj.Driver.disableallsensors;                                             % disable all sensors
+                obj.Driver.setenabledsensors(SensorMacros.GYRO,1,SensorMacros.MAG,1,...   % Enable the gyroscope, magnetometer and accelerometer.
+                SensorMacros.ACCEL,1);                                                  
+                obj.Driver.setaccelrange(0);                                              % Set the accelerometer range to 0 (+/- 1.5g for Shimmer2/2r, +/- 2.0g for Shimmer3)
+                obj.Driver.setorientation3D(1);                                           % Enable orientation3D
+                obj.Driver.setgyroinusecalibration(1);                                    % Enable gyro in-use calibration
+
+                configured = true;
+            else
+                configured = false;
+            end
+        end
+
+        function rateSet = setSamplingRate( obj, samplingRate )
+            %SETSAMPLINGRATE Sets the sampling rate and then sets sensors 
+            % as closely as possible to it
+
+            if (obj.SamplingRates == samplingRate)
+                isNumber = ~strcmp(obj.Driver.setsamplingrate( samplingRate ), 'Nan');
+                if (isNumber)
+                    rateSet = true;
+                else
+                    rateSet = false;
+                end
+            else
+                rateSet = false;
+                disp("Invalid sampling rate specified for " + obj.Name);
+            end
         end
 
         function started = startStreaming(obj)
