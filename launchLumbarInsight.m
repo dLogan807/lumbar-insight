@@ -26,7 +26,7 @@ managementTab = uitab(tabgroup,"Title","Session Management");
 model = Model;
 
 % Create the views
-fontSize = 14;
+fontSize = 16;
 
 imuTabView = IMUTabView( "Parent", imuTab, ...
     "FontSize", fontSize );

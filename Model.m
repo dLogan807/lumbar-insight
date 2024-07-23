@@ -53,7 +53,8 @@ classdef Model < handle
             quaternion1 = obj.IMUDevices(1).LatestQuaternion;
             quaternion2 = obj.IMUDevices(2).LatestQuaternion;
 
-            latestAngle = calculateAngle(obj, quaternion1, quaternion2);
+            quat3dDifference = getQuat3dDifference( obj, quaternion1, quaternion2 );
+            latestAngle = calculateAngle(obj, quat3dDifference);
         end
 
         function set.ThresholdAnglePercentage( obj, thresholdPercentage )
