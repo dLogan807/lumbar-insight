@@ -70,12 +70,14 @@ classdef SessionTabView < matlab.ui.componentcontainer.ComponentContainer
 
             obj.GridLayout = uigridlayout( ...
                 "Parent", obj, ...
-                "RowHeight", {"1x", 22, 40, 22, 22, 22}, ...
+                "RowHeight", {"1x", 22, 40, 30, 30, 22}, ...
                 "ColumnWidth", {"2x", ".5x", "1x"}, ...
                 "Padding", 20, ...
-                "ColumnSpacing", 50 );
+                "ColumnSpacing", 100 );
 
             % Create view components.
+
+            % Graph
             obj.LumbarAngleGraph = uiaxes( "Parent", obj.GridLayout );
             obj.LumbarAngleGraph.XLabel.String = 'Time (Seconds)';
             obj.LumbarAngleGraph.YLabel.String = 'Lumbosacral Angle (Degrees)';
@@ -84,6 +86,7 @@ classdef SessionTabView < matlab.ui.componentcontainer.ComponentContainer
             obj.LumbarAngleGraph.Layout.Row = 1;
             obj.LumbarAngleGraph.Layout.Column = 1;
 
+            % Threshold slider
             sliderLabel = uilabel( "Parent", obj.GridLayout, ...
                 "Text", "Percentage threshold of maximum angle" );
             sliderLabel.Layout.Row = 2;
@@ -95,6 +98,7 @@ classdef SessionTabView < matlab.ui.componentcontainer.ComponentContainer
             obj.AngleThresholdSlider.Layout.Row = 3;
             obj.AngleThresholdSlider.Layout.Column = 1;
 
+            % Session data
             obj.TimeAboveMaxLabel = uilabel( "Parent", obj.GridLayout, ...
                 "Text", "Time above threshold angle: 0s");
             obj.TimeAboveMaxLabel.Layout.Row = 4;
@@ -110,6 +114,7 @@ classdef SessionTabView < matlab.ui.componentcontainer.ComponentContainer
             obj.LargestAngleLabel.Layout.Row = 6;
             obj.LargestAngleLabel.Layout.Column = 1;
 
+            % Session control
             obj.SessionStartButton = uibutton( "Parent", obj.GridLayout, ...
                 "Text", "Start Session", ...
                 "Enable", "off", ...
@@ -128,7 +133,7 @@ classdef SessionTabView < matlab.ui.componentcontainer.ComponentContainer
             obj.IndicatorGraph.YLabel.String = 'Lumbosacral Angle (Degrees)';
             obj.IndicatorGraph.YLim = [-90 180];
             obj.IndicatorGraph.XLim = [0 10];
-            obj.IndicatorGraph.Layout.Row = [1 3];
+            obj.IndicatorGraph.Layout.Row = 1;
             obj.IndicatorGraph.Layout.Column = 2;
             %Draw traffic light indicator colours
             rectangle("Parent", obj.IndicatorGraph, ...
