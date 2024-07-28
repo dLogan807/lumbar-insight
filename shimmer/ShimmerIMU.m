@@ -20,12 +20,16 @@ classdef ShimmerIMU < IMUInterface
     
     methods
         function obj = ShimmerIMU( deviceName )
+            %SHIMMERIMU Constructor
+
             obj.Name = deviceName;
 
             obj.Driver = ShimmerDriver( deviceName );
         end
 
         function isConnected = get.IsConnected( obj )
+            %GET.ISCONNECTED Return the imu's streaming state 
+
             isConnected = false;
 
             state = obj.Driver.State;
@@ -36,6 +40,8 @@ classdef ShimmerIMU < IMUInterface
         end
 
         function isStreaming = get.IsStreaming( obj )
+            %GET.ISSTREAMING Return the imu's streaming logical
+
             isStreaming = false;
 
             state = obj.Driver.State;
@@ -46,6 +52,8 @@ classdef ShimmerIMU < IMUInterface
         end
 
         function batteryInfo = get.BatteryInfo( obj )
+            %GET.BATTERYINFO Return a string describing the IMU's battery state
+
             state = obj.Driver.State;
 
             wasStreaming = strcmp(state, 'Streaming');
@@ -72,49 +80,52 @@ classdef ShimmerIMU < IMUInterface
         end
 
         function latestQuaternion = get.LatestQuaternion(obj)
+            %LATESTQUATERNION Retrieve the most recent quaternion from the
+            %IMU
+
             wasStreaming = obj.IsStreaming;
+            ME = [];
 
             if (~wasStreaming)
                 obj.startStreaming;
-
-                if (~obj.IsStreaming)
-                    latestQuaternion = [0.5 0.5 0.5 0.5];
-
-                    disp(obj.Name + " failed to start streaming data.");
-
-                    return;
-                end
             end
 
-            [shimmerData,shimmerSignalNameArray,~,~] = obj.Driver.getdata('c');
+            try
+                [shimmerData,shimmerSignalNameArray,~,~] = obj.Driver.getdata('c');
 
-            if (~isempty(shimmerData))
-                shimmerQuaternionChannels(1) = find(ismember(shimmerSignalNameArray, 'Quaternion 0'));                  % Find Quaternion signal indices.
-                shimmerQuaternionChannels(2) = find(ismember(shimmerSignalNameArray, 'Quaternion 1'));
-                shimmerQuaternionChannels(3) = find(ismember(shimmerSignalNameArray, 'Quaternion 2'));
-                shimmerQuaternionChannels(4) = find(ismember(shimmerSignalNameArray, 'Quaternion 3'));
-
-                latestQuaternion = shimmerData(end, shimmerQuaternionChannels);
-            else
-                latestQuaternion = [0.5 0.5 0.5 0.5];
-
-                disp("Data could not be retrieved from " + obj.Name);
+                if (~isempty(shimmerData))
+                    shimmerQuaternionChannels(1) = find(ismember(shimmerSignalNameArray, 'Quaternion 0'));                  % Find Quaternion signal indices.
+                    shimmerQuaternionChannels(2) = find(ismember(shimmerSignalNameArray, 'Quaternion 1'));
+                    shimmerQuaternionChannels(3) = find(ismember(shimmerSignalNameArray, 'Quaternion 2'));
+                    shimmerQuaternionChannels(4) = find(ismember(shimmerSignalNameArray, 'Quaternion 3'));
+    
+                    latestQuaternion = shimmerData(end, shimmerQuaternionChannels);
+                else
+                    ME = MException("LatestQuaternion:noData", "Data could not be retrieved from %s" + obj.Name);
+                end
+            catch exception
+                ME = exception;
             end
 
             if (~wasStreaming)
                 obj.stopStreaming;
             end
 
+            %Rethrow if exception occured
+            if (~isempty(ME))
+                rethrow(ME);
+            end
+
         end
 
         function connected = connect(obj)
-            % CONNECT Connect to the Shimmer over Bluetooth
+            %CONNECT Connect to the Shimmer over Bluetooth
 
             connected = obj.Driver.connect;
         end
 
         function disconnected = disconnect(obj)
-            % DISCONNECT Disconnect from the Shimmer
+            %DISCONNECT Disconnect from the Shimmer
 
             obj.IsConfigured = false;
             obj.SamplingRate = -1;
@@ -122,7 +133,7 @@ classdef ShimmerIMU < IMUInterface
         end
 
         function configured = configure( obj, samplingRate )
-            % CONFIGURE Configures the Shimmer
+            %CONFIGURE Configures the Shimmer
 
             SensorMacros = ShimmerEnabledSensorsMacrosClass;                          % assign user friendly macros for setenabledsensors
 
@@ -145,7 +156,7 @@ classdef ShimmerIMU < IMUInterface
 
         function rateSet = setSamplingRate( obj, samplingRate )
             %SETSAMPLINGRATE Sets the sampling rate and then sets sensors 
-            % as closely as possible to it
+            %as closely as possible to it
 
             if (ismember(samplingRate, obj.SamplingRates))
                 isNumber = ~strcmp(obj.Driver.setsamplingrate( samplingRate ), 'Nan');
@@ -162,7 +173,7 @@ classdef ShimmerIMU < IMUInterface
         end
 
         function started = startStreaming(obj)
-            % STARTSESSION Start streaming data
+            %STARTSTREAMING Start streaming data
             if (obj.IsStreaming)
                 started = true;
             else
@@ -171,7 +182,7 @@ classdef ShimmerIMU < IMUInterface
         end
 
         function stopped = stopStreaming(obj)
-            % ENDSESSION Stop streaming data
+            %STOPSTREAMING Stop streaming data
             if (obj.IsStreaming)
                 stopped = obj.Driver.stop;
             else

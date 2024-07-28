@@ -4,7 +4,7 @@ classdef Model < handle
     properties
         % Application data.
 
-        IMUDevices (1, 2) IMUInterface = [ShimmerIMU("temp"), ShimmerIMU("temp")]
+        IMUDevices (1, 2) IMUInterface = [ShimmerIMU("placeholder1"), ShimmerIMU("placeholder2")]
         BluetoothDevices table
 
         Cameras (1, :) Camera
@@ -21,6 +21,7 @@ classdef Model < handle
 
     properties (SetAccess = private)
         SessionInProgress logical = false
+        OperationInProgress logical = false
     end
     
     events ( NotifyAccess = private )
@@ -66,6 +67,10 @@ classdef Model < handle
             % and configure device
 
             connected = false;
+            if ( obj.OperationInProgress )
+                return
+            end
+            operationStarted;
 
             if (deviceType == DeviceTypes.Shimmer)
                 obj.IMUDevices(deviceIndex) = ShimmerIMU(deviceName);
@@ -74,14 +79,24 @@ classdef Model < handle
                 disp("Device of type " + string(deviceType) + " is not implemented.");
             end
 
+            operationCompleted;
+
             notify( obj, "DevicesConnectedChanged" )
 
         end % connectDevice
 
-        function disconnectDevice( obj, deviceIndex )
+        function disconnected = disconnectDevice( obj, deviceIndex )
             % DISCONNECTDEVICE Disconnect a device
 
-            obj.IMUDevices(deviceIndex).disconnect;
+            disconnected = false;
+            if ( obj.OperationInProgress )
+                return
+            end
+            operationStarted;
+
+            disconnected = obj.IMUDevices(deviceIndex).disconnect;
+
+            operationCompleted;
 
             notify( obj, "DevicesConnectedChanged" )
 
@@ -97,13 +112,31 @@ classdef Model < handle
 
         function batteryInfo = getBatteryInfo( obj, deviceIndex )
             % GETBATTERYINFO Get battery information of the IMU
+
+            if ( obj.OperationInProgress )
+                return
+            end
+            operationStarted;
+
             batteryInfo = obj.IMUDevices(deviceIndex).BatteryInfo;
+
+            operationCompleted;
         end
 
-        function configure( obj, deviceIndex, samplingRate )
+        function configured = configure( obj, deviceIndex, samplingRate )
+            %CONFIGURE Configure the IMU with the specified sampling rate
+
+            configured = false;
+            if ( obj.OperationInProgress )
+                return
+            end
+            operationStarted;
+
             device = obj.IMUDevices(deviceIndex);
 
-            device.configure(samplingRate);
+            configured = device.configure(samplingRate);
+
+            operationCompleted;
 
             notify( obj, "DevicesConfiguredChanged" )
         end
@@ -124,28 +157,51 @@ classdef Model < handle
             end
         end
 
-        function calibrateStandingAngle( obj )
+        function calibrated = calibrateStandingAngle( obj )
+            %CALIBRATESTANDINGANGLE Calibrate the subject's standing angle
+
+            if (obj.OperationInProgress)
+                return
+            end
+            operationStarted;
+
             startStreamingBoth( obj );
+            calibrated = true;
+            try
+                obj.StandingAngle = obj.LatestAngle;
+            catch ME
+                calibrated = false;
+                warning(ME);
+            end
 
-            quaternion1 = obj.IMUDevices(1).LatestQuaternion;
-            quaternion2 = obj.IMUDevices(2).LatestQuaternion;
-
-            quat3dDifference = getQuat3dDifference( obj, quaternion1, quaternion2 );
-            obj.StandingAngle = calculateAngle(obj, quat3dDifference);
-
-            notify( obj, "StandingAngleCalibrated" )
+            operationCompleted;
+            if (calibrated)
+                notify( obj, "StandingAngleCalibrated" )
+            end
         end
 
-        function calibrateFullFlexionAngle( obj )
+        function calibrated = calibrateFullFlexionAngle( obj )
+            %CALIBRATEFULLFLEIONANGLE Calibrate the subject's full fleion
+            %angle
+
+            if (obj.OperationInProgress)
+                return
+            end
+            operationStarted;
+
             startStreamingBoth( obj );
-    
-            quaternion1 = obj.IMUDevices(1).LatestQuaternion;
-            quaternion2 = obj.IMUDevices(2).LatestQuaternion;
+            calibrated = true;
+            try
+                obj.FullFlexionAngle = obj.LatestAngle;
+            catch ME
+                calibrated = false;
+                warning(ME);
+            end
 
-            quat3dDifference = getQuat3dDifference( obj, quaternion1, quaternion2 );
-            obj.FullFlexionAngle = calculateAngle(obj, quat3dDifference);
-
-            notify( obj, "FullFlexionAngleCalibrated")
+            operationCompleted;
+            if (calibrated)
+                notify( obj, "FullFlexionAngleCalibrated" )
+            end
         end
 
         function startStreamingBoth( obj )
@@ -201,6 +257,14 @@ classdef Model < handle
     end % methods
 
     methods (Access = private)
+        function operationStarted( obj )
+            obj.OperationInProgress = true;
+        end
+
+        function operationCompleted( obj )
+            obj.OperationInProgress = false;
+        end
+
         function angle = calculateAngle( ~, quat3dDifference)
             % CALCULATEANGLE Calculate the angle between two quaternions
             % https://au.mathworks.com/matlabcentral/answers/415936-angle-between-2-quaternions?s_tid=answers_rc1-2_p2_MLT

@@ -5052,9 +5052,7 @@ classdef ShimmerDriver < handle   % Inherit from super class 'handle'
             
             if (~strcmp(thisShimmer.State,'Disconnected'))                 % TRUE if the Shimmer is streaming or connected
                 if (strcmp(thisShimmer.State,'Streaming'))
-                    if( thisShimmer.FirmwareIdentifier ~= 3)
-                        thisShimmer.stop;                                  % Stop streaming before closing COM Port
-                    end
+                    thisShimmer.stop;                                  % Stop streaming before closing COM Port
                 end
                 isOpen=false;
                 clear thisShimmer.bluetoothConn;                           %Clear bluetooth connection
