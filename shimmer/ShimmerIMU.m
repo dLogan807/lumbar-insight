@@ -71,7 +71,7 @@ classdef ShimmerIMU < IMUInterface
                     batteryInfo = obj.Name + " (" + batteryVoltage + "mV)";
                 end
             else
-                batteryInfo = "Device not connected. No battery information.";
+                batteryInfo = "Not connected. No battery information.";
             end
 
             if (wasStreaming)
