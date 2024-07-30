@@ -70,7 +70,7 @@ classdef Model < handle
             if ( obj.OperationInProgress )
                 return
             end
-            operationStarted;
+            operationStarted( obj );
 
             if (deviceType == DeviceTypes.Shimmer)
                 obj.IMUDevices(deviceIndex) = ShimmerIMU(deviceName);
@@ -79,7 +79,7 @@ classdef Model < handle
                 disp("Device of type " + string(deviceType) + " is not implemented.");
             end
 
-            operationCompleted;
+            operationCompleted( obj );
 
             notify( obj, "DevicesConnectedChanged" )
 
@@ -92,11 +92,11 @@ classdef Model < handle
             if ( obj.OperationInProgress )
                 return
             end
-            operationStarted;
+            operationStarted( obj );
 
             disconnected = obj.IMUDevices(deviceIndex).disconnect;
 
-            operationCompleted;
+            operationCompleted( obj );
 
             notify( obj, "DevicesConnectedChanged" )
 
@@ -116,11 +116,11 @@ classdef Model < handle
             if ( obj.OperationInProgress )
                 return
             end
-            operationStarted;
+            operationStarted( obj );
 
             batteryInfo = obj.IMUDevices(deviceIndex).BatteryInfo;
 
-            operationCompleted;
+            operationCompleted( obj );
         end
 
         function configured = configure( obj, deviceIndex, samplingRate )
@@ -130,13 +130,13 @@ classdef Model < handle
             if ( obj.OperationInProgress )
                 return
             end
-            operationStarted;
+            operationStarted( obj );
 
             device = obj.IMUDevices(deviceIndex);
 
             configured = device.configure(samplingRate);
 
-            operationCompleted;
+            operationCompleted( obj );
 
             notify( obj, "DevicesConfiguredChanged" )
         end
@@ -163,7 +163,7 @@ classdef Model < handle
             if (obj.OperationInProgress)
                 return
             end
-            operationStarted;
+            operationStarted( obj );
 
             startStreamingBoth( obj );
             calibrated = true;
@@ -174,7 +174,7 @@ classdef Model < handle
                 warning(ME);
             end
 
-            operationCompleted;
+            operationCompleted( obj );
             if (calibrated)
                 notify( obj, "StandingAngleCalibrated" )
             end
@@ -187,7 +187,7 @@ classdef Model < handle
             if (obj.OperationInProgress)
                 return
             end
-            operationStarted;
+            operationStarted( obj );
 
             startStreamingBoth( obj );
             calibrated = true;
@@ -198,7 +198,7 @@ classdef Model < handle
                 warning(ME);
             end
 
-            operationCompleted;
+            operationCompleted( obj );
             if (calibrated)
                 notify( obj, "FullFlexionAngleCalibrated" )
             end

@@ -201,7 +201,9 @@ classdef IMUTabController < handle
                 deviceConfig DeviceConfig
             end
 
-            if (imuDevice.IsConnected)
+            if (imuDevice.IsConfigured)
+                deviceConfig.State = "Configured";
+            elseif (imuDevice.IsConnected)
                 deviceConfig.setDeviceInfo(imuDevice.Name, imuDevice.SamplingRates);
                 deviceConfig.State = "Configure";
             else

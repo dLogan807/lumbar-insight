@@ -31,29 +31,31 @@ classdef DeviceConfig < matlab.ui.componentcontainer.ComponentContainer
             obj.GridLayout = uigridlayout( ...
                 "Parent", obj, ...
                 "RowHeight", { 30 }, ...
-                "ColumnWidth", { "0.8x", "0.5x", "0.6x" } , ...
+                "ColumnWidth", { "0.6x", "0.5x", "0.8x" } , ...
                 "Padding", 0, ...
                 "ColumnSpacing", 22 );
-        
-            % Create sampling rate label
-            obj.SamplingRateLabel = uilabel(obj.GridLayout, ...
-                "Text", "Device not connected. Sampling Rate (Hz)" );
-            obj.SamplingRateLabel.Layout.Column = 1;
 
             % Create drop down to select sampling rate
             obj.SamplingRateDropDown = uidropdown(obj.GridLayout, ...
-                "Items", "Unavailable", ...
+                "Items", "", ...
+                "Value", "", ...
+                "Placeholder", "Sampling Rate (Hz)", ...
                 "Editable", "off", ...
                 "Enable", "off");
             obj.SamplingRateDropDown.ValueChangedFcn = @obj.samplingRateChanged;
-            obj.SamplingRateDropDown.Layout.Column = 2;
+            obj.SamplingRateDropDown.Layout.Column = 1;
 
             % Create button to configure
             obj.DeviceConfigButton = uibutton(obj.GridLayout, ...
                 "Text", string(obj.State), ...
                 "Enable", "off" );
             obj.DeviceConfigButton.ButtonPushedFcn = @obj.configureButtonPushed;
-            obj.DeviceConfigButton.Layout.Column = 3;
+            obj.DeviceConfigButton.Layout.Column = 2;
+
+            % Create sampling rate label
+            obj.SamplingRateLabel = uilabel(obj.GridLayout, ...
+                "Text", "Not configured." );
+            obj.SamplingRateLabel.Layout.Column = 3;
         end
 
         function update( obj )
@@ -74,23 +76,22 @@ classdef DeviceConfig < matlab.ui.componentcontainer.ComponentContainer
 
         function updateOverallState( obj )
             if (obj.State == "Configure")
-                obj.SamplingRateLabel.Text = obj.DeviceName + " Sampling Rate (Hz)";
-                obj.SamplingRateDropDown.Enable = "on";
-                obj.DeviceConfigButton.Text = "Configure";
-                obj.SamplingRateDropDown.Items = string(obj.AvailableSamplingRates);
-                obj.SamplingRate = str2double(obj.SamplingRateDropDown.Value);
-                obj.DeviceConfigButton.Enable = "on";
+                obj.SamplingRateLabel.Text = obj.DeviceName + " not configured.";
+                setConfigureable( obj );
             elseif (obj.State == "Configuring")
                 obj.DeviceConfigButton.Enable = "off";
                 obj.DeviceConfigButton.Text = "Configuring";
                 obj.SamplingRateDropDown.Enable = "off";
+            elseif (obj.State == "Configured")
+                obj.SamplingRateLabel.Text = obj.DeviceName + " set to " + obj.SamplingRate + "Hz.";
+                setConfigureable( obj );
             elseif ( obj.State == "Waiting" )
                 obj.DeviceConfigButton.Text = "Waiting";
                 obj.DeviceConfigButton.Enable = "off";
             elseif ( obj.State == "Disconnected" )
-                obj.SamplingRateLabel.Text = "Device not connected. Sampling Rate (Hz)";
+                obj.SamplingRateLabel.Text = "Not configured.";
                 obj.SamplingRateDropDown.Enable = "off";
-                obj.SamplingRateDropDown.Items = "Unavailable";
+                obj.SamplingRateDropDown.Items = "";
                 obj.DeviceConfigButton.Enable = "off";
                 obj.DeviceConfigButton.Text = "Configure";
             end
@@ -121,6 +122,14 @@ classdef DeviceConfig < matlab.ui.componentcontainer.ComponentContainer
     end
 
     methods (Access = private)
+        function setConfigureable( obj )
+            obj.SamplingRateDropDown.Enable = "on";
+            obj.DeviceConfigButton.Text = "Configure";
+            obj.SamplingRateDropDown.Items = string(obj.AvailableSamplingRates);
+            obj.SamplingRate = str2double(obj.SamplingRateDropDown.Value);
+            obj.DeviceConfigButton.Enable = "on";
+        end
+
         function configureButtonPushed( obj, ~, ~ )
             notify( obj, "Configure" );
         end
