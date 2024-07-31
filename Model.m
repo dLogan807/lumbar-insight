@@ -13,8 +13,8 @@ classdef Model < handle
         SmallestAngle double = -1
         LargestAngle double = -1
 
-        FullFlexionAngle double
-        StandingAngle double
+        FullFlexionAngle double = []
+        StandingAngle double = []
         ThresholdAnglePercentage uint8 = 0.8
         timeAboveThresholdAngle = 0
     end
@@ -157,8 +157,14 @@ classdef Model < handle
             end
         end
 
-        function calibrated = calibrateStandingAngle( obj )
-            %CALIBRATESTANDINGANGLE Calibrate the subject's standing angle
+        function calibrated = calibrateAngle( obj, angleType )
+            % CALIBRATEANGLE Calibrate the standing or full flexion angle.
+            % "f" for Full Flexion, "s" for standing
+
+            arguments
+                obj
+                angleType string
+            end
 
             if (obj.OperationInProgress)
                 return
@@ -167,8 +173,9 @@ classdef Model < handle
 
             startStreamingBoth( obj );
             calibrated = true;
+            latestAngle = [];
             try
-                obj.StandingAngle = obj.LatestAngle;
+                latestAngle = obj.LatestAngle;
             catch ME
                 calibrated = false;
                 warning(ME);
@@ -176,31 +183,17 @@ classdef Model < handle
 
             operationCompleted( obj );
             if (calibrated)
-                notify( obj, "StandingAngleCalibrated" )
-            end
-        end
-
-        function calibrated = calibrateFullFlexionAngle( obj )
-            %CALIBRATEFULLFLEIONANGLE Calibrate the subject's full fleion
-            %angle
-
-            if (obj.OperationInProgress)
-                return
-            end
-            operationStarted( obj );
-
-            startStreamingBoth( obj );
-            calibrated = true;
-            try
-                obj.FullFlexionAngle = obj.LatestAngle;
-            catch ME
-                calibrated = false;
-                warning(ME);
-            end
-
-            operationCompleted( obj );
-            if (calibrated)
-                notify( obj, "FullFlexionAngleCalibrated" )
+                if (strcmp(angleType, "f"))
+                    obj.FullFlexionAngle = latestAngle;
+                    notify( obj, "FullFlexionAngleCalibrated" )
+                elseif (strcmp(angleType, "s"))
+                    obj.StandingAngle = latestAngle;
+                    notify( obj, "StandingAngleCalibrated" )
+                else
+                    calibrated = false;
+                    warning("calibrateAngle: " + angleType + " is not an implemented input.")
+                end
+                
             end
         end
 
