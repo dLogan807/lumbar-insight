@@ -179,6 +179,9 @@ classdef IMUTabController < handle
                 obj.IMUTabView.CalibrateStandingPositionButton.Enable = true;
                 obj.IMUTabView.CalibrateFullFlexionButton.Enable = true;
 
+                obj.IMUTabView.CalibrateStandingPositionButton.StatusText = "Not Calibrated.";
+                obj.IMUTabView.CalibrateFullFlexionButton.StatusText = "Not Calibrated.";
+
                 obj.Model.startStreamingBoth;
             else
                 obj.IMUTabView.CalibrateStandingPositionButton.Enable = false;
@@ -222,11 +225,11 @@ classdef IMUTabController < handle
         end
 
         function onCalibrateStandingPushed( obj, ~, ~ )
-            obj.Model.calibrateStandingAngle;
+            obj.Model.calibrateAngle( obj, "s");
         end
 
         function onCalibrateFullFlexionPushed( obj, ~, ~ )
-            obj.Model.calibrateFullFlexionAngle;
+            obj.Model.calibrateAngle( obj, "f" );
         end
 
         function onStandingAngleCalibrated( obj, ~, ~ )

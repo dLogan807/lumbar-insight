@@ -15,7 +15,7 @@ classdef Model < handle
         FullFlexionAngle double = []
         StandingAngle double = []
         ThresholdAnglePercentage uint8 = 0.8
-        timeAboveThresholdAngle = 0
+        timeAboveThresholdAngle uint8 = 0
     end
 
     properties (SetAccess = private)
