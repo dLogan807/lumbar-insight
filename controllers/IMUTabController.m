@@ -53,8 +53,6 @@ classdef IMUTabController < handle
 
             % Listen for changes to the model data.
             obj.Listener(end+1) = listener( obj.Model, ... 
-                "DeviceListUpdated", @obj.onDeviceListUpdated );
-            obj.Listener(end+1) = listener( obj.Model, ... 
                 "DevicesConnectedChanged", @obj.onDevicesChanged );
 
             obj.Listener(end+1) = listener( obj.Model, ... 
@@ -98,11 +96,7 @@ classdef IMUTabController < handle
 
             allDevices = statusHTMLToText(obj, allDevices);
 
-            obj.Model.BluetoothDevices = allDevices;
-        end
-
-        function onDeviceListUpdated( obj, ~, ~ )
-            obj.IMUTabView.BTDeviceList.Data = obj.Model.BluetoothDevices;
+            obj.IMUTabView.BTDeviceList.Data = allDevices;
             setBTScanButtonScanning( obj, false );
         end
 

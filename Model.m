@@ -5,7 +5,6 @@ classdef Model < handle
         % Application data.
 
         IMUDevices (1, 2) IMUInterface = [ShimmerIMU("placeholder1"), ShimmerIMU("placeholder2")]
-        BluetoothDevices table
 
         Cameras (1, :) Camera
 
@@ -26,8 +25,6 @@ classdef Model < handle
     
     events ( NotifyAccess = private )
         % Events broadcast when the model is altered.
-        DeviceListUpdated
-
         DevicesConnectedChanged
         DevicesConfiguredChanged
 
@@ -40,15 +37,6 @@ classdef Model < handle
     end % events ( NotifyAccess = private )
 
     methods
-
-        function set.BluetoothDevices( obj, deviceList )
-            % SET.BLUETOOTHDEVICES Set table of bluetooth devices, notify
-            % controller
-
-            obj.BluetoothDevices = deviceList;
-
-            notify( obj, "DeviceListUpdated" )
-        end
 
         function latestAngle = get.LatestAngle( obj )
             %GET.LATESTANGLE Update and store the latest angle between the
