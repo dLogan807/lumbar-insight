@@ -36,6 +36,10 @@ classdef SessionTabController < handle
             % Listen for changes to the model data.
             obj.Listener(end+1) = listener( obj.Model, ...
                 "DevicesConnectedChanged", @obj.onDevicesConnectedChanged );
+            obj.Listener(end+1) = listener( obj.Model, ...
+                "StandingAngleCalibrated", @obj.onStandingAngleCalibrated );
+            obj.Listener(end+1) = listener( obj.Model, ...
+                "FullFlexionAngleCalibrated", @obj.onFullFlexionAngleCalibrated );
             
         end % constructor
         
@@ -59,10 +63,24 @@ classdef SessionTabController < handle
     methods ( Access = private )
 
         function onDevicesConnectedChanged( obj, ~, ~ )
-            %ONDEVICESCONNECTEDCHANGED Enable start button depending on
-            %devices connected.
+            handleSessionControls( obj );
+        end
 
-            if (obj.Model.bothIMUDevicesConnected)
+        function onStandingAngleCalibrated( obj ,~, ~ )
+            handleSessionControls( obj );
+        end
+
+        function onFullFlexionAngleCalibrated( obj ,~, ~ )
+            handleSessionControls( obj );
+        end
+
+        function handleSessionControls( obj )
+            %HANDLESESSION Enable session control buttons depending on
+            %angle calibration
+
+            obj.SessionTabView.SessionStopButton.Enable = "off";
+
+            if (obj.Model.bothIMUDevicesConnected && obj.Model.bothAnglesCalibrated)
                 obj.SessionTabView.SessionStartButton.Enable = "on";
             else
                 obj.SessionTabView.SessionStartButton.Enable = "off";
