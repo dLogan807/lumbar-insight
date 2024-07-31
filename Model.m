@@ -69,9 +69,6 @@ classdef Model < handle
             % CONNECTDEVICE Attempt device connection, notify controller,
             % and configure device
 
-            obj.FullFlexionAngle = [];
-            obj.StandingAngle = [];
-
             connected = false;
             if ( obj.OperationInProgress )
                 return
@@ -87,6 +84,9 @@ classdef Model < handle
 
             operationCompleted( obj );
 
+            %Reset angle calibration
+            obj.FullFlexionAngle = [];
+            obj.StandingAngle = [];
             notify( obj, "DevicesConnectedChanged" )
 
         end % connectDevice
@@ -107,7 +107,6 @@ classdef Model < handle
             %Reset angle calibration
             obj.StandingAngle = [];
             obj.FullFlexionAngle = [];
-
             notify( obj, "DevicesConnectedChanged" )
 
         end % disconnectDevice

@@ -3,13 +3,16 @@ classdef IMUInterface < handle
     
     properties (Abstract, SetAccess = protected)
         Name string
-        IsConnected logical
-        IsStreaming logical
         IsConfigured logical
-        LatestQuaternion
         BatteryInfo string
         SamplingRates (1, :) double
         SamplingRate double
+    end
+
+    properties (Abstract, SetAccess = protected, Dependent)
+        LatestQuaternion (1, 4) double
+        IsConnected logical
+        IsStreaming logical
     end
     
     methods (Abstract)

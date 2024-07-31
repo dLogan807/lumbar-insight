@@ -9,13 +9,16 @@ classdef ShimmerIMU < IMUInterface
 
     properties (SetAccess = protected)
         Name
-        IsConnected = false
-        IsStreaming = false
         IsConfigured = false
-        LatestQuaternion
         BatteryInfo
         SamplingRates = [60 120]
         SamplingRate = -1
+    end
+
+    properties (SetAccess = protected, Dependent)
+        IsConnected
+        IsStreaming
+        LatestQuaternion
     end
     
     methods
@@ -121,9 +124,8 @@ classdef ShimmerIMU < IMUInterface
         function connected = connect(obj)
             %CONNECT Connect to the Shimmer over Bluetooth
 
-            obj.IsConnected = false;
-            obj.IsStreaming = false;
             obj.IsConfigured = false;
+            obj.SamplingRate = -1;
 
             connected = obj.Driver.connect;
         end
@@ -133,6 +135,7 @@ classdef ShimmerIMU < IMUInterface
 
             obj.IsConfigured = false;
             obj.SamplingRate = -1;
+            
             disconnected = obj.Driver.disconnect;
         end
 
