@@ -121,6 +121,10 @@ classdef ShimmerIMU < IMUInterface
         function connected = connect(obj)
             %CONNECT Connect to the Shimmer over Bluetooth
 
+            obj.IsConnected = false;
+            obj.IsStreaming = false;
+            obj.IsConfigured = false;
+
             connected = obj.Driver.connect;
         end
 

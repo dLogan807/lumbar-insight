@@ -51,6 +51,9 @@ classdef Model < handle
         end
 
         function latestAngle = get.LatestAngle( obj )
+            %GET.LATESTANGLE Update and store the latest angle between the
+            %IMUs
+
             quaternion1 = obj.IMUDevices(1).LatestQuaternion;
             quaternion2 = obj.IMUDevices(2).LatestQuaternion;
 
@@ -65,6 +68,9 @@ classdef Model < handle
         function connected = connectDevice( obj, deviceName, deviceType, deviceIndex )
             % CONNECTDEVICE Attempt device connection, notify controller,
             % and configure device
+
+            obj.FullFlexionAngle = [];
+            obj.StandingAngle = [];
 
             connected = false;
             if ( obj.OperationInProgress )
@@ -98,6 +104,10 @@ classdef Model < handle
 
             operationCompleted( obj );
 
+            %Reset angle calibration
+            obj.StandingAngle = [];
+            obj.FullFlexionAngle = [];
+
             notify( obj, "DevicesConnectedChanged" )
 
         end % disconnectDevice
@@ -108,6 +118,10 @@ classdef Model < handle
 
         function devicesConfigured = bothIMUDevicesConfigured( obj )
             devicesConfigured = (obj.IMUDevices(1).IsConfigured && obj.IMUDevices(2).IsConfigured);
+        end
+
+        function anglesCalibrated = bothAnglesCalibrated( obj )
+            anglesCalibrated = ~isempty(obj.StandingAngle) && ~isempty(obj.FullFlexionAngle); 
         end
 
         function batteryInfo = getBatteryInfo( obj, deviceIndex )
