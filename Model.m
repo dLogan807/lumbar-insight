@@ -40,13 +40,14 @@ classdef Model < handle
 
         function latestAngle = get.LatestAngle( obj )
             %GET.LATESTANGLE Update and store the latest angle between the
-            %IMUs
+            %IMUs. Shimmer driver may throw exceptions.
 
             quaternion1 = obj.IMUDevices(1).LatestQuaternion;
             quaternion2 = obj.IMUDevices(2).LatestQuaternion;
 
             quat3dDifference = getQuat3dDifference( obj, quaternion1, quaternion2 );
             latestAngle = calculateAngle(obj, quat3dDifference);
+
         end
 
         function set.ThresholdAnglePercentage( obj, thresholdPercentage )
@@ -167,7 +168,8 @@ classdef Model < handle
                 angleType string
             end
 
-            if (obj.OperationInProgress)
+            calibrated = false;
+            if (obj.OperationInProgress || isInvalidAngleType( obj, angleType ))
                 return
             end
             operationStarted( obj );
@@ -187,15 +189,15 @@ classdef Model < handle
                 if (strcmp(angleType, "f"))
                     obj.FullFlexionAngle = latestAngle;
                     notify( obj, "FullFlexionAngleCalibrated" )
-                elseif (strcmp(angleType, "s"))
+                else
                     obj.StandingAngle = latestAngle;
                     notify( obj, "StandingAngleCalibrated" )
-                else
-                    calibrated = false;
-                    warning("calibrateAngle: " + angleType + " is not an implemented input.")
                 end
-                
             end
+        end
+
+        function isInvalid = isInvalidAngleType( ~, angleType )
+            isInvalid = ~strcmp(angleType, "s") && ~strcmp(angleType, "f");
         end
 
         function startStreamingBoth( obj )

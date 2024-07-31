@@ -225,7 +225,7 @@ classdef IMUTabController < handle
         end
 
         function onCalibrateStandingPushed( obj, ~, ~ )
-            obj.Model.calibrateAngle( obj, "s");
+            obj.Model.calibrateAngle( obj, "s" );
         end
 
         function onCalibrateFullFlexionPushed( obj, ~, ~ )
