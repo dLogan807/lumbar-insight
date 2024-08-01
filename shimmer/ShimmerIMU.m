@@ -67,8 +67,10 @@ classdef ShimmerIMU < IMUInterface
 
             if (strcmp(state, "Connected"))
                 batteryVoltage = obj.Driver.getbatteryvoltage;
-
-                if (strcmp(state, "Connected") && batteryVoltage <= obj.LowBatteryVoltageLevel)
+                
+                if (strcmp(batteryVoltage, 'Nan'))
+                    batteryInfo = "Unable to retrieve " + obj.Name + " battery voltage.";
+                elseif (strcmp(state, "Connected") && batteryVoltage <= obj.LowBatteryVoltageLevel)
                     batteryInfo = obj.Name + " battery low! (" + batteryVoltage + "mV)";
                 else
                     batteryInfo = obj.Name + " (" + batteryVoltage + "mV)";
