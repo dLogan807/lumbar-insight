@@ -117,8 +117,7 @@ classdef SessionTabController < handle
 
                 try
                     latestAngle = obj.Model.LatestAngle;
-                catch ME
-                    warning(ME)
+                catch
                     continue
                 end
 

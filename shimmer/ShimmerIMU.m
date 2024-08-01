@@ -129,7 +129,11 @@ classdef ShimmerIMU < IMUInterface
             obj.IsConfigured = false;
             obj.SamplingRate = -1;
 
-            connected = obj.Driver.connect;
+            try
+                connected = obj.Driver.connect;
+            catch
+                connected = obj.IsConnected;
+            end
         end
 
         function disconnected = disconnect(obj)
@@ -138,7 +142,11 @@ classdef ShimmerIMU < IMUInterface
             obj.IsConfigured = false;
             obj.SamplingRate = -1;
             
-            disconnected = obj.Driver.disconnect;
+            try
+                disconnected = obj.Driver.disconnect;
+            catch
+                disconnected = ~obj.IsConnected;
+            end
         end
 
         function configured = configure( obj, samplingRate )
@@ -192,14 +200,24 @@ classdef ShimmerIMU < IMUInterface
             if (obj.IsStreaming)
                 started = true;
             else
-                started = obj.Driver.start;
+                try
+                    started = obj.Driver.start;
+                catch
+                    warning("Error encountered starting streaming of " + obj.Name);
+                    started = obj.IsStreaming;
+                end
             end
         end
 
         function stopped = stopStreaming(obj)
             %STOPSTREAMING Stop streaming data
             if (obj.IsStreaming)
-                stopped = obj.Driver.stop;
+                try
+                    stopped = obj.Driver.stop;
+                catch
+                    warning("Error encountered stopping streaming of " + obj.name);
+                    stopped = ~obj.IsStreaming;
+                end
             else
                 stopped = true;
             end
