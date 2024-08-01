@@ -106,7 +106,7 @@ classdef ShimmerIMU < IMUInterface
     
                     latestQuaternion = shimmerData(end, shimmerQuaternionChannels);
                 else
-                    ME = MException("LatestQuaternion:noData", "Data could not be retrieved from %s" + obj.Name);
+                    ME = MException("LatestQuaternion", "Data could not be retrieved from %s" + obj.Name);
                 end
             catch exception
                 ME = exception;
@@ -146,18 +146,24 @@ classdef ShimmerIMU < IMUInterface
 
             SensorMacros = ShimmerEnabledSensorsMacrosClass;                          % assign user friendly macros for setenabledsensors
 
-            if (setSamplingRate(obj, samplingRate))
-    	        obj.Driver.setinternalboard('9DOF');                                      % Set the shimmer internal daughter board to '9DOF'
-                obj.Driver.disableallsensors;                                             % disable all sensors
-                obj.Driver.setenabledsensors(SensorMacros.GYRO,1,SensorMacros.MAG,1,...   % Enable the gyroscope, magnetometer and accelerometer.
-                SensorMacros.ACCEL,1);                                                  
-                obj.Driver.setaccelrange(0);                                              % Set the accelerometer range to 0 (+/- 1.5g for Shimmer2/2r, +/- 2.0g for Shimmer3)
-                obj.Driver.setorientation3D(1);                                           % Enable orientation3D
-                obj.Driver.setgyroinusecalibration(1);                                    % Enable gyro in-use calibration
-
-                obj.IsConfigured = true;
-                configured = true;
-            else
+            try
+                if (setSamplingRate(obj, samplingRate))
+    	            obj.Driver.setinternalboard('9DOF');                                      % Set the shimmer internal daughter board to '9DOF'
+                    obj.Driver.disableallsensors;                                             % disable all sensors
+                    obj.Driver.setenabledsensors(SensorMacros.GYRO,1,SensorMacros.MAG,1,...   % Enable the gyroscope, magnetometer and accelerometer.
+                    SensorMacros.ACCEL,1);                                                  
+                    obj.Driver.setaccelrange(0);                                              % Set the accelerometer range to 0 (+/- 1.5g for Shimmer2/2r, +/- 2.0g for Shimmer3)
+                    obj.Driver.setorientation3D(1);                                           % Enable orientation3D
+                    obj.Driver.setgyroinusecalibration(1);                                    % Enable gyro in-use calibration
+    
+                    obj.IsConfigured = true;
+                    configured = true;
+                else
+                    obj.IsConfigured = false;
+                    configured = false;
+                end
+            catch
+                warning("configure: " + obj.Name + " failed to complete configuration.")
                 obj.IsConfigured = false;
                 configured = false;
             end
@@ -177,7 +183,7 @@ classdef ShimmerIMU < IMUInterface
                 end
             else
                 rateSet = false;
-                disp("Invalid sampling rate specified for " + obj.Name);
+                warning("Invalid sampling rate specified for " + obj.Name);
             end
         end
 
