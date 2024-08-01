@@ -113,6 +113,12 @@ classdef IMUTabController < handle
         end
 
         function onDevice1ConnectButtonPushed( obj, ~, ~ )
+
+            if(obj.Model.OperationInProgress)
+                disp("Please wait for the current operation to complete.")
+                return
+            end
+
             obj.IMUTabView.DeviceConnect1.State = "Connecting";
             if (obj.IMUTabView.DeviceConnect2.State == "Connect")
                 obj.IMUTabView.DeviceConnect2.State = "Waiting";
@@ -122,6 +128,12 @@ classdef IMUTabController < handle
         end
 
         function onDevice2ConnectButtonPushed( obj, ~, ~ )
+
+            if(obj.Model.OperationInProgress)
+                disp("Please wait for the current operation to complete.")
+                return
+            end
+
             obj.IMUTabView.DeviceConnect2.State = "Connecting";
             if (obj.IMUTabView.DeviceConnect1.State == "Connect")
                 obj.IMUTabView.DeviceConnect1.State = "Waiting";
@@ -131,10 +143,20 @@ classdef IMUTabController < handle
         end
 
         function onDevice1DisconnectButtonPushed( obj, ~, ~ )
+            if(obj.Model.OperationInProgress)
+                disp("Please wait for the current operation to complete.")
+                return
+            end
+
             obj.Model.disconnectDevice(1);
         end
 
         function onDevice2DisconnectButtonPushed( obj, ~, ~ )
+            if(obj.Model.OperationInProgress)
+                disp("Please wait for the current operation to complete.")
+                return
+            end
+
             obj.Model.disconnectDevice(2);
         end
 
@@ -209,6 +231,11 @@ classdef IMUTabController < handle
         end
 
         function onDevice1ConfigureButtonPushed( obj, ~, ~ )
+            if(obj.Model.OperationInProgress)
+                disp("Please wait for the current operation to complete.")
+                return
+            end
+
             obj.IMUTabView.DeviceConfig1.State = "Configuring";
             obj.IMUTabView.DeviceConfig2.State = "Waiting";
 
@@ -217,6 +244,11 @@ classdef IMUTabController < handle
         end
 
         function onDevice2ConfigureButtonPushed( obj, ~, ~ )
+            if(obj.Model.OperationInProgress)
+                disp("Please wait for the current operation to complete.")
+                return
+            end
+            
             obj.IMUTabView.DeviceConfig2.State = "Configuring";
             obj.IMUTabView.DeviceConfig1.State = "Waiting";
 
