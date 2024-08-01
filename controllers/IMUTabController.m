@@ -62,6 +62,11 @@ classdef IMUTabController < handle
                 "StandingAngleCalibrated", @obj.onStandingAngleCalibrated );
             obj.Listener(end+1) = listener( obj.Model, ... 
                 "FullFlexionAngleCalibrated", @obj.onFullFlexionAngleCalibrated );
+
+            obj.Listener(end+1) = listener( obj.Model, ... 
+                "OperationStarted", @obj.onOperationStarted );
+            obj.Listener(end+1) = listener( obj.Model, ... 
+                "OperationCompleted", @obj.onOperationCompleted );
             
         end % constructor
         
@@ -115,7 +120,6 @@ classdef IMUTabController < handle
         function onDevice1ConnectButtonPushed( obj, ~, ~ )
 
             if(obj.Model.OperationInProgress)
-                disp("Please wait for the current operation to complete.")
                 return
             end
 
@@ -130,7 +134,6 @@ classdef IMUTabController < handle
         function onDevice2ConnectButtonPushed( obj, ~, ~ )
 
             if(obj.Model.OperationInProgress)
-                disp("Please wait for the current operation to complete.")
                 return
             end
 
@@ -144,7 +147,6 @@ classdef IMUTabController < handle
 
         function onDevice1DisconnectButtonPushed( obj, ~, ~ )
             if(obj.Model.OperationInProgress)
-                disp("Please wait for the current operation to complete.")
                 return
             end
 
@@ -153,7 +155,6 @@ classdef IMUTabController < handle
 
         function onDevice2DisconnectButtonPushed( obj, ~, ~ )
             if(obj.Model.OperationInProgress)
-                disp("Please wait for the current operation to complete.")
                 return
             end
 
@@ -232,7 +233,6 @@ classdef IMUTabController < handle
 
         function onDevice1ConfigureButtonPushed( obj, ~, ~ )
             if(obj.Model.OperationInProgress)
-                disp("Please wait for the current operation to complete.")
                 return
             end
 
@@ -245,7 +245,6 @@ classdef IMUTabController < handle
 
         function onDevice2ConfigureButtonPushed( obj, ~, ~ )
             if(obj.Model.OperationInProgress)
-                disp("Please wait for the current operation to complete.")
                 return
             end
             

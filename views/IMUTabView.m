@@ -34,6 +34,9 @@ classdef IMUTabView < matlab.ui.componentcontainer.ComponentContainer
         CalibrationLabel matlab.ui.control.Label
         CalibrateStandingPositionButton CalibrationButton
         CalibrateFullFlexionButton CalibrationButton
+
+        StatusLabel matlab.ui.control.Label
+        OperationLabel matlab.ui.control.Label
     end
 
     events ( NotifyAccess = private )
@@ -178,7 +181,8 @@ classdef IMUTabView < matlab.ui.componentcontainer.ComponentContainer
 
             % Calibration components
             obj.CalibrationLabel = uilabel("Parent", obj.GridLayout, ...
-                "Text", "Calibration", "FontWeight", "bold");
+                "Text", "Calibration", ...
+                "FontWeight", "bold");
             obj.CalibrationLabel.Layout.Row = 7;
             obj.CalibrationLabel.Layout.Column = 2;
 
@@ -193,6 +197,23 @@ classdef IMUTabView < matlab.ui.componentcontainer.ComponentContainer
                 "FontSize", obj.FontSize );
             obj.CalibrateFullFlexionButton.Layout.Row = 9;
             obj.CalibrateFullFlexionButton.Layout.Column = 2;
+
+            % Information components
+            InformationHeadingLabel = uilabel("Parent", obj.GridLayout, ...
+                "Text", "Information", ...
+                "FontWeight", "bold" );
+            InformationHeadingLabel.Layout.Row = 11;
+            InformationHeadingLabel.Layout.Column = 2;
+
+            obj.StatusLabel = uilabel("Parent", obj.GridLayout, ...
+                "Text", "Please two connect devices." );
+            obj.StatusLabel.Layout.Row = 12;
+            obj.StatusLabel.Layout.Column = 2;
+
+            obj.OperationLabel = uilabel("Parent", obj.GridLayout, ...
+                "Text", "No operations in progress." );
+            obj.OperationLabel.Layout.Row = 13;
+            obj.OperationLabel.Layout.Column = 2;
         end
 
         function update( obj )

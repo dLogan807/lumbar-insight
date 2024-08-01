@@ -25,6 +25,9 @@ classdef Model < handle
     
     events ( NotifyAccess = private )
         % Events broadcast when the model is altered.
+        OperationStarted
+        OperationCompleted
+
         DevicesConnectedChanged
         DevicesConfiguredChanged
 
@@ -255,10 +258,14 @@ classdef Model < handle
     methods (Access = private)
         function operationStarted( obj )
             obj.OperationInProgress = true;
+
+            notify( obj, "OperationStarted" )
         end
 
         function operationCompleted( obj )
             obj.OperationInProgress = false;
+
+            notify( obj, "OperationCompleted" )
         end
 
         function angle = calculateAngle( ~, quat3dDifference)
