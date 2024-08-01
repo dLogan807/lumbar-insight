@@ -115,7 +115,12 @@ classdef SessionTabController < handle
             while ( obj.Model.SessionInProgress )
                 pause(delay);
 
-                latestAngle = obj.Model.LatestAngle;
+                try
+                    latestAngle = obj.Model.LatestAngle;
+                catch ME
+                    warning(ME)
+                    continue
+                end
 
                 updateCeilingAngles( obj, latestAngle );
 
