@@ -206,12 +206,12 @@ classdef IMUTabView < matlab.ui.componentcontainer.ComponentContainer
             InformationHeadingLabel.Layout.Column = 2;
 
             obj.StatusLabel = uilabel("Parent", obj.GridLayout, ...
-                "Text", "Please two connect devices." );
+                "Text", "Please two connect IMUs." );
             obj.StatusLabel.Layout.Row = 12;
             obj.StatusLabel.Layout.Column = 2;
 
             obj.OperationLabel = uilabel("Parent", obj.GridLayout, ...
-                "Text", "No operations in progress." );
+                "Text", "No operations are in progress." );
             obj.OperationLabel.Layout.Row = 13;
             obj.OperationLabel.Layout.Column = 2;
         end

@@ -28,7 +28,7 @@ classdef IMUTabController < handle
 
             obj.IMUTabView = imuTabView;
 
-            % Listen for changes to the view. 
+            % Listen for changes to the view.
             obj.Listener(end+1) = listener( obj.IMUTabView, ... 
                 "BTScanButtonPushed", @obj.onBTScanButtonPushed );
             
@@ -51,7 +51,12 @@ classdef IMUTabController < handle
             obj.Listener(end+1) = listener( obj.IMUTabView, ... 
                 "CalibrateFullFlexionPushed", @obj.onCalibrateFullFlexionPushed );
 
-            % Listen for changes to the model data.
+            % Listen for changes to the model.
+            obj.Listener(end+1) = listener( obj.Model, ... 
+                "OperationStarted", @obj.onOperationStarted );
+            obj.Listener(end+1) = listener( obj.Model, ... 
+                "OperationCompleted", @obj.onOperationCompleted );
+            
             obj.Listener(end+1) = listener( obj.Model, ... 
                 "DevicesConnectedChanged", @obj.onDevicesChanged );
 
@@ -63,11 +68,6 @@ classdef IMUTabController < handle
             obj.Listener(end+1) = listener( obj.Model, ... 
                 "FullFlexionAngleCalibrated", @obj.onFullFlexionAngleCalibrated );
 
-            obj.Listener(end+1) = listener( obj.Model, ... 
-                "OperationStarted", @obj.onOperationStarted );
-            obj.Listener(end+1) = listener( obj.Model, ... 
-                "OperationCompleted", @obj.onOperationCompleted );
-            
         end % constructor
         
     end % methods
@@ -159,6 +159,37 @@ classdef IMUTabController < handle
             end
 
             obj.Model.disconnectDevice(2);
+        end
+
+        function onOperationStarted( obj, ~, ~ )
+            obj.IMUTabView.OperationLabel.Text = "Operation in progress. Please wait.";
+            drawnow;
+        end
+
+        function onOperationCompleted( obj, ~, ~ )
+            %ONOPERATIONCOMPLETED Prompt the user of the next configuration
+            %step
+
+            obj.IMUTabView.OperationLabel.Text = "No operations are in progress.";
+            statusLabel = obj.IMUTabView.StatusLabel;
+
+            if (~obj.Model.bothIMUDevicesConnected)
+                statusLabel.Text = "Please connect two IMUs.";
+            elseif (~obj.Model.IMUDevices(1).IsConfigured)
+                statusLabel.Text = "Please configure " + obj.Model.IMUDevices(1).Name + ".";
+            elseif (~obj.Model.IMUDevices(2).IsConfigured)
+                statusLabel.Text = "Please configure " + obj.Model.IMUDevices(2).Name + ".";
+            elseif (isempty(obj.Model.StandingAngle))
+                statusLabel.Text = "Please calibrate the subject's angle whilst standing.";
+            elseif (isempty(obj.Model.FullFlexionAngle))
+                statusLabel.Text = "Please calibrate the subject's angle whilst at full flexion.";
+            elseif (obj.Model.IMUDevices(1).SamplingRate ~= obj.Model.IMUDevices(2).SamplingRate)
+                statusLabel.Text = "Setup completed. Note the lowest sampling rate will be used! A session can be started.";
+            else
+                statusLabel.Text = "Setup completed. A session can be started.";
+            end
+
+            drawnow;
         end
 
         function onDevicesChanged( obj, ~, ~ )
@@ -289,6 +320,7 @@ classdef IMUTabController < handle
 
             formattedDevices = deviceTable;
         end
+
     end % methods ( Access = private )
     
 end % classdef

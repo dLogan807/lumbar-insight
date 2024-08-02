@@ -187,7 +187,6 @@ classdef Model < handle
                 warning(ME);
             end
 
-            operationCompleted( obj );
             if (calibrated)
                 if (strcmp(angleType, "f"))
                     obj.FullFlexionAngle = latestAngle;
@@ -197,6 +196,9 @@ classdef Model < handle
                     notify( obj, "StandingAngleCalibrated" )
                 end
             end
+
+            operationCompleted( obj );
+            notify( obj, "OperationCompleted" )
         end
 
         function isInvalid = isInvalidAngleType( ~, angleType )
