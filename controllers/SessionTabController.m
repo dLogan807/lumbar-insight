@@ -104,7 +104,7 @@ classdef SessionTabController < handle
             resetSessionData( obj );
 
             delay = calculateDelay( obj );
-            xDuration = 30;
+            xAxisTimeDuration = 30;
 
             elapsedTime = 0;
             tic; % Start timer
@@ -135,8 +135,8 @@ classdef SessionTabController < handle
                 addpoints(thresholdLine, elapsedTime, thresholdAngle);
 
                 % Move along x-axis
-                if (elapsedTime > xDuration)
-                    obj.SessionTabView.LumbarAngleGraph.XLim = [(elapsedTime - xDuration) elapsedTime];
+                if (elapsedTime > xAxisTimeDuration)
+                    obj.SessionTabView.LumbarAngleGraph.XLim = [(elapsedTime - xAxisTimeDuration) elapsedTime];
                 end
 
                 if (latestAngle > thresholdAngle)
@@ -166,12 +166,12 @@ classdef SessionTabController < handle
         end
 
         function updateCeilingAngles( obj, latestAngle )
-            if (obj.Model.SmallestAngle == -1 || latestAngle < obj.Model.SmallestAngle)
+            if (latestAngle < obj.Model.SmallestAngle)
                 obj.Model.SmallestAngle = latestAngle;
                 obj.SessionTabView.SmallestAngleLabel.Text = "Smallest Angle: " + latestAngle + "°";
             end
 
-            if (obj.Model.LargestAngle == -1 || latestAngle > obj.Model.LargestAngle)
+            if (latestAngle > obj.Model.LargestAngle)
                 obj.Model.LargestAngle = latestAngle;
                 obj.SessionTabView.LargestAngleLabel.Text = "Largest Angle: " + latestAngle + "°";
             end
@@ -181,6 +181,8 @@ classdef SessionTabController < handle
             obj.SessionTabView.SmallestAngleLabel.Text = "Smallest Angle: No data";
             obj.SessionTabView.LargestAngleLabel.Text = "Largest Angle: No data";
             obj.SessionTabView.TimeAboveMaxLabel.Text = "Time above threshold angle: 0s";
+
+            obj.SessionTabView.LumbarAngleGraph.XLim = [0 inf];
         end
 
         function onSessionStopButtonPushed( obj, ~, ~ )

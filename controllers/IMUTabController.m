@@ -296,10 +296,11 @@ classdef IMUTabController < handle
 
         function onStandingOffsetAngleCalibrated( obj, ~, ~ )
             obj.IMUTabView.CalibrateStandingPositionButton.StatusText = "Standing offset: " + obj.Model.StandingOffsetAngle + "°";
+            obj.IMUTabView.CalibrateFullFlexionButton.StatusText = "Not calibrated.";
         end
 
         function onFullFlexionAngleCalibrated( obj, ~, ~ )
-            obj.IMUTabView.CalibrateFullFlexionButton.StatusText = obj.Model.FullFlexionAngle + "°";
+            obj.IMUTabView.CalibrateFullFlexionButton.StatusText = "Full flexion angle:" + obj.Model.FullFlexionAngle + "°";
         end
 
         function formattedDevices = statusHTMLToText( ~, deviceTable )

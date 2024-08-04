@@ -146,7 +146,6 @@ classdef Model < handle
             operationStarted( obj );
 
             device = obj.IMUDevices(deviceIndex);
-
             configured = device.configure(samplingRate);
 
             operationCompleted( obj );
@@ -188,16 +187,15 @@ classdef Model < handle
             startStreamingBoth( obj );
             calibrated = true;
             angle = [];
-
             try
                 if (strcmp(angleType, "s"))
-                    obj.StandingOffsetAngle = 0 - obj.LatestAngle;
+                    angle = 0 - obj.LatestAngle;
                 else
-                    obj.FullFlexionAngle = latestCalibratedAngle( obj );
+                    angle = obj.LatestCalibratedAngle;
                 end
-            catch ME
+            catch
                 calibrated = false;
-                warning(ME);
+                warning("Failed to retrieve angle. Could not calibrate.");
             end
 
             if (calibrated)
@@ -295,12 +293,12 @@ classdef Model < handle
             end
         end % calculateAngle
 
-        function quat3dDifference = getQuat3dDifference( ~ )
+        function quat3dDifference = getQuat3dDifference( obj )
             %GETQUAT3DDIFFERENCE Find the difference between IMU
             %quaternions.
 
-            quaternion1 = obj.IMUDevices(1).LatestQuaternion;
-            quaternion2 = obj.IMUDevices(2).LatestQuaternion;
+            quaternion1 = obj.IMUDevices(2).LatestQuaternion;
+            quaternion2 = obj.IMUDevices(1).LatestQuaternion;
 
             quat3dDifference = quatmultiply(quatconj(quaternion1), quaternion2);
         end
