@@ -189,7 +189,7 @@ classdef SessionTabController < handle
 
             obj.Model.timeAboveThresholdAngle = 0;
             obj.Model.SmallestAngle = [];
-            obj.Model.LatestAngle = [];
+            obj.Model.LargestAngle = [];
         end
 
         function onSessionStopButtonPushed( obj, ~, ~ )
