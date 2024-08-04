@@ -66,11 +66,11 @@ classdef SessionTabController < handle
             handleSessionControls( obj );
         end
 
-        function onStandingOffsetAngleCalibrated( obj ,~, ~ )
+        function onStandingOffsetAngleCalibrated( obj, ~, ~ )
             handleSessionControls( obj );
         end
 
-        function onFullFlexionAngleCalibrated( obj ,~, ~ )
+        function onFullFlexionAngleCalibrated( obj, ~, ~ )
             handleSessionControls( obj );
         end
 
@@ -97,10 +97,10 @@ classdef SessionTabController < handle
         function onSessionStartButtonPushed( obj, ~, ~ )
             obj.SessionTabView.SessionStartButton.Enable = "off";
             obj.SessionTabView.SessionStopButton.Enable = "on";
+            obj.Model.ThresholdAnglePercentage = obj.SessionTabView.AngleThresholdSlider.Value;
 
             obj.Model.startSession;
 
-            cla(obj.SessionTabView.LumbarAngleGraph);
             resetSessionData( obj );
 
             delay = calculateDelay( obj );
@@ -178,6 +178,7 @@ classdef SessionTabController < handle
         end
 
         function resetSessionData( obj )
+            cla(obj.SessionTabView.LumbarAngleGraph);
             obj.SessionTabView.SmallestAngleLabel.Text = "Smallest Angle: No data";
             obj.SessionTabView.LargestAngleLabel.Text = "Largest Angle: No data";
             obj.SessionTabView.TimeAboveMaxLabel.Text = "Time above threshold angle: 0s";

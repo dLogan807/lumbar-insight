@@ -15,7 +15,7 @@ classdef Model < handle
 
         FullFlexionAngle double = []
         StandingOffsetAngle double = []
-        ThresholdAnglePercentage uint8 = 0.8
+        ThresholdAnglePercentage uint8
         timeAboveThresholdAngle uint8 = 0
     end
 
@@ -62,12 +62,25 @@ classdef Model < handle
         end
 
         function set.ThresholdAnglePercentage( obj, thresholdPercentage )
+
+            arguments
+                obj 
+                thresholdPercentage int8
+            end
+
             obj.ThresholdAnglePercentage = double(thresholdPercentage) * 0.01;
         end
 
         function connected = connectDevice( obj, deviceName, deviceType, deviceIndex )
             % CONNECTDEVICE Attempt device connection, notify controller,
             % and configure device
+            
+            arguments
+                obj 
+                deviceName string
+                deviceType DeviceTypes
+                deviceIndex int8
+            end
 
             connected = false;
             if ( obj.OperationInProgress )
