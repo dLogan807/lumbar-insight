@@ -63,18 +63,18 @@ classdef SessionTabController < handle
     methods ( Access = private )
 
         function onDevicesConnectedChanged( obj, ~, ~ )
-            handleSessionControls( obj );
+            updateSessionControls( obj );
         end
 
         function onStandingOffsetAngleCalibrated( obj, ~, ~ )
-            handleSessionControls( obj );
+            updateSessionControls( obj );
         end
 
         function onFullFlexionAngleCalibrated( obj, ~, ~ )
-            handleSessionControls( obj );
+            updateSessionControls( obj );
         end
 
-        function handleSessionControls( obj )
+        function updateSessionControls( obj )
             %HANDLESESSION Enable session control buttons depending on
             %angle calibration
 
@@ -139,17 +139,17 @@ classdef SessionTabController < handle
                     obj.SessionTabView.LumbarAngleGraph.XLim = [(elapsedTime - xAxisTimeDuration) elapsedTime];
                 end
 
+                timeThisLoop = toc;
                 if (latestAngle > thresholdAngle)
-                    obj.Model.timeAboveThresholdAngle = obj.Model.timeAboveThresholdAngle + toc;
-
+                    obj.Model.timeAboveThresholdAngle = obj.Model.timeAboveThresholdAngle + timeThisLoop;
                     obj.SessionTabView.TimeAboveMaxLabel.Text = "Time above threshold angle: " + obj.Model.timeAboveThresholdAngle + "s";
                 end
 
-                elapsedTime = elapsedTime + toc;                                                              % Stop timer and add to elapsed time
+                elapsedTime = elapsedTime + timeThisLoop;                                                              % Stop timer and add to elapsed time
                 tic;
             end
 
-            obj.SessionTabView.SessionStartButton.Enable = "on";
+            updateSessionControls( obj );
         end
 
         function delay = calculateDelay( obj)
@@ -166,24 +166,30 @@ classdef SessionTabController < handle
         end
 
         function updateCeilingAngles( obj, latestAngle )
-            if (latestAngle < obj.Model.SmallestAngle)
+            if (isempty(obj.Model.SmallestAngle) || latestAngle < obj.Model.SmallestAngle)
                 obj.Model.SmallestAngle = latestAngle;
                 obj.SessionTabView.SmallestAngleLabel.Text = "Smallest Angle: " + latestAngle + "°";
             end
 
-            if (latestAngle > obj.Model.LargestAngle)
+            if (isempty(obj.Model.LargestAngle) || latestAngle > obj.Model.LargestAngle)
                 obj.Model.LargestAngle = latestAngle;
                 obj.SessionTabView.LargestAngleLabel.Text = "Largest Angle: " + latestAngle + "°";
             end
         end
 
         function resetSessionData( obj )
+            % Reset graph
             cla(obj.SessionTabView.LumbarAngleGraph);
+            obj.SessionTabView.LumbarAngleGraph.XLim = [0 30];
+
+            %Reset measurements
             obj.SessionTabView.SmallestAngleLabel.Text = "Smallest Angle: No data";
             obj.SessionTabView.LargestAngleLabel.Text = "Largest Angle: No data";
             obj.SessionTabView.TimeAboveMaxLabel.Text = "Time above threshold angle: 0s";
 
-            obj.SessionTabView.LumbarAngleGraph.XLim = [0 30];
+            obj.Model.timeAboveThresholdAngle = 0;
+            obj.Model.SmallestAngle = [];
+            obj.Model.LatestAngle = [];
         end
 
         function onSessionStopButtonPushed( obj, ~, ~ )

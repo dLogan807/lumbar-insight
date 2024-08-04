@@ -10,13 +10,13 @@ classdef Model < handle
 
         LatestAngle double
         LatestCalibratedAngle double
-        SmallestAngle double = -1
-        LargestAngle double = -1
+        SmallestAngle double = [];
+        LargestAngle double = [];
 
         FullFlexionAngle double = []
         StandingOffsetAngle double = []
         ThresholdAnglePercentage uint8
-        timeAboveThresholdAngle uint8 = 0
+        timeAboveThresholdAngle double = 0
     end
 
     properties (SetAccess = private)
