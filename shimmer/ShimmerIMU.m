@@ -1,6 +1,6 @@
 classdef ShimmerIMU < IMUInterface
     %SHIMMERIMU Class implmenting IMU Interface, utilising the Shimmer
-    %driver
+    %driver. ShimmerDriver may cause exceptions!
     
     properties (GetAccess = private, SetAccess = immutable)
         Driver ShimmerDriver

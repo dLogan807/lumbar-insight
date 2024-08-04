@@ -37,7 +37,7 @@ classdef SessionTabController < handle
             obj.Listener(end+1) = listener( obj.Model, ...
                 "DevicesConnectedChanged", @obj.onDevicesConnectedChanged );
             obj.Listener(end+1) = listener( obj.Model, ...
-                "StandingAngleCalibrated", @obj.onStandingAngleCalibrated );
+                "StandingOffsetAngleCalibrated", @obj.onStandingOffsetAngleCalibrated );
             obj.Listener(end+1) = listener( obj.Model, ...
                 "FullFlexionAngleCalibrated", @obj.onFullFlexionAngleCalibrated );
             
@@ -66,7 +66,7 @@ classdef SessionTabController < handle
             handleSessionControls( obj );
         end
 
-        function onStandingAngleCalibrated( obj ,~, ~ )
+        function onStandingOffsetAngleCalibrated( obj ,~, ~ )
             handleSessionControls( obj );
         end
 
@@ -80,7 +80,7 @@ classdef SessionTabController < handle
 
             obj.SessionTabView.SessionStopButton.Enable = "off";
 
-            if (obj.Model.bothIMUDevicesConnected && obj.Model.bothAnglesCalibrated)
+            if (obj.Model.bothIMUDevicesConnected && obj.Model.calibrationCompleted)
                 obj.SessionTabView.SessionStartButton.Enable = "on";
             else
                 obj.SessionTabView.SessionStartButton.Enable = "off";
@@ -113,10 +113,15 @@ classdef SessionTabController < handle
             thresholdLine = animatedline(obj.SessionTabView.LumbarAngleGraph, "Color", "r");
 
             while ( obj.Model.SessionInProgress )
+                if (~obj.Model.bothIMUDevicesConnected)
+                    obj.Model.stopSession;
+                    break
+                end
+
                 pause(delay);
 
                 try
-                    latestAngle = obj.Model.LatestAngle;
+                    latestAngle = obj.Model.LatestCalibratedAngle;
                 catch
                     continue
                 end
@@ -154,10 +159,9 @@ classdef SessionTabController < handle
             samplingRate = obj.Model.lowestSamplingRate;
 
             if (samplingRate <= 0)
-                delay = 0.5;
+                delay = 0.1;
             else
                 delay = 1 / samplingRate;
-                disp("Delay: " + delay);
             end
         end
 

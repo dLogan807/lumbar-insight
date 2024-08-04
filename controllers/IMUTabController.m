@@ -64,7 +64,7 @@ classdef IMUTabController < handle
                 "DevicesConfiguredChanged", @obj.onDevicesConfiguredChanged );
 
             obj.Listener(end+1) = listener( obj.Model, ... 
-                "StandingAngleCalibrated", @obj.onStandingAngleCalibrated );
+                "StandingOffsetAngleCalibrated", @obj.onStandingOffsetAngleCalibrated );
             obj.Listener(end+1) = listener( obj.Model, ... 
                 "FullFlexionAngleCalibrated", @obj.onFullFlexionAngleCalibrated );
 
@@ -179,7 +179,7 @@ classdef IMUTabController < handle
                 statusLabel.Text = "Please configure " + obj.Model.IMUDevices(1).Name + ".";
             elseif (~obj.Model.IMUDevices(2).IsConfigured)
                 statusLabel.Text = "Please configure " + obj.Model.IMUDevices(2).Name + ".";
-            elseif (isempty(obj.Model.StandingAngle))
+            elseif (isempty(obj.Model.StandingOffsetAngle))
                 statusLabel.Text = "Please calibrate the subject's angle whilst standing.";
             elseif (isempty(obj.Model.FullFlexionAngle))
                 statusLabel.Text = "Please calibrate the subject's angle whilst at full flexion.";
@@ -294,8 +294,8 @@ classdef IMUTabController < handle
             obj.Model.calibrateAngle( "f" );
         end
 
-        function onStandingAngleCalibrated( obj, ~, ~ )
-            obj.IMUTabView.CalibrateStandingPositionButton.StatusText = obj.Model.StandingAngle + "°";
+        function onStandingOffsetAngleCalibrated( obj, ~, ~ )
+            obj.IMUTabView.CalibrateStandingPositionButton.StatusText = "Standing offset: " + obj.Model.StandingOffsetAngle + "°";
         end
 
         function onFullFlexionAngleCalibrated( obj, ~, ~ )

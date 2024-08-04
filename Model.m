@@ -9,11 +9,12 @@ classdef Model < handle
         Cameras (1, :) Camera
 
         LatestAngle double
+        LatestCalibratedAngle double
         SmallestAngle double = -1
         LargestAngle double = -1
 
         FullFlexionAngle double = []
-        StandingAngle double = []
+        StandingOffsetAngle double = []
         ThresholdAnglePercentage uint8 = 0.8
         timeAboveThresholdAngle uint8 = 0
     end
@@ -31,7 +32,7 @@ classdef Model < handle
         DevicesConnectedChanged
         DevicesConfiguredChanged
 
-        StandingAngleCalibrated
+        StandingOffsetAngleCalibrated
         FullFlexionAngleCalibrated
 
         SessionStarted
@@ -42,15 +43,22 @@ classdef Model < handle
     methods
 
         function latestAngle = get.LatestAngle( obj )
-            %GET.LATESTANGLE Update and store the latest angle between the
-            %IMUs. Shimmer driver may throw exceptions.
+            %LATESTREANGLE Update and store the latest angle between the
+            %IMUs, relative to subject's standing angle.
 
-            quaternion1 = obj.IMUDevices(1).LatestQuaternion;
-            quaternion2 = obj.IMUDevices(2).LatestQuaternion;
+            quat3dDifference = getQuat3dDifference( obj );
+            latestAngle = calculateAngle(obj, quat3dDifference);
+        end
 
-            quat3dDifference = getQuat3dDifference( obj, quaternion1, quaternion2 );
-            latestAngle = calculateAngleRelatively(obj, quat3dDifference);
+        function latestCalibratedAngle = get.LatestCalibratedAngle( obj )
+            %GET.LATESTCALIBRATEDANGLE Get the latest angle zeroed to the
+            %subject's standing position.
 
+            if (isempty(obj.StandingOffsetAngle))
+                throw("LatestCalibratedAngle: Standing offset angle not calibrated!");
+            end
+
+            latestCalibratedAngle = obj.LatestAngle + obj.StandingOffsetAngle;
         end
 
         function set.ThresholdAnglePercentage( obj, thresholdPercentage )
@@ -78,7 +86,7 @@ classdef Model < handle
 
             %Reset angle calibration
             obj.FullFlexionAngle = [];
-            obj.StandingAngle = [];
+            obj.StandingOffsetAngle = [];
             notify( obj, "DevicesConnectedChanged" )
 
         end % connectDevice
@@ -97,7 +105,7 @@ classdef Model < handle
             operationCompleted( obj );
 
             %Reset angle calibration
-            obj.StandingAngle = [];
+            obj.StandingOffsetAngle = [];
             obj.FullFlexionAngle = [];
             notify( obj, "DevicesConnectedChanged" )
 
@@ -111,8 +119,8 @@ classdef Model < handle
             devicesConfigured = (obj.IMUDevices(1).IsConfigured && obj.IMUDevices(2).IsConfigured);
         end
 
-        function anglesCalibrated = bothAnglesCalibrated( obj )
-            anglesCalibrated = ~isempty(obj.StandingAngle) && ~isempty(obj.FullFlexionAngle); 
+        function anglesCalibrated = calibrationCompleted( obj )
+            anglesCalibrated = ~isempty(obj.StandingOffsetAngle) && ~isempty(obj.FullFlexionAngle); 
         end
 
         function batteryInfo = getBatteryInfo( obj, deviceIndex )
@@ -164,7 +172,7 @@ classdef Model < handle
 
         function calibrated = calibrateAngle( obj, angleType )
             % CALIBRATEANGLE Calibrate the standing or full flexion angle.
-            % "f" for Full Flexion, "s" for standing
+            % "f" for Full Flexion, "s" for standing offset
 
             arguments
                 obj
@@ -172,28 +180,34 @@ classdef Model < handle
             end
 
             calibrated = false;
-            if (obj.OperationInProgress || isInvalidAngleType( obj, angleType ))
+            if (obj.OperationInProgress || isInvalidAngleType( obj, angleType ) || (isempty(obj.StandingOffsetAngle) && strcmp(angleType, "f")))
                 return
             end
             operationStarted( obj );
 
             startStreamingBoth( obj );
             calibrated = true;
-            latestAngle = [];
+            angle = [];
+
             try
-                latestAngle = obj.LatestAngle;
+                if (strcmp(angleType, "s"))
+                    obj.StandingOffsetAngle = 0 - obj.LatestAngle;
+                else
+                    obj.FullFlexionAngle = latestCalibratedAngle( obj );
+                end
             catch ME
                 calibrated = false;
                 warning(ME);
             end
 
             if (calibrated)
-                if (strcmp(angleType, "f"))
-                    obj.FullFlexionAngle = latestAngle;
-                    notify( obj, "FullFlexionAngleCalibrated" )
+                if (strcmp(angleType, "s"))
+                    obj.StandingOffsetAngle = angle;
+                    obj.FullFlexionAngle = [];
+                    notify( obj, "StandingOffsetAngleCalibrated" )
                 else
-                    obj.StandingAngle = latestAngle;
-                    notify( obj, "StandingAngleCalibrated" )
+                    obj.FullFlexionAngle = angle;
+                    notify( obj, "FullFlexionAngleCalibrated" )
                 end
             end
 
@@ -270,14 +284,7 @@ classdef Model < handle
             notify( obj, "OperationCompleted" )
         end
 
-        function angle = calculateAngle( ~, quat3dDifference)
-            % CALCULATEANGLE Calculate the angle between two quaternions
-            % https://au.mathworks.com/matlabcentral/answers/415936-angle-between-2-quaternions?s_tid=answers_rc1-2_p2_MLT
-    
-            angle = 2*acosd(quat3dDifference(1));
-        end % calculateAngle
-
-        function angle = calculateAngleRelatively( obj, quat3dDifference)
+        function angle = calculateAngle( obj, quat3dDifference)
             % CALCULATEANGLE Calculate the angle between two quaternions
             % https://au.mathworks.com/matlabcentral/answers/415936-angle-between-2-quaternions?s_tid=answers_rc1-2_p2_MLT
     
@@ -288,13 +295,18 @@ classdef Model < handle
             end
         end % calculateAngle
 
-        function quat3dDifference = getQuat3dDifference( ~, quaternion1, quaternion2 )
+        function quat3dDifference = getQuat3dDifference( ~ )
+            %GETQUAT3DDIFFERENCE Find the difference between IMU
+            %quaternions.
+
+            quaternion1 = obj.IMUDevices(1).LatestQuaternion;
+            quaternion2 = obj.IMUDevices(2).LatestQuaternion;
+
             quat3dDifference = quatmultiply(quatconj(quaternion1), quaternion2);
         end
 
         function isNegative = isNegativeAngle( ~, quat3dDiffernce )
             %https://en.wikipedia.org/wiki/Conversion_between_quaternions_and_Euler_angles
-            % roll (x-axis rotation)
 
             w = quat3dDiffernce(1);
             x = quat3dDiffernce(2);
