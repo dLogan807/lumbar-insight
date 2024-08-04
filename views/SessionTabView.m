@@ -81,8 +81,8 @@ classdef SessionTabView < matlab.ui.componentcontainer.ComponentContainer
             obj.LumbarAngleGraph = uiaxes( "Parent", obj.GridLayout );
             obj.LumbarAngleGraph.XLabel.String = 'Time (Seconds)';
             obj.LumbarAngleGraph.YLabel.String = 'Lumbosacral Angle (Degrees)';
-            obj.LumbarAngleGraph.YLim = [-180 180];
-            obj.LumbarAngleGraph.XLim = [0 inf];
+            obj.LumbarAngleGraph.YLim = [-50 90];
+            obj.LumbarAngleGraph.XLim = [0 30];
             obj.LumbarAngleGraph.Layout.Row = 1;
             obj.LumbarAngleGraph.Layout.Column = 1;
 

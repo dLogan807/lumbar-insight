@@ -55,7 +55,7 @@ classdef Model < handle
             %subject's standing position.
 
             if (isempty(obj.StandingOffsetAngle))
-                throw("LatestCalibratedAngle: Standing offset angle not calibrated!");
+                warning("LatestCalibratedAngle: Standing offset angle not calibrated!");
             end
 
             latestCalibratedAngle = obj.LatestAngle + obj.StandingOffsetAngle;
@@ -117,6 +117,10 @@ classdef Model < handle
 
         function devicesConfigured = bothIMUDevicesConfigured( obj )
             devicesConfigured = (obj.IMUDevices(1).IsConfigured && obj.IMUDevices(2).IsConfigured);
+        end
+
+        function devicesStreaming = bothIMUDevicesStreaming( obj )
+            devicesStreaming = (obj.IMUDevices(1).IsStreaming && obj.IMUDevices(2).IsStreaming);
         end
 
         function anglesCalibrated = calibrationCompleted( obj )

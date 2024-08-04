@@ -300,7 +300,7 @@ classdef IMUTabController < handle
         end
 
         function onFullFlexionAngleCalibrated( obj, ~, ~ )
-            obj.IMUTabView.CalibrateFullFlexionButton.StatusText = "Full flexion angle:" + obj.Model.FullFlexionAngle + "°";
+            obj.IMUTabView.CalibrateFullFlexionButton.StatusText = "Full flexion angle: " + obj.Model.FullFlexionAngle + "°";
         end
 
         function formattedDevices = statusHTMLToText( ~, deviceTable )

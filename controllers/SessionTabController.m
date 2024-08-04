@@ -113,12 +113,12 @@ classdef SessionTabController < handle
             thresholdLine = animatedline(obj.SessionTabView.LumbarAngleGraph, "Color", "r");
 
             while ( obj.Model.SessionInProgress )
-                if (~obj.Model.bothIMUDevicesConnected)
+                pause(delay);
+
+                if (~obj.Model.bothIMUDevicesStreaming)
                     obj.Model.stopSession;
                     break
                 end
-
-                pause(delay);
 
                 try
                     latestAngle = obj.Model.LatestCalibratedAngle;
@@ -182,7 +182,7 @@ classdef SessionTabController < handle
             obj.SessionTabView.LargestAngleLabel.Text = "Largest Angle: No data";
             obj.SessionTabView.TimeAboveMaxLabel.Text = "Time above threshold angle: 0s";
 
-            obj.SessionTabView.LumbarAngleGraph.XLim = [0 inf];
+            obj.SessionTabView.LumbarAngleGraph.XLim = [0 30];
         end
 
         function onSessionStopButtonPushed( obj, ~, ~ )
