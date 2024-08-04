@@ -225,7 +225,6 @@ classdef IMUTabController < handle
         function updateCalibrationEnabled( obj )
             if (obj.Model.bothIMUDevicesConfigured)
                 obj.IMUTabView.CalibrateStandingPositionButton.Enable = true;
-                obj.IMUTabView.CalibrateFullFlexionButton.Enable = true;
 
                 obj.Model.startStreamingBoth;
             else
@@ -289,6 +288,8 @@ classdef IMUTabController < handle
         function onStandingOffsetAngleCalibrated( obj, ~, ~ )
             obj.IMUTabView.CalibrateStandingPositionButton.StatusText = "Standing offset: " + obj.Model.StandingOffsetAngle + "°";
             obj.IMUTabView.CalibrateFullFlexionButton.StatusText = "Not calibrated.";
+
+            obj.IMUTabView.CalibrateFullFlexionButton.Enable = true;
         end
 
         function onFullFlexionAngleCalibrated( obj, ~, ~ )
