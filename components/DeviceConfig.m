@@ -85,9 +85,6 @@ classdef DeviceConfig < matlab.ui.componentcontainer.ComponentContainer
             elseif (obj.State == "Configured")
                 obj.SamplingRateLabel.Text = obj.DeviceName + " set to " + obj.SamplingRate + "Hz.";
                 setConfigureable( obj );
-            elseif ( obj.State == "Waiting" )
-                obj.DeviceConfigButton.Text = "Waiting";
-                obj.DeviceConfigButton.Enable = "off";
             elseif ( obj.State == "Disconnected" )
                 obj.SamplingRateLabel.Text = "Not configured.";
                 obj.SamplingRateDropDown.Enable = "off";

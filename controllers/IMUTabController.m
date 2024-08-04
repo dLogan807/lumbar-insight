@@ -124,9 +124,6 @@ classdef IMUTabController < handle
             end
 
             obj.IMUTabView.DeviceConnect1.State = "Connecting";
-            if (obj.IMUTabView.DeviceConnect2.State == "Connect")
-                obj.IMUTabView.DeviceConnect2.State = "Waiting";
-            end
 
             obj.Model.connectDevice(obj.IMUTabView.DeviceConnect1.DeviceName, obj.IMUTabView.DeviceConnect1.DeviceType, 1);
         end
@@ -138,9 +135,6 @@ classdef IMUTabController < handle
             end
 
             obj.IMUTabView.DeviceConnect2.State = "Connecting";
-            if (obj.IMUTabView.DeviceConnect1.State == "Connect")
-                obj.IMUTabView.DeviceConnect1.State = "Waiting";
-            end
 
             obj.Model.connectDevice(obj.IMUTabView.DeviceConnect2.DeviceName, obj.IMUTabView.DeviceConnect2.DeviceType, 2);
         end
@@ -268,7 +262,6 @@ classdef IMUTabController < handle
             end
 
             obj.IMUTabView.DeviceConfig1.State = "Configuring";
-            obj.IMUTabView.DeviceConfig2.State = "Waiting";
 
             samplingRate = obj.IMUTabView.DeviceConfig1.SamplingRate;
             obj.Model.configure(1, samplingRate);
@@ -280,7 +273,6 @@ classdef IMUTabController < handle
             end
             
             obj.IMUTabView.DeviceConfig2.State = "Configuring";
-            obj.IMUTabView.DeviceConfig1.State = "Waiting";
 
             samplingRate = obj.IMUTabView.DeviceConfig2.SamplingRate;
             obj.Model.configure(2, samplingRate);

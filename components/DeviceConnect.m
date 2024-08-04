@@ -79,8 +79,6 @@ classdef DeviceConnect < matlab.ui.componentcontainer.ComponentContainer
                 
                 obj.DeviceNameEditField.Enable = "off";
                 obj.DeviceTypeDropDown.Enable = "off";
-            elseif ( obj.State == "Waiting" )
-                obj.DeviceConnectButton.Enable = "off";
             elseif (obj.State == "Disconnect")
                 obj.DeviceConnectButton.Enable = "on";
             end
