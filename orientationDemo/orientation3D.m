@@ -30,7 +30,7 @@ addpath('./quaternion/')                                                   % dir
 
 % Note: these constants are only relevant to this examplescript and are not used
 % by the ShimmerHandle Class
-DELAY_PERIOD = 0.05;                                                       % A delay period of time in seconds between data read operations
+DELAY_PERIOD = 0.25;                                                       % A delay period of time in seconds between data read operations
 
 if (shimmer1.connect && shimmer2.connect)                                  % TRUE if the shimmers connect
    
@@ -97,7 +97,10 @@ if (shimmer1.connect && shimmer2.connect)                                  % TRU
                 plotShimmer(shimmer1, 1);
                 plotShimmer(shimmer2, 2);
 
-                calculateAngle(shimmer1Quaternion, shimmer2Quaternion);
+                quat3dDifference = getQuat3dDifference( shimmer1Quaternion, shimmer2Quaternion);
+                latestAngle = calculateAngleRelatively(quat3dDifference);
+                tlabel1.Text = "Angle: " + latestAngle;
+
             end
             
             elapsedTime = elapsedTime + toc;                                                              % Stop timer and add to elapsed time
@@ -242,12 +245,46 @@ end
 
     end
 
-    % https://au.mathworks.com/matlabcentral/answers/476474-how-to-find-the-angle-between-two-quaternions
-    function angle = calculateAngle(quaternion1, quaternion2)
-        z = quatmultiply(quatconj(quaternion1), quaternion2);
+    function angle = calculateAngle( quat3dDifference)
+        % CALCULATEANGLE Calculate the angle between two quaternions
+        % https://au.mathworks.com/matlabcentral/answers/415936-angle-between-2-quaternions?s_tid=answers_rc1-2_p2_MLT
 
-        angle = 2*acosd(z(1));
+        angle = 2*acosd(quat3dDifference(1));
+    end % calculateAngle
 
-        tlabel1.Text = "Angle: " + angle;
+    function angle = calculateAngleRelatively( quat3dDifference)
+            % CALCULATEANGLE Calculate the angle between two quaternions
+            % https://au.mathworks.com/matlabcentral/answers/415936-angle-between-2-quaternions?s_tid=answers_rc1-2_p2_MLT
+    
+            angle = 2*acosd(quat3dDifference(1));
+
+            if (isNegativeAngle( quat3dDifference ))
+                angle = angle * -1;
+            end
+    end % calculateAngle
+
+    function quat3dDifference = getQuat3dDifference(quaternion1, quaternion2 )
+        quat3dDifference = quatmultiply(quatconj(quaternion1), quaternion2);
+    end
+
+    function isNegative = isNegativeAngle(quat3dDiffernce )
+        %https://en.wikipedia.org/wiki/Conversion_between_quaternions_and_Euler_angles
+        % roll (x-axis rotation)
+
+        w = quat3dDiffernce(1);
+        x = quat3dDiffernce(2);
+        y = quat3dDiffernce(3);
+        z = quat3dDiffernce(4);
+        
+        sinr_cosp = 2 * (w * x + y * z);
+        cosr_cosp = 1 - 2 * (x * x + y * y);
+        roll = atan2(sinr_cosp, cosr_cosp);
+
+        if (roll < 0)
+            isNegative = true;
+        else
+            isNegative = false;
+        end
+            
     end
 end
