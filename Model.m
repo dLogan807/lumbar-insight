@@ -286,15 +286,13 @@ classdef Model < handle
             notify( obj, "OperationCompleted" )
         end
 
-        function angle = calculateAngle( obj, quat3dDifference)
-            % CALCULATEANGLE Calculate the angle between two quaternions
-            % https://au.mathworks.com/matlabcentral/answers/415936-angle-between-2-quaternions?s_tid=answers_rc1-2_p2_MLT
-    
-            angle = 2*acosd(quat3dDifference(1));
+        function angle = calculateAngle( ~, quat3dDifference)
+            %CALCULATEANGLE Find the angle between the IMUs in terms of the
+            %horizontal plane
 
-            if (isNegativeAngle( obj, quat3dDifference ))
-                angle = angle * -1;
-            end
+            eulerZYX = quat2eul(quat3dDifference);
+
+            angle = rad2deg(eulerZYX(3));
         end % calculateAngle
 
         function quat3dDifference = getQuat3dDifference( obj )
@@ -305,26 +303,6 @@ classdef Model < handle
             quaternion2 = obj.IMUDevices(1).LatestQuaternion;
 
             quat3dDifference = quatmultiply(quatconj(quaternion1), quaternion2);
-        end
-
-        function isNegative = isNegativeAngle( ~, quat3dDiffernce )
-            %https://en.wikipedia.org/wiki/Conversion_between_quaternions_and_Euler_angles
-
-            w = quat3dDiffernce(1);
-            x = quat3dDiffernce(2);
-            y = quat3dDiffernce(3);
-            z = quat3dDiffernce(4);
-            
-            sinr_cosp = 2 * (w * x + y * z);
-            cosr_cosp = 1 - 2 * (x * x + y * y);
-            roll = atan2(sinr_cosp, cosr_cosp);
-
-            if (roll < 0)
-                isNegative = true;
-            else
-                isNegative = false;
-            end
-                
         end
 
     end
