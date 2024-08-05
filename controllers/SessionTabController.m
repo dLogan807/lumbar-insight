@@ -107,9 +107,11 @@ classdef SessionTabController < handle
             xAxisTimeDuration = 30;
 
             elapsedTime = 0;
-            tic; % Start timer
+            tic; %Start timer
 
             lumbarAngleLine = animatedline(obj.SessionTabView.LumbarAngleGraph);
+            latestAngleText = text(obj.SessionTabView.LumbarAngleGraph, 26, 85, "Angle:");
+            latestAngleText.FontSize = 16;
             thresholdLine = animatedline(obj.SessionTabView.LumbarAngleGraph, "Color", "r");
 
             while ( obj.Model.SessionInProgress )
@@ -128,24 +130,27 @@ classdef SessionTabController < handle
 
                 updateCeilingAngles( obj, latestAngle );
 
-                % Plot lines
+                %Plot lines and data
                 addpoints(lumbarAngleLine, elapsedTime, latestAngle);
+                latestAngleText.String = "Angle: " + round(latestAngle, 2) + "°";
 
                 thresholdAngle = (obj.Model.FullFlexionAngle * obj.Model.ThresholdAnglePercentage);
                 addpoints(thresholdLine, elapsedTime, thresholdAngle);
 
-                % Move along x-axis
+                %Move along x-axis
                 if (elapsedTime > xAxisTimeDuration)
                     obj.SessionTabView.LumbarAngleGraph.XLim = [(elapsedTime - xAxisTimeDuration) elapsedTime];
+                    latestAngleText.Position = [(elapsedTime - 4) 85];
                 end
 
+                %Timing
                 timeThisLoop = toc;
                 if (latestAngle > thresholdAngle)
                     obj.Model.timeAboveThresholdAngle = obj.Model.timeAboveThresholdAngle + timeThisLoop;
-                    obj.SessionTabView.TimeAboveMaxLabel.Text = "Time above threshold angle: " + obj.Model.timeAboveThresholdAngle + "s";
+                    obj.SessionTabView.TimeAboveMaxLabel.Text = "Time above threshold angle: " + round(obj.Model.timeAboveThresholdAngle, 2) + "s";
                 end
 
-                elapsedTime = elapsedTime + timeThisLoop;                                                              % Stop timer and add to elapsed time
+                elapsedTime = elapsedTime + timeThisLoop;
                 tic;
             end
 
@@ -166,19 +171,22 @@ classdef SessionTabController < handle
         end
 
         function updateCeilingAngles( obj, latestAngle )
+            %UPDATECEILINGANGLES Update the smallest and largest angles
+            %recorded
+
             if (isempty(obj.Model.SmallestAngle) || latestAngle < obj.Model.SmallestAngle)
                 obj.Model.SmallestAngle = latestAngle;
-                obj.SessionTabView.SmallestAngleLabel.Text = "Smallest Angle: " + latestAngle + "°";
+                obj.SessionTabView.SmallestAngleLabel.Text = "Smallest Angle: " + round(latestAngle, 2) + "°";
             end
 
             if (isempty(obj.Model.LargestAngle) || latestAngle > obj.Model.LargestAngle)
                 obj.Model.LargestAngle = latestAngle;
-                obj.SessionTabView.LargestAngleLabel.Text = "Largest Angle: " + latestAngle + "°";
+                obj.SessionTabView.LargestAngleLabel.Text = "Largest Angle: " + round(latestAngle, 2) + "°";
             end
         end
 
         function resetSessionData( obj )
-            % Reset graph
+            %Reset graph
             cla(obj.SessionTabView.LumbarAngleGraph);
             obj.SessionTabView.LumbarAngleGraph.XLim = [0 30];
 
@@ -187,6 +195,7 @@ classdef SessionTabController < handle
             obj.SessionTabView.LargestAngleLabel.Text = "Largest Angle: No data";
             obj.SessionTabView.TimeAboveMaxLabel.Text = "Time above threshold angle: 0s";
 
+            %Reset data
             obj.Model.timeAboveThresholdAngle = 0;
             obj.Model.SmallestAngle = [];
             obj.Model.LargestAngle = [];

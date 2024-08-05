@@ -203,7 +203,6 @@ classdef Model < handle
 
             startStreamingBoth( obj );
             calibrated = true;
-            angle = [];
             try
                 if (strcmp(angleType, "s"))
                     angle = 0 - obj.LatestAngle;
