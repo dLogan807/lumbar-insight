@@ -6,6 +6,10 @@ classdef SessionTabView < matlab.ui.componentcontainer.ComponentContainer
         Listener(:, 1) event.listener
         
         FontSet logical = false
+
+        yAxisMinimum = -50
+        yAxisMaximum = 90
+        yAxisTickInterval = 10
     end
 
     properties
@@ -78,11 +82,12 @@ classdef SessionTabView < matlab.ui.componentcontainer.ComponentContainer
             % Create view components.
 
             % Graph
-            obj.LumbarAngleGraph = uiaxes( "Parent", obj.GridLayout );
+            obj.LumbarAngleGraph = uiaxes( "Parent", obj.GridLayout, ...
+                "XLim", [0 30], ...
+                "YLim", [obj.yAxisMinimum obj.yAxisMaximum], ...
+                "YTick", obj.yAxisMinimum:obj.yAxisTickInterval:obj.yAxisMaximum);
             obj.LumbarAngleGraph.XLabel.String = 'Time (Seconds)';
             obj.LumbarAngleGraph.YLabel.String = 'Lumbosacral Angle (Degrees)';
-            obj.LumbarAngleGraph.YLim = [-50 90];
-            obj.LumbarAngleGraph.XLim = [0 30];
             obj.LumbarAngleGraph.Layout.Row = 1;
             obj.LumbarAngleGraph.Layout.Column = 1;
 
@@ -129,10 +134,12 @@ classdef SessionTabView < matlab.ui.componentcontainer.ComponentContainer
             obj.SessionStopButton.Layout.Row = 5;
             obj.SessionStopButton.Layout.Column = 2;
 
-            obj.IndicatorGraph = uiaxes( "Parent", obj.GridLayout );
+            obj.IndicatorGraph = uiaxes( "Parent", obj.GridLayout, ...
+                "XLim", [0 1], ...
+                "YLim", [obj.yAxisMinimum obj.yAxisMaximum], ...
+                "XTick", [], ...
+                "YTick", obj.yAxisMinimum:obj.yAxisTickInterval:obj.yAxisMaximum);
             obj.IndicatorGraph.YLabel.String = 'Lumbosacral Angle (Degrees)';
-            obj.IndicatorGraph.YLim = [-90 180];
-            obj.IndicatorGraph.XLim = [0 10];
             obj.IndicatorGraph.Layout.Row = 1;
             obj.IndicatorGraph.Layout.Column = 2;
             %Draw traffic light indicator colours
