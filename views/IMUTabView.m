@@ -20,8 +20,8 @@ classdef IMUTabView < matlab.ui.componentcontainer.ComponentContainer
         DeviceConnect1 DeviceConnect
         DeviceConnect2 DeviceConnect
 
-        Device1BatteryLabel matlab.ui.control.Label
-        Device2BatteryLabel matlab.ui.control.Label
+        Device1BatteryStatus BatteryStatus
+        Device2BatteryStatus BatteryStatus
 
         BTDeviceListLabel matlab.ui.control.Label
         DeviceConnectLabel matlab.ui.control.Label
@@ -47,6 +47,9 @@ classdef IMUTabView < matlab.ui.componentcontainer.ComponentContainer
         Device2ConnectButtonPushed
         Device1DisconnectButtonPushed
         Device2DisconnectButtonPushed
+
+        Device1BatteryRefreshButtonPushed
+        Device2BatteryRefreshButtonPushed
 
         Device1ConfigureButtonPushed
         Device2ConfigureButtonPushed
@@ -86,10 +89,17 @@ classdef IMUTabView < matlab.ui.componentcontainer.ComponentContainer
                 "Connect", @obj.onDevice2Connect );
             obj.Listener(end+1) = listener( obj.DeviceConnect2, ... 
                 "Disconnect", @obj.onDevice2Disconnect );
+
+            obj.Listener(end+1) = listener( obj.Device1BatteryStatus, ...
+                "RefreshBatteryStatusButtonPushed", @obj.onRefreshBatteryStatus1ButtonPushed );
+            obj.Listener(end+1) = listener( obj.Device2BatteryStatus, ...
+                "RefreshBatteryStatusButtonPushed", @obj.onRefreshBatteryStatus2ButtonPushed );
+
             obj.Listener(end+1) = listener( obj.DeviceConfig1, ...
                 "Configure", @obj.onDevice1Configure );
             obj.Listener(end+1) = listener( obj.DeviceConfig2, ...
                 "Configure", @obj.onDevice2Configure );
+
             obj.Listener(end+1) = listener( obj.CalibrateStandingPositionButton, ... 
                 "CalibrateButtonPushed", @obj.onCalibrateStandingPushed );
             obj.Listener(end+1) = listener( obj.CalibrateFullFlexionButton, ... 
@@ -153,15 +163,15 @@ classdef IMUTabView < matlab.ui.componentcontainer.ComponentContainer
             obj.BatteryInformationLabel.Layout.Row = 1;
             obj.BatteryInformationLabel.Layout.Column = 2;
 
-            obj.Device1BatteryLabel = uilabel("Parent", obj.GridLayout, ...
-                "Text", "Device not connected. No battery information.");
-            obj.Device1BatteryLabel.Layout.Row = 2;
-            obj.Device1BatteryLabel.Layout.Column = 2;
+            obj.Device1BatteryStatus = BatteryStatus("Parent", obj.GridLayout, ...
+                "FontSize", obj.FontSize );
+            obj.Device1BatteryStatus.Layout.Row = 2;
+            obj.Device1BatteryStatus.Layout.Column = 2;
 
-            obj.Device2BatteryLabel = uilabel("Parent", obj.GridLayout, ...
-                "Text", "Device not connected. No battery information.");
-            obj.Device2BatteryLabel.Layout.Row = 3;
-            obj.Device2BatteryLabel.Layout.Column = 2;
+            obj.Device2BatteryStatus = BatteryStatus("Parent", obj.GridLayout, ...
+                "FontSize", obj.FontSize );
+            obj.Device2BatteryStatus.Layout.Row = 3;
+            obj.Device2BatteryStatus.Layout.Column = 2;
 
             % Configuration components
             obj.ConfigurationLabel = uilabel("Parent", obj.GridLayout, ...
@@ -198,7 +208,7 @@ classdef IMUTabView < matlab.ui.componentcontainer.ComponentContainer
             obj.CalibrateFullFlexionButton.Layout.Row = 9;
             obj.CalibrateFullFlexionButton.Layout.Column = 2;
 
-            % Information components
+            % Configuration status components
             AppStatusHeadingLabel = uilabel("Parent", obj.GridLayout, ...
                 "Text", "Configuration Status", ...
                 "FontWeight", "bold" );
@@ -245,6 +255,14 @@ classdef IMUTabView < matlab.ui.componentcontainer.ComponentContainer
 
         function onDevice2Disconnect( obj, ~, ~ )
             notify( obj, "Device2DisconnectButtonPushed");
+        end
+
+        function onRefreshBatteryStatus1ButtonPushed( obj, ~, ~ )
+            notify( obj, "Device1BatteryRefreshButtonPushed");
+        end
+
+        function onRefreshBatteryStatus2ButtonPushed( obj, ~, ~ )
+            notify( obj, "Device2BatteryRefreshButtonPushed");
         end
 
         function onDevice1Configure( obj, ~, ~ )

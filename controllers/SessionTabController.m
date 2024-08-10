@@ -110,7 +110,7 @@ classdef SessionTabController < handle
             tic; %Start timer
 
             lumbarAngleLine = animatedline(obj.SessionTabView.LumbarAngleGraph);
-            latestAngleText = text(obj.SessionTabView.LumbarAngleGraph, 26, 85, "Angle:");
+            latestAngleText = text(obj.SessionTabView.LumbarAngleGraph, 2, 85, "Angle:");
             latestAngleText.FontSize = 16;
             thresholdLine = animatedline(obj.SessionTabView.LumbarAngleGraph, "Color", "r");
 
@@ -140,7 +140,7 @@ classdef SessionTabController < handle
                 %Move along x-axis
                 if (elapsedTime > xAxisTimeDuration)
                     obj.SessionTabView.LumbarAngleGraph.XLim = [(elapsedTime - xAxisTimeDuration) elapsedTime];
-                    latestAngleText.Position = [(elapsedTime - 4) 85];
+                    latestAngleText.Position = [(elapsedTime - xAxisTimeDuration + 2) 85];
                 end
 
                 %Timing

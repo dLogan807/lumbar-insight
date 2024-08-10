@@ -145,6 +145,9 @@ classdef Model < handle
 
             if ( obj.OperationInProgress )
                 return
+            elseif (obj.SessionInProgress)
+                batteryInfo = "Battery info cannot be retrieved during a session.";
+                return
             end
             operationStarted( obj );
 

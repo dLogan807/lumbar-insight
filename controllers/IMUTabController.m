@@ -41,6 +41,11 @@ classdef IMUTabController < handle
             obj.Listener(end+1) = listener( obj.IMUTabView, ... 
                 "Device2DisconnectButtonPushed", @obj.onDevice2DisconnectButtonPushed );
 
+            obj.Listener(end+1) = listener( obj.IMUTabView, ...
+                "Device1BatteryRefreshButtonPushed", @obj.onDevice1BatteryRefreshButtonPushed );
+            obj.Listener(end+1) = listener( obj.IMUTabView, ...
+                "Device2BatteryRefreshButtonPushed", @obj.onDevice2BatteryRefreshButtonPushed );
+
             obj.Listener(end+1) = listener( obj.IMUTabView, ... 
                 "Device1ConfigureButtonPushed", @obj.onDevice1ConfigureButtonPushed );
             obj.Listener(end+1) = listener( obj.IMUTabView, ... 
@@ -88,6 +93,8 @@ classdef IMUTabController < handle
     end % methods ( Access = protected )
     
     methods ( Access = private )
+
+        %% Bluetooth scanning
         function onBTScanButtonPushed( obj, ~, ~ ) 
             % ONBTSCANBUTTONPUSHED Listener callback, responding to the view event
 
@@ -105,6 +112,25 @@ classdef IMUTabController < handle
             setBTScanButtonScanning( obj, false );
         end
 
+        function formattedDevices = statusHTMLToText( ~, deviceTable )
+            %STATUSHTMLTOTEXT Convert any HTML <a> elements to plaintext
+            
+            rows = height(deviceTable);
+            for row = 1:rows
+                currentRow = deviceTable.Status(row,:);
+
+                startIndex = strfind(currentRow, ">");
+                if (isempty(startIndex))
+                    continue;
+                end
+                endIndex = strfind(currentRow, "</");
+
+                deviceTable.Status(row,:) = extractBetween(currentRow, startIndex(1) + 1, endIndex(1) - 1);
+            end
+
+            formattedDevices = deviceTable;
+        end
+
         function setBTScanButtonScanning( obj, isScanning )
             if (isScanning)
                 obj.IMUTabView.BTScanButton.Text = "Scanning";
@@ -117,6 +143,7 @@ classdef IMUTabController < handle
             end
         end
 
+        %% Device connection
         function onDevice1ConnectButtonPushed( obj, ~, ~ )
 
             if(obj.Model.OperationInProgress)
@@ -155,6 +182,16 @@ classdef IMUTabController < handle
             obj.Model.disconnectDevice(2);
         end
 
+        %% Battery information and refresh
+        function onDevice1BatteryRefreshButtonPushed( obj, ~, ~ )
+            updateDeviceBatteryStatus( obj, 1, obj.IMUTabView.Device1BatteryStatus);
+        end
+
+        function onDevice2BatteryRefreshButtonPushed( obj, ~, ~ )
+            updateDeviceBatteryStatus( obj, 2, obj.IMUTabView.Device2BatteryStatus);
+        end
+
+        %% Operation and configuration status
         function onOperationStarted( obj, ~, ~ )
             obj.IMUTabView.OperationLabel.Text = "Operation in progress. Please wait.";
             drawnow;
@@ -192,13 +229,28 @@ classdef IMUTabController < handle
             setDeviceConnectState( obj, obj.Model.IMUDevices(1), obj.IMUTabView.DeviceConnect1 );
             setDeviceConnectState( obj, obj.Model.IMUDevices(2), obj.IMUTabView.DeviceConnect2 );
 
-            obj.IMUTabView.Device1BatteryLabel.Text = obj.Model.getBatteryInfo(1);
-            obj.IMUTabView.Device2BatteryLabel.Text = obj.Model.getBatteryInfo(2);
+            updateDeviceBatteryStatus( obj, 1, obj.IMUTabView.Device1BatteryStatus );
+            updateDeviceBatteryStatus( obj, 2, obj.IMUTabView.Device2BatteryStatus );
 
             setDeviceConfigState( obj, obj.Model.IMUDevices(1), obj.IMUTabView.DeviceConfig1 );
             setDeviceConfigState( obj, obj.Model.IMUDevices(2), obj.IMUTabView.DeviceConfig2 );
 
             updateCalibrationEnabled( obj );
+
+        end
+
+        function updateDeviceBatteryStatus( obj, deviceNum, batteryStatusComp )
+            arguments
+                obj 
+                deviceNum int8  
+                batteryStatusComp BatteryStatus
+            end
+
+            isConnected = obj.Model.IMUDevices(deviceNum).IsConnected;
+            batteryInfo = obj.Model.getBatteryInfo(deviceNum);
+
+            batteryStatusComp.setButtonEnabled(isConnected);
+            batteryStatusComp.setStatusText(batteryInfo);
         end
 
         function setDeviceConnectState( ~, imuDevice, deviceConnect )
@@ -277,6 +329,8 @@ classdef IMUTabController < handle
             obj.Model.configure(2, samplingRate);
         end
 
+        %% Calibration
+
         function onCalibrateStandingPushed( obj, ~, ~ )
             obj.Model.calibrateAngle( "s" );
         end
@@ -294,25 +348,6 @@ classdef IMUTabController < handle
 
         function onFullFlexionAngleCalibrated( obj, ~, ~ )
             obj.IMUTabView.CalibrateFullFlexionButton.StatusText = "Full flexion angle: " + obj.Model.FullFlexionAngle + "°";
-        end
-
-        function formattedDevices = statusHTMLToText( ~, deviceTable )
-            %STATUSHTMLTOTEXT Convert any HTML <a> elements to plaintext
-            
-            rows = height(deviceTable);
-            for row = 1:rows
-                currentRow = deviceTable.Status(row,:);
-
-                startIndex = strfind(currentRow, ">");
-                if (isempty(startIndex))
-                    continue;
-                end
-                endIndex = strfind(currentRow, "</");
-
-                deviceTable.Status(row,:) = extractBetween(currentRow, startIndex(1) + 1, endIndex(1) - 1);
-            end
-
-            formattedDevices = deviceTable;
         end
 
     end % methods ( Access = private )
