@@ -144,6 +144,7 @@ classdef Model < handle
             % GETBATTERYINFO Get battery information of the IMU
 
             if ( obj.OperationInProgress )
+                batteryInfo = "An operation was ongoing. Failed to retrieve.";
                 return
             elseif (obj.SessionInProgress)
                 batteryInfo = "Battery info cannot be retrieved during a session.";

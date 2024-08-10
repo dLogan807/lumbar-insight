@@ -175,7 +175,7 @@ classdef IMUTabView < matlab.ui.componentcontainer.ComponentContainer
 
             % Configuration components
             obj.ConfigurationLabel = uilabel("Parent", obj.GridLayout, ...
-                "Text", "Configuration", "FontWeight", "bold");
+                "Text", "Configuration (Hz)", "FontWeight", "bold");
             obj.ConfigurationLabel.Layout.Row = 4;
             obj.ConfigurationLabel.Layout.Column = 2;
 

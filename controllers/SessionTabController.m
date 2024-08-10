@@ -116,6 +116,8 @@ classdef SessionTabController < handle
             latestAngleText.FontSize = 16;
             thresholdLine = animatedline(obj.SessionTabView.LumbarAngleGraph, "Color", "r");
 
+            gradientLine = [];
+
             while ( obj.Model.SessionInProgress )
                 pause(delay);
 
@@ -138,6 +140,12 @@ classdef SessionTabController < handle
 
                 thresholdAngle = (obj.Model.FullFlexionAngle * obj.Model.ThresholdAnglePercentage);
                 addpoints(thresholdLine, elapsedTime, thresholdAngle);
+
+                %Redraw gradient line
+                if (~isempty(gradientLine))
+                    delete(gradientLine);
+                end
+                gradientLine = yline(obj.SessionTabView.IndicatorGraph, latestAngle);
 
                 %Move along x-axis
                 if (elapsedTime > xAxisTimeDuration)

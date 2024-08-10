@@ -63,7 +63,10 @@ classdef ShimmerIMU < IMUInterface
 
             if (wasStreaming)
                 obj.stopStreaming;
+                pause(0.5);
             end
+
+            state = obj.Driver.State;
 
             if (strcmp(state, "Connected"))
                 batteryVoltage = obj.Driver.getbatteryvoltage;
@@ -75,12 +78,15 @@ classdef ShimmerIMU < IMUInterface
                 else
                     batteryInfo = obj.Name + " battery voltage: " + batteryVoltage + "mV";
                 end
+            elseif (strcmp(state, "Streaming"))
+                batteryInfo = "Failed to stop streaming. No battery information.";
             else
                 batteryInfo = "Not connected. No battery information.";
             end
 
             if (wasStreaming)
                 obj.startStreaming;
+                pause(0.5);
             end
         end
 
