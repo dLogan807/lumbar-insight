@@ -72,6 +72,7 @@ classdef SessionTabController < handle
 
         function onFullFlexionAngleCalibrated( obj, ~, ~ )
             updateSessionControls( obj );
+            obj.SessionTabView.FullFlexionAngle = obj.Model.FullFlexionAngle;
         end
 
         function updateSessionControls( obj )

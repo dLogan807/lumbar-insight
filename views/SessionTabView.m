@@ -1,11 +1,13 @@
 classdef SessionTabView < matlab.ui.componentcontainer.ComponentContainer
-    %IMUTABVIEW Visualizes the data, responding to any relevant model events.
+    %Visualizes the data, responding to any relevant model events.
 
     properties ( Access = private )
         % Listener object used to respond dynamically to controller or component events.
         Listener(:, 1) event.listener
         
         FontSet logical = false
+
+        AngleUpdated = false
 
         yAxisMinimum = -50
         yAxisMaximum = 90
@@ -14,8 +16,9 @@ classdef SessionTabView < matlab.ui.componentcontainer.ComponentContainer
 
     properties
         FontSize double = 12
+        FullFlexionAngle double = 30
 
-        % Components
+        %Components
         GridLayout matlab.ui.container.GridLayout
 
         LumbarAngleGraph matlab.ui.control.UIAxes
@@ -33,7 +36,7 @@ classdef SessionTabView < matlab.ui.componentcontainer.ComponentContainer
     end
 
     events ( NotifyAccess = private )
-        % Event broadcast when view is interacted with
+        %Event broadcast when view is interacted with
         ThresholdSliderValueChanged
         SessionStartButtonPushed
         SessionStopButtonPushed
@@ -43,7 +46,7 @@ classdef SessionTabView < matlab.ui.componentcontainer.ComponentContainer
     methods
 
         function obj = SessionTabView( namedArgs )
-            %VIEW View constructor.
+            %View constructor.
 
             arguments
                 namedArgs.?SessionTabView
@@ -67,10 +70,17 @@ classdef SessionTabView < matlab.ui.componentcontainer.ComponentContainer
         end
     end
 
+    methods
+        function set.FullFlexionAngle( obj, angle)
+            obj.FullFlexionAngle = angle;
+            obj.AngleUpdated = true;
+        end
+    end
+
     methods ( Access = protected )
 
         function setup( obj )
-            %SETUP Initialize the view.
+            %Initialize the view.
 
             obj.GridLayout = uigridlayout( ...
                 "Parent", obj, ...
@@ -79,9 +89,9 @@ classdef SessionTabView < matlab.ui.componentcontainer.ComponentContainer
                 "Padding", 20, ...
                 "ColumnSpacing", 100 );
 
-            % Create view components.
+            %Create view components.
 
-            % Graph
+            %Graph
             obj.LumbarAngleGraph = uiaxes( "Parent", obj.GridLayout, ...
                 "XLim", [0 30], ...
                 "YLim", [obj.yAxisMinimum obj.yAxisMaximum], ...
@@ -91,7 +101,7 @@ classdef SessionTabView < matlab.ui.componentcontainer.ComponentContainer
             obj.LumbarAngleGraph.Layout.Row = 1;
             obj.LumbarAngleGraph.Layout.Column = 1;
 
-            % Threshold slider
+            %Threshold slider
             sliderLabel = uilabel( "Parent", obj.GridLayout, ...
                 "Text", "Percentage threshold of maximum angle" );
             sliderLabel.Layout.Row = 2;
@@ -103,7 +113,7 @@ classdef SessionTabView < matlab.ui.componentcontainer.ComponentContainer
             obj.AngleThresholdSlider.Layout.Row = 3;
             obj.AngleThresholdSlider.Layout.Column = 1;
 
-            % Session data
+            %Session data
             obj.TimeAboveMaxLabel = uilabel( "Parent", obj.GridLayout, ...
                 "Text", "Time above threshold angle: 0s");
             obj.TimeAboveMaxLabel.Layout.Row = 4;
@@ -119,7 +129,7 @@ classdef SessionTabView < matlab.ui.componentcontainer.ComponentContainer
             obj.LargestAngleLabel.Layout.Row = 6;
             obj.LargestAngleLabel.Layout.Column = 1;
 
-            % Session control
+            %Session control
             obj.SessionStartButton = uibutton( "Parent", obj.GridLayout, ...
                 "Text", "Start Session", ...
                 "Enable", "off", ...
@@ -138,23 +148,14 @@ classdef SessionTabView < matlab.ui.componentcontainer.ComponentContainer
                 "XLim", [0 1], ...
                 "YLim", [obj.yAxisMinimum obj.yAxisMaximum], ...
                 "XTick", [], ...
-                "YTick", obj.yAxisMinimum:obj.yAxisTickInterval:obj.yAxisMaximum);
+                "YTick", obj.yAxisMinimum:obj.yAxisTickInterval:obj.yAxisMaximum, ...
+                "Layer", "top", ...
+                "Colormap", CustomColourMaps.TrafficLight);
             obj.IndicatorGraph.YLabel.String = 'Lumbosacral Angle (Degrees)';
             obj.IndicatorGraph.Layout.Row = 1;
             obj.IndicatorGraph.Layout.Column = 2;
-            %Draw traffic light indicator colours
-            rectangle("Parent", obj.IndicatorGraph, ...
-                "FaceColor","#f26b67", ...
-                "EdgeColor","none", ...
-                "Position", [0 -90 10 270] )
-            rectangle("Parent", obj.IndicatorGraph, ...
-                "FaceColor","#f6ee5d", ...
-                "EdgeColor","none", ...
-                "Position", [0 -90 10 270] );
-            rectangle("Parent", obj.IndicatorGraph, ...
-                "FaceColor","#bfda69", ...
-                "EdgeColor","none", ...
-                "Position", [0 -90 10 270] );
+
+            updateTrafficLightGraph( obj );
         end
 
         function update( obj )
@@ -162,6 +163,31 @@ classdef SessionTabView < matlab.ui.componentcontainer.ComponentContainer
                 set(findall(obj.GridLayout,'-property','FontSize'),'FontSize', obj.FontSize);
                 obj.FontSet = true;
             end
+
+            if (obj.AngleUpdated)
+                updateTrafficLightGraph( obj );
+                obj.AngleUpdated = false;
+            end
+        end
+
+        function updateTrafficLightGraph( obj )
+            %Draw traffic light indicator graph gradient
+
+            upperMax = obj.FullFlexionAngle * 0.8;
+            upperWarn = obj.FullFlexionAngle * 0.6;
+            standing = 0;
+            lowerWarn = obj.FullFlexionAngle * -0.1;
+            lowerMax = obj.FullFlexionAngle * -0.2;
+
+            red = 0;
+            green = 1;
+            yellow = 0.6;
+            amber = 0.25;
+
+            x = [0 1 1 1 1 1 1 1 0 0 0 0 0 0];
+            y = [obj.yAxisMinimum obj.yAxisMinimum lowerMax lowerWarn standing upperWarn upperMax obj.yAxisMaximum obj.yAxisMaximum upperMax upperWarn standing lowerWarn lowerMax];
+            c = [red; red; amber; yellow; green; yellow; amber; red; red; amber; yellow; green; yellow; amber];
+            fill(obj.IndicatorGraph,x,y,c, "EdgeColor","none");
         end
 
     end
