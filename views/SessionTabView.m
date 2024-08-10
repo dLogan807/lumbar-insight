@@ -17,6 +17,7 @@ classdef SessionTabView < matlab.ui.componentcontainer.ComponentContainer
     properties
         FontSize double = 12
         FullFlexionAngle double = 30
+        ThresholdPercentage = 80;
 
         %Components
         GridLayout matlab.ui.container.GridLayout
@@ -73,6 +74,11 @@ classdef SessionTabView < matlab.ui.componentcontainer.ComponentContainer
     methods
         function set.FullFlexionAngle( obj, angle)
             obj.FullFlexionAngle = angle;
+            obj.AngleUpdated = true;
+        end
+
+        function set.ThresholdPercentage( obj, percentage)
+            obj.ThresholdPercentage = percentage;
             obj.AngleUpdated = true;
         end
     end
@@ -173,8 +179,8 @@ classdef SessionTabView < matlab.ui.componentcontainer.ComponentContainer
         function updateTrafficLightGraph( obj )
             %Draw traffic light indicator graph gradient
 
-            upperMax = obj.FullFlexionAngle * 0.8;
-            upperWarn = obj.FullFlexionAngle * 0.6;
+            upperMax = obj.FullFlexionAngle * obj.ThresholdPercentage;
+            upperWarn = obj.FullFlexionAngle * (obj.ThresholdPercentage - 0.2);
             standing = 0;
             lowerWarn = obj.FullFlexionAngle * -0.1;
             lowerMax = obj.FullFlexionAngle * -0.2;

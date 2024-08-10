@@ -93,6 +93,7 @@ classdef SessionTabController < handle
 
         function onThresholdSliderValueChanged( obj, ~, ~ )
             obj.Model.ThresholdAnglePercentage = obj.SessionTabView.AngleThresholdSlider.Value;
+            obj.SessionTabView.ThresholdPercentage = obj.Model.ThresholdAnglePercentage;
         end
 
         function onSessionStartButtonPushed( obj, ~, ~ )
