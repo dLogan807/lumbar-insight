@@ -27,7 +27,7 @@ classdef DeviceConfig < matlab.ui.componentcontainer.ComponentContainer
 
     methods (Access = protected)
         function setup( obj ) 
-            % Create grid layout to manage building blocks 
+            %Create grid layout to manage building blocks 
             obj.GridLayout = uigridlayout( ...
                 "Parent", obj, ...
                 "RowHeight", { 30 }, ...
@@ -35,7 +35,7 @@ classdef DeviceConfig < matlab.ui.componentcontainer.ComponentContainer
                 "Padding", 0, ...
                 "ColumnSpacing", 22 );
 
-            % Create drop down to select sampling rate
+            %Create drop down to select sampling rate
             obj.SamplingRateDropDown = uidropdown(obj.GridLayout, ...
                 "Items", "", ...
                 "Value", "", ...
@@ -45,14 +45,14 @@ classdef DeviceConfig < matlab.ui.componentcontainer.ComponentContainer
             obj.SamplingRateDropDown.ValueChangedFcn = @obj.samplingRateChanged;
             obj.SamplingRateDropDown.Layout.Column = 1;
 
-            % Create button to configure
+            %Create button to configure
             obj.DeviceConfigButton = uibutton(obj.GridLayout, ...
                 "Text", string(obj.State), ...
                 "Enable", "off" );
             obj.DeviceConfigButton.ButtonPushedFcn = @obj.configureButtonPushed;
             obj.DeviceConfigButton.Layout.Column = 2;
 
-            % Create sampling rate label
+            %Create sampling rate label
             obj.SamplingRateLabel = uilabel(obj.GridLayout, ...
                 "Text", "Not configured." );
             obj.SamplingRateLabel.Layout.Column = 3;
@@ -97,13 +97,18 @@ classdef DeviceConfig < matlab.ui.componentcontainer.ComponentContainer
 
     methods
         function set.FontSize( obj, fontSize )
+            arguments
+                obj 
+                fontSize double {mustBePositive} 
+            end
+
             obj.FontSize = fontSize;
         end
 
         function set.State( obj, state )
             arguments
                 obj
-                state ConfigButtonStates
+                state ConfigButtonStates {mustBeNonempty}
             end
 
             obj.State = state;
@@ -111,6 +116,12 @@ classdef DeviceConfig < matlab.ui.componentcontainer.ComponentContainer
         end
 
         function setDeviceInfo( obj, name, samplingRates )
+            arguments
+                obj 
+                name string {mustBeTextScalar}
+                samplingRates double {mustBePositive}
+            end
+
             obj.DeviceName = name;
             obj.AvailableSamplingRates = samplingRates;
 

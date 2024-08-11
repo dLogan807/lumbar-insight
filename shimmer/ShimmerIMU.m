@@ -25,6 +25,10 @@ classdef ShimmerIMU < IMUInterface
         function obj = ShimmerIMU( deviceName )
             %SHIMMERIMU Constructor
 
+            arguments
+                deviceName string {mustBeTextScalar}
+            end
+
             obj.Name = deviceName;
 
             obj.Driver = ShimmerDriver( deviceName );
@@ -158,6 +162,11 @@ classdef ShimmerIMU < IMUInterface
         function configured = configure( obj, samplingRate )
             %CONFIGURE Configures the Shimmer
 
+            arguments
+                obj 
+                samplingRate double {mustBePositive}
+            end
+
             SensorMacros = ShimmerEnabledSensorsMacrosClass;                          % assign user friendly macros for setenabledsensors
 
             try
@@ -186,6 +195,11 @@ classdef ShimmerIMU < IMUInterface
         function rateSet = setSamplingRate( obj, samplingRate )
             %SETSAMPLINGRATE Sets the sampling rate and then sets sensors 
             %as closely as possible to it
+
+            arguments
+                obj 
+                samplingRate double {mustBePositive}
+            end
 
             if (ismember(samplingRate, obj.SamplingRates))
                 isNumber = ~strcmp(obj.Driver.setsamplingrate( samplingRate ), 'Nan');

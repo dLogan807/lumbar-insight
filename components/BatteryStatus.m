@@ -22,7 +22,7 @@ classdef BatteryStatus < matlab.ui.componentcontainer.ComponentContainer
         function setButtonEnabled( obj, enabled )
             arguments
                 obj 
-                enabled logical 
+                enabled logical {mustBeNonempty}
             end
 
             if (enabled)
@@ -35,7 +35,7 @@ classdef BatteryStatus < matlab.ui.componentcontainer.ComponentContainer
         function setStatusText( obj, text )
             arguments
                 obj 
-                text string
+                text string {mustBeTextScalar}
             end
 
             obj.BatteryLabel.Text = text;

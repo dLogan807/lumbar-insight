@@ -1,5 +1,5 @@
 classdef SessionTabController < handle
-    %IMUTABCONTROLLER Provides an interactive control to generate new data.
+    %Provides an interactive control to generate new data.
 
     properties ( Access = private )
         % Application data model.
@@ -13,7 +13,7 @@ classdef SessionTabController < handle
     methods
         
         function obj = SessionTabController( model, sessionTabView )
-            % CONTROLLER Controller constructor.
+            %Controller constructor.
             
             arguments
                 model(1, 1) Model
@@ -48,12 +48,12 @@ classdef SessionTabController < handle
     methods ( Access = protected )
         
         function setup( ~ )
-            %SETUP Initialize the controller.
+            %Initialize the controller.
             
         end % setup
         
         function update( ~ )
-            %UPDATE Update the controller. This method is empty because 
+            %Update the controller. This method is empty because 
             %there are no public properties of the controller.
             
         end % update
@@ -76,7 +76,7 @@ classdef SessionTabController < handle
         end
 
         function updateSessionControls( obj )
-            %HANDLESESSION Enable session control buttons depending on
+            %Enable session control buttons depending on
             %angle calibration
 
             obj.SessionTabView.SessionStopButton.Enable = "off";
@@ -97,6 +97,8 @@ classdef SessionTabController < handle
         end
 
         function onSessionStartButtonPushed( obj, ~, ~ )
+            %Update graphs and values while session is active.
+
             obj.SessionTabView.SessionStartButton.Enable = "off";
             obj.SessionTabView.SessionStopButton.Enable = "on";
             obj.Model.ThresholdAnglePercentage = obj.SessionTabView.AngleThresholdSlider.Value;
@@ -168,7 +170,7 @@ classdef SessionTabController < handle
         end
 
         function delay = calculateDelay( obj)
-            %CALCULATEDELAY Calculate the delay from the lowest sampling
+            %Calculate the delay from the lowest sampling
             %rate
 
             samplingRate = obj.Model.lowestSamplingRate;
@@ -181,8 +183,13 @@ classdef SessionTabController < handle
         end
 
         function updateCeilingAngles( obj, latestAngle )
-            %UPDATECEILINGANGLES Update the smallest and largest angles
+            %Update the smallest and largest angles
             %recorded
+
+            arguments
+                obj 
+                latestAngle double {mustBeNonempty}
+            end
 
             if (isempty(obj.Model.SmallestAngle) || latestAngle < obj.Model.SmallestAngle)
                 obj.Model.SmallestAngle = latestAngle;

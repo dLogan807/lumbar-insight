@@ -89,7 +89,7 @@ classdef DeviceConnect < matlab.ui.componentcontainer.ComponentContainer
         function set.State( obj, state )
             arguments
                 obj
-                state ConnectButtonStates
+                state ConnectButtonStates {mustBeNonempty}
             end
 
             obj.State = state;

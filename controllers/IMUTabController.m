@@ -1,12 +1,12 @@
 classdef IMUTabController < handle
-    %IMUTABCONTROLLER Provides an interactive control to generate new data.
+    %Provides an interactive control to generate new data.
 
     properties ( Access = private )
-        % IMU View
+        %IMU View
         IMUTabView IMUTabView
-        % Listener object used to respond dynamically to view events.
+        %Listener object used to respond dynamically to view events.
         Listener(:, 1) event.listener
-    end % properties ( Access = private )
+    end %properties ( Access = private )
     
     properties ( GetAccess = public, SetAccess = private )
         % Application data model.
@@ -16,7 +16,7 @@ classdef IMUTabController < handle
     methods
         
         function obj = IMUTabController( model, imuTabView )
-            % CONTROLLER Controller constructor.
+            %Controller constructor.
             
             arguments
                 model(1, 1) Model
@@ -56,7 +56,7 @@ classdef IMUTabController < handle
             obj.Listener(end+1) = listener( obj.IMUTabView, ... 
                 "CalibrateFullFlexionPushed", @obj.onCalibrateFullFlexionPushed );
 
-            % Listen for changes to the model.
+            %Listen for changes to the model.
             obj.Listener(end+1) = listener( obj.Model, ... 
                 "OperationStarted", @obj.onOperationStarted );
             obj.Listener(end+1) = listener( obj.Model, ... 
@@ -73,30 +73,30 @@ classdef IMUTabController < handle
             obj.Listener(end+1) = listener( obj.Model, ... 
                 "FullFlexionAngleCalibrated", @obj.onFullFlexionAngleCalibrated );
 
-        end % constructor
+        end %constructor
         
-    end % methods
+    end %methods
     
     methods ( Access = protected )
         
         function setup( ~ )
-            %SETUP Initialize the controller.
+            %Initialize the controller.
             
         end % setup
         
         function update( ~ )
-            %UPDATE Update the controller. This method is empty because 
+            %Update the controller. This method is empty because 
             %there are no public properties of the controller.
             
-        end % update
+        end %update
         
-    end % methods ( Access = protected )
+    end %methods ( Access = protected )
     
     methods ( Access = private )
 
         %% Bluetooth scanning
         function onBTScanButtonPushed( obj, ~, ~ ) 
-            % ONBTSCANBUTTONPUSHED Listener callback, responding to the view event
+            %Listener callback, responding to the view event
 
             % Retrieve bluetooth devices and update the model.
             setBTScanButtonScanning( obj, true );
@@ -114,6 +114,11 @@ classdef IMUTabController < handle
 
         function formattedDevices = statusHTMLToText( ~, deviceTable )
             %STATUSHTMLTOTEXT Convert any HTML <a> elements to plaintext
+
+            arguments
+                ~ 
+                deviceTable table
+            end
             
             rows = height(deviceTable);
             for row = 1:rows
@@ -198,7 +203,7 @@ classdef IMUTabController < handle
         end
 
         function onOperationCompleted( obj, ~, ~ )
-            %ONOPERATIONCOMPLETED Prompt the user of the next configuration
+            %Prompt the user of the next configuration
             %step
 
             obj.IMUTabView.OperationLabel.Text = "No operations are in progress.";
@@ -224,7 +229,7 @@ classdef IMUTabController < handle
         end
 
         function onDevicesChanged( obj, ~, ~ )
-            % DEVICESCHANGED Update UI on device connect or disconnect
+            %Update UI on device connect or disconnect
             
             setDeviceConnectState( obj, obj.Model.IMUDevices(1), obj.IMUTabView.DeviceConnect1 );
             setDeviceConnectState( obj, obj.Model.IMUDevices(2), obj.IMUTabView.DeviceConnect2 );
@@ -239,15 +244,15 @@ classdef IMUTabController < handle
 
         end
 
-        function updateDeviceBatteryStatus( obj, deviceNum, batteryStatusComp )
+        function updateDeviceBatteryStatus( obj, deviceIndex, batteryStatusComp )
             arguments
                 obj 
-                deviceNum int8  
-                batteryStatusComp BatteryStatus
+                deviceIndex int8 {mustBeInRange(deviceIndex,1,2)}
+                batteryStatusComp BatteryStatus {mustBeNonempty}
             end
 
-            isConnected = obj.Model.IMUDevices(deviceNum).IsConnected;
-            batteryInfo = obj.Model.getBatteryInfo(deviceNum);
+            isConnected = obj.Model.IMUDevices(deviceIndex).IsConnected;
+            batteryInfo = obj.Model.getBatteryInfo(deviceIndex);
 
             batteryStatusComp.setButtonEnabled(isConnected);
             batteryStatusComp.setStatusText(batteryInfo);
@@ -256,8 +261,8 @@ classdef IMUTabController < handle
         function setDeviceConnectState( ~, imuDevice, deviceConnect )
             arguments
                 ~
-                imuDevice IMUInterface
-                deviceConnect DeviceConnect
+                imuDevice IMUInterface {mustBeNonempty}
+                deviceConnect DeviceConnect {mustBeNonempty}
             end
 
             if (imuDevice.IsConnected)
@@ -293,8 +298,8 @@ classdef IMUTabController < handle
         function setDeviceConfigState( ~, imuDevice, deviceConfig )
             arguments
                 ~
-                imuDevice IMUInterface
-                deviceConfig DeviceConfig
+                imuDevice IMUInterface {mustBeNonempty}
+                deviceConfig DeviceConfig {mustBeNonempty}
             end
 
             if (imuDevice.IsConfigured)

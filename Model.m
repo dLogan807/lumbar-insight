@@ -2,7 +2,7 @@ classdef Model < handle
     %MODEL Application data model.
     
     properties
-        % Application data.
+        %Application data.
 
         IMUDevices (1, 2) IMUInterface = [ShimmerIMU("placeholder1"), ShimmerIMU("placeholder2")]
 
@@ -25,7 +25,7 @@ classdef Model < handle
     end
     
     events ( NotifyAccess = private )
-        % Events broadcast when the model is altered.
+        %Events broadcast when the model is altered.
         OperationStarted
         OperationCompleted
 
@@ -43,7 +43,7 @@ classdef Model < handle
     methods
 
         function latestAngle = get.LatestAngle( obj )
-            %LATESTREANGLE Update and store the latest angle between the
+            %Update and store the latest angle between the
             %IMUs, relative to subject's standing angle.
 
             quat3dDifference = getQuat3dDifference( obj );
@@ -51,7 +51,7 @@ classdef Model < handle
         end
 
         function latestCalibratedAngle = get.LatestCalibratedAngle( obj )
-            %GET.LATESTCALIBRATEDANGLE Get the latest angle zeroed to the
+            %Get the latest angle zeroed to the
             %subject's standing position.
 
             if (isempty(obj.StandingOffsetAngle))
@@ -62,24 +62,25 @@ classdef Model < handle
         end
 
         function set.ThresholdAnglePercentage( obj, thresholdPercentage )
+            %Store int % value as a double for easier later use.
 
             arguments
                 obj 
-                thresholdPercentage int8
+                thresholdPercentage int8 {mustBePositive}
             end
 
             obj.ThresholdAnglePercentage = double(thresholdPercentage) * 0.01;
         end
 
         function connected = connectDevice( obj, deviceName, deviceType, deviceIndex )
-            % CONNECTDEVICE Attempt device connection, notify controller,
+            %Attempt device connection, notify controller,
             % and configure device
             
             arguments
                 obj 
                 deviceName string
                 deviceType DeviceTypes
-                deviceIndex int8
+                deviceIndex int8 {mustBeInRange(deviceIndex,1,2)}
             end
 
             connected = false;
@@ -105,7 +106,7 @@ classdef Model < handle
         end % connectDevice
 
         function disconnected = disconnectDevice( obj, deviceIndex )
-            % DISCONNECTDEVICE Disconnect a device
+            %Disconnect a device
 
             disconnected = false;
             if ( obj.OperationInProgress )
@@ -141,7 +142,12 @@ classdef Model < handle
         end
 
         function batteryInfo = getBatteryInfo( obj, deviceIndex )
-            % GETBATTERYINFO Get battery information of the IMU
+            %Get battery information of the IMU
+
+            arguments
+                obj 
+                deviceIndex int8 {mustBeInRange(deviceIndex,1,2)}
+            end
 
             if ( obj.OperationInProgress )
                 batteryInfo = "An operation was ongoing. Failed to retrieve.";
@@ -158,7 +164,13 @@ classdef Model < handle
         end
 
         function configured = configure( obj, deviceIndex, samplingRate )
-            %CONFIGURE Configure the IMU with the specified sampling rate
+            %Configure the IMU with the specified sampling rate
+
+            arguments
+                obj 
+                deviceIndex int8 {mustBeInRange(deviceIndex,1,2)}
+                samplingRate double {mustBePositive}
+            end
 
             configured = false;
             if ( obj.OperationInProgress )
@@ -175,7 +187,7 @@ classdef Model < handle
         end
 
         function samplingRate = lowestSamplingRate( obj )
-            %LOWESTSAMPLINGRATE Retrieve the lowest sampling rate of the
+            %Retrieve the lowest sampling rate of the
             %IMUs
 
             samplingRate = -1;
@@ -191,12 +203,12 @@ classdef Model < handle
         end
 
         function calibrated = calibrateAngle( obj, angleType )
-            % CALIBRATEANGLE Calibrate the standing or full flexion angle.
+            %Calibrate the standing or full flexion angle.
             % "f" for Full Flexion, "s" for standing offset
 
             arguments
                 obj
-                angleType string
+                angleType string {mustBeTextScalar}
             end
 
             calibrated = false;
@@ -233,12 +245,8 @@ classdef Model < handle
             notify( obj, "OperationCompleted" )
         end
 
-        function isInvalid = isInvalidAngleType( ~, angleType )
-            isInvalid = ~strcmp(angleType, "s") && ~strcmp(angleType, "f");
-        end
-
         function startStreamingBoth( obj )
-            %STARTSTREAMINGBOTH Start streaming on both devices, if
+            %Start streaming on both devices, if
             %possible
 
             device1 = obj.IMUDevices(1);
@@ -257,7 +265,7 @@ classdef Model < handle
         end
 
         function stopStreamingBoth( obj )
-            %STOPSTREAMINGBOTH Stop streaming on both devices
+            %Stop streaming on both devices
 
             device1 = obj.IMUDevices(1);
             device2 = obj.IMUDevices(2);
@@ -302,9 +310,18 @@ classdef Model < handle
             notify( obj, "OperationCompleted" )
         end
 
+        function isInvalid = isInvalidAngleType( ~, angleType )
+            arguments
+                ~ 
+                angleType string {mustBeTextScalar}
+            end
+
+            isInvalid = ~strcmp(angleType, "s") && ~strcmp(angleType, "f");
+        end
+
         function angle = calculateAngle( ~, quat3dDifference)
-            %CALCULATEANGLE Find the angle between the IMUs in terms of the
-            %horizontal plane
+            %Find the angle between the IMUs in terms of the
+            %X axis.
 
             eulerZYX = quat2eul(quat3dDifference);
 
@@ -312,8 +329,7 @@ classdef Model < handle
         end % calculateAngle
 
         function quat3dDifference = getQuat3dDifference( obj )
-            %GETQUAT3DDIFFERENCE Find the difference between IMU
-            %quaternions.
+            %Find the difference between IMU quaternions.
 
             quaternion1 = obj.IMUDevices(2).LatestQuaternion;
             quaternion2 = obj.IMUDevices(1).LatestQuaternion;
