@@ -4893,6 +4893,7 @@ classdef ShimmerDriver < handle   % Inherit from super class 'handle'
                 
                 if (isOpen)
                     thisShimmer.State = 'Connected';                                    % Set Shimmer state to Connected
+                    thisShimmer.bluetoothConn.Timeout = 1;
                     readshimmerversion(thisShimmer);                                    % Requests the Shimmer version from the Shimmer and stores the response in thisShimmer.ShimmerVersion
                     readfirmwareversion(thisShimmer);
                     
