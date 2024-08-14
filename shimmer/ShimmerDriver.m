@@ -3023,7 +3023,6 @@ classdef ShimmerDriver < handle   % Inherit from super class 'handle'
                         if ( ~isempty(shimmerResponse) && (shimmerResponse(1) == thisShimmer.INSTREAM_CMD_RESPONSE) && (shimmerResponse(2) == thisShimmer.VBATT_RESPONSE) )
                             battAdcValue = uint32(uint16(shimmerResponse(4))*256 + uint16(shimmerResponse(3)));  % battery ADC value
                             batteryVoltage = calibrateu12ADCValue(thisShimmer,battAdcValue,0,3.0,1.0)*1.988;     % calibrate 12-bit ADC value with offset = 0; vRef=3.0; gain=1.0
-                            disp(['Battery Voltage: ' num2str(batteryVoltage) '[mV]' '']);
                             thisShimmer.LatestBatteryVoltageReading = batteryVoltage;
                         else
                             thisShimmer.LatestBatteryVoltageReading = 'Nan';                                     % Set the  to 'Nan' to indicate unknown
