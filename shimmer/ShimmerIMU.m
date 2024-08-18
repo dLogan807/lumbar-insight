@@ -95,7 +95,7 @@ classdef ShimmerIMU < IMUInterface
         end
 
         function latestQuaternion = get.LatestQuaternion(obj)
-            %LATESTQUATERNION Retrieve the most recent quaternion from the
+            %Retrieve the most recent quaternion from the
             %IMU
 
             wasStreaming = obj.IsStreaming;
@@ -134,7 +134,7 @@ classdef ShimmerIMU < IMUInterface
         end
 
         function connected = connect(obj)
-            %CONNECT Connect to the Shimmer over Bluetooth
+            %Connect to the Shimmer over Bluetooth
 
             obj.IsConfigured = false;
             obj.SamplingRate = -1;
@@ -147,7 +147,7 @@ classdef ShimmerIMU < IMUInterface
         end
 
         function disconnected = disconnect(obj)
-            %DISCONNECT Disconnect from the Shimmer
+            %Disconnect from the Shimmer
 
             obj.IsConfigured = false;
             obj.SamplingRate = -1;
@@ -160,7 +160,7 @@ classdef ShimmerIMU < IMUInterface
         end
 
         function configured = configure( obj, samplingRate )
-            %CONFIGURE Configures the Shimmer
+            %Configures the Shimmer
 
             arguments
                 obj 
@@ -193,7 +193,7 @@ classdef ShimmerIMU < IMUInterface
         end
 
         function rateSet = setSamplingRate( obj, samplingRate )
-            %SETSAMPLINGRATE Sets the sampling rate and then sets sensors 
+            %Sets the sampling rate and then sets sensors 
             %as closely as possible to it
 
             arguments
@@ -216,7 +216,7 @@ classdef ShimmerIMU < IMUInterface
         end
 
         function started = startStreaming(obj)
-            %STARTSTREAMING Start streaming data
+            %Start streaming data
             if (obj.IsStreaming)
                 started = true;
             else

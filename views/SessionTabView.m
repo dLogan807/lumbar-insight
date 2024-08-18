@@ -109,7 +109,7 @@ classdef SessionTabView < matlab.ui.componentcontainer.ComponentContainer
 
             %Threshold slider
             sliderLabel = uilabel( "Parent", obj.GridLayout, ...
-                "Text", "Percentage threshold of maximum angle" );
+                "Text", "Percentage threshold of Full Flexion angle" );
             sliderLabel.Layout.Row = 2;
             sliderLabel.Layout.Column = 1;
 

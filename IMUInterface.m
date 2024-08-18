@@ -1,5 +1,5 @@
 classdef IMUInterface < handle
-    %IMUINTERFACE Abstract class for creating an IMU object
+    %Abstract class for creating an IMU
     
     properties (Abstract, SetAccess = protected)
         Name string

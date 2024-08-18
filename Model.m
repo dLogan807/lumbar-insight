@@ -6,7 +6,7 @@ classdef Model < handle
 
         IMUDevices (1, 2) IMUInterface = [ShimmerIMU("placeholder1"), ShimmerIMU("placeholder2")]
 
-        Cameras (1, :) Camera
+        Cameras (:, 2) Camera
 
         LatestAngle double
         LatestCalibratedAngle double
@@ -44,7 +44,7 @@ classdef Model < handle
 
         function latestAngle = get.LatestAngle( obj )
             %Update and store the latest angle between the
-            %IMUs, relative to subject's standing angle.
+            %IMUs
 
             quat3dDifference = getQuat3dDifference( obj );
             latestAngle = calculateAngle(obj, quat3dDifference);
@@ -212,7 +212,8 @@ classdef Model < handle
             end
 
             calibrated = false;
-            if (obj.OperationInProgress || isInvalidAngleType( obj, angleType ) || (isempty(obj.StandingOffsetAngle) && strcmp(angleType, "f")))
+            if (obj.OperationInProgress || isInvalidAngleType( obj, angleType ) || ...
+                    (isempty(obj.StandingOffsetAngle) && strcmp(angleType, "f")))
                 return
             end
             operationStarted( obj );
@@ -319,15 +320,6 @@ classdef Model < handle
             isInvalid = ~strcmp(angleType, "s") && ~strcmp(angleType, "f");
         end
 
-        function angle = calculateAngle( ~, quat3dDifference)
-            %Find the angle between the IMUs in terms of the
-            %X axis.
-
-            eulerZYX = quat2eul(quat3dDifference);
-
-            angle = rad2deg(eulerZYX(3));
-        end % calculateAngle
-
         function quat3dDifference = getQuat3dDifference( obj )
             %Find the difference between IMU quaternions.
 
@@ -335,6 +327,15 @@ classdef Model < handle
             quaternion2 = obj.IMUDevices(1).LatestQuaternion;
 
             quat3dDifference = quatmultiply(quatconj(quaternion1), quaternion2);
+        end
+
+        function angle = calculateAngle( ~, quat3dDifference)
+            %Find the angle between the IMUs in terms of the
+            %X axis.
+
+            eulerZYX = quat2eul(quat3dDifference);
+
+            angle = rad2deg(eulerZYX(3));
         end
 
     end
