@@ -109,6 +109,8 @@ classdef SessionTabController < handle
 
             delay = calculateDelay( obj );
             xAxisTimeDuration = 30;
+            failures = 0;
+            totalAttempts = 0;
 
             elapsedTime = 0;
             tic; %Start timer
@@ -131,6 +133,7 @@ classdef SessionTabController < handle
                 try
                     latestAngle = obj.Model.LatestCalibratedAngle;
                 catch
+                    failures = failures + 1;
                     continue
                 end
 
@@ -162,10 +165,12 @@ classdef SessionTabController < handle
                     obj.SessionTabView.TimeAboveMaxLabel.Text = "Time above threshold angle: " + round(obj.Model.timeAboveThresholdAngle, 2) + "s";
                 end
 
+                totalAttempts = totalAttempts + 1;
                 elapsedTime = elapsedTime + timeThisLoop;
                 tic;
             end
 
+            disp("Failure rate: " + round((failures * 100) / totalAttempts, 2) + "% (" + failures + " failures out of " + totalAttempts + " read attempts)");
             updateSessionControls( obj );
         end
 
