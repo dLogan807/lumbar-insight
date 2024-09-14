@@ -8,6 +8,9 @@ classdef Model < handle
 
         Cameras (:, 2) Camera
 
+        PollingRateOverride double = 60
+        PollingOverrideEnabled logical = false
+
         LatestAngle double
         LatestCalibratedAngle double
         SmallestAngle double = [];

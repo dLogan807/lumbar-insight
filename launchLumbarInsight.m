@@ -15,9 +15,9 @@ function varargout = launchLumbarInsight( f )
         "Position", [0 0 1 1], ...
         "SelectionChangedFcn", @onTabChanged);
     imuTab = uitab(tabgroup,"Title","IMU Configuration");
-    cameraTab = uitab(tabgroup,"Title","Camera Configuration");
+    % cameraTab = uitab(tabgroup,"Title","Camera Configuration");
     sessionTab = uitab(tabgroup,"Title","Session");
-    managementTab = uitab(tabgroup,"Title","Session Management");
+    % managementTab = uitab(tabgroup,"Title","Session Management");
     
     % Create the model
     model = Model;

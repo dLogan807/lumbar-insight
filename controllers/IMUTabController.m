@@ -56,6 +56,13 @@ classdef IMUTabController < handle
             obj.Listener(end+1) = listener( obj.IMUTabView, ... 
                 "CalibrateFullFlexionPushed", @obj.onCalibrateFullFlexionPushed );
 
+            obj.Listener(end+1) = listener( obj.IMUTabView, ...
+                "PollingRateChanged", @obj.onPollingRateChanged );
+            obj.Listener(end+1) = listener( obj.IMUTabView, ...
+                "PollingOverrideEnabled", @obj.onPollingOverrideEnabled );
+            obj.Listener(end+1) = listener( obj.IMUTabView, ...
+                "PollingOverrideDisabled", @obj.onPollingOverrideDisabled );
+
             %Listen for changes to the model.
             obj.Listener(end+1) = listener( obj.Model, ... 
                 "OperationStarted", @obj.onOperationStarted );
@@ -334,6 +341,17 @@ classdef IMUTabController < handle
             obj.Model.configure(2, samplingRate);
         end
 
+        function onPollingRateChanged( obj, ~, ~ )
+            obj.Model.PollingRateOverride = obj.IMUTabView.PollingRateOverride.PollingRate;
+        end
+
+        function onPollingRateEnabled( obj, ~, ~ )
+            obj.Model.PollingOverrideEnabled = true;
+        end
+
+        function onPollingRateDisabled( obj, ~, ~ )
+            obj.Model.PollingOverrideEnabled = false;
+        end
         %% Calibration
 
         function onCalibrateStandingPushed( obj, ~, ~ )
