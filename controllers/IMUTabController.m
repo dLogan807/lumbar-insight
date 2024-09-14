@@ -342,17 +342,14 @@ classdef IMUTabController < handle
         end
 
         function onPollingRateChanged( obj, ~, ~ )
-            disp("changed!")
             obj.Model.PollingRateOverride = obj.IMUTabView.PollingRateOverride.PollingRate;
         end
 
         function onPollingOverrideEnabled( obj, ~, ~ )
-            disp("Enabled!")
             obj.Model.PollingOverrideEnabled = true;
         end
 
         function onPollingOverrideDisabled( obj, ~, ~ )
-            disp("Disabled!")
             obj.Model.PollingOverrideEnabled = false;
         end
         %% Calibration
