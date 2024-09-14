@@ -55,6 +55,10 @@ classdef IMUTabView < matlab.ui.componentcontainer.ComponentContainer
         Device1ConfigureButtonPushed
         Device2ConfigureButtonPushed
 
+        PollingRateChanged
+        PollingOverrideEnabled
+        PollingOverrideDisabled
+
         CalibrateStandingPushed
         CalibrateFullFlexionPushed
     end % events ( NotifyAccess = private )
@@ -62,17 +66,14 @@ classdef IMUTabView < matlab.ui.componentcontainer.ComponentContainer
     methods
 
         function obj = IMUTabView( namedArgs )
-            %VIEW View constructor.
+            % View constructor.
 
             arguments
                 namedArgs.?IMUTabView
             end % arguments
 
             % Do not create a default figure parent for the component, and
-            % ensure that the component spans its parent. By default,
-            % ComponentContainer objects are auto-parenting - that is, a
-            % figure is created automatically if no parent argument is
-            % specified.
+            % ensure that the component spans its parent.
             obj@matlab.ui.componentcontainer.ComponentContainer( ...
                 "Parent", [], ...
                 "Units", "normalized", ...
@@ -100,6 +101,13 @@ classdef IMUTabView < matlab.ui.componentcontainer.ComponentContainer
                 "Configure", @obj.onDevice1Configure );
             obj.Listener(end+1) = listener( obj.DeviceConfig2, ...
                 "Configure", @obj.onDevice2Configure );
+
+            obj.Listener(end+1) = listener( obj.PollingRateOverride, ...
+                "PollingRateChanged", @obj.onPollingRateChanged );
+            obj.Listener(end+1) = listener( obj.PollingRateOverride, ...
+                "PollingOverrideEnabled", @obj.onPollingOverrideEnabled );
+            obj.Listener(end+1) = listener( obj.PollingRateOverride, ...
+                "PollingOverrideDisabled", @obj.onPollingOverrideEnabled );
 
             obj.Listener(end+1) = listener( obj.CalibrateStandingPositionButton, ... 
                 "CalibrateButtonPushed", @obj.onCalibrateStandingPushed );
@@ -278,6 +286,18 @@ classdef IMUTabView < matlab.ui.componentcontainer.ComponentContainer
 
         function onDevice2Configure( obj, ~, ~ )
             notify( obj, "Device2ConfigureButtonPushed");
+        end
+
+        function onPollingRateChanged( obj, ~, ~ )
+            notify( obj, "PollingRateChanged" );
+        end
+
+        function onPollingRateEnabled( obj, ~, ~ )
+            notify( obj, "PollingRateEnabled" );
+        end
+
+        function onPollingRateDisabled( obj, ~, ~ )
+            notify( obj, "PollingRateDisabled" );
         end
 
         function onCalibrateStandingPushed( obj, ~, ~ )

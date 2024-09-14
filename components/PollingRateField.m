@@ -3,6 +3,8 @@ classdef PollingRateField < matlab.ui.componentcontainer.ComponentContainer
 
     properties
         FontSize double = 12
+
+        PollingRate double = 60
     end
     
     properties (Access = private, Transient, NonCopyable)
@@ -15,7 +17,8 @@ classdef PollingRateField < matlab.ui.componentcontainer.ComponentContainer
 
     events (HasCallbackProperty, NotifyAccess = protected) 
         PollingRateChanged
-        PollingOverrideToggled
+        PollingOverrideEnabled
+        PollingOverrideDisabled
     end
 
     methods (Access = protected)
@@ -55,11 +58,19 @@ classdef PollingRateField < matlab.ui.componentcontainer.ComponentContainer
 
     methods (Access = private)
         function pollingOverrideToggled( obj, ~, ~ )
-            notify( obj, "PollingOverrideToggled" )
+            if (obj.PollingCheckbox.Value == true)
+                notify( obj, "PollingOverrideEnabled" )
+            else
+                notify( obj, "PollingOverrideDisabled" )
+            end      
         end
         
         function pollingRateChanged( obj, ~, ~ )
-            notify( obj, "PollingRateChanged" )
+            obj.PollingRate = obj.RateEditField.Value;
+            
+            if (obj.PollingCheckbox.value == true)
+                notify( obj, "PollingRateChanged" )
+            end
         end
     end
 end
