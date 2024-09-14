@@ -186,9 +186,9 @@ classdef SessionTabView < matlab.ui.componentcontainer.ComponentContainer
             lowerMax = obj.FullFlexionAngle * -0.2;
 
             red = 0;
-            green = 1;
-            yellow = 0.6;
             amber = 0.25;
+            yellow = 0.6;
+            green = 1;
 
             x = [0 1 1 1 1 1 1 1 0 0 0 0 0 0];
             y = [obj.yAxisMinimum obj.yAxisMinimum lowerMax lowerWarn standing upperWarn upperMax obj.yAxisMaximum obj.yAxisMaximum upperMax upperWarn standing lowerWarn lowerMax];
