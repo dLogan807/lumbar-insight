@@ -28,6 +28,10 @@ Support for further IMUs can be added by:
 2. Adding a value to `DeviceTypes.m`
 3. Modifying `connectDevice()` in `Model.m`.
 
+### Changing Font Size
+
+Adjust the `fontSize` variable in `launchLumbarInsight.m`.
+
 ### Modifying the Session Gradient Indicator
 
 1. Open `views/SessionTabView.m`
