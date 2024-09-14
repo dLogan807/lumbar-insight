@@ -111,6 +111,7 @@ classdef SessionTabController < handle
             xAxisTimeDuration = 30;
             failures = 0;
             totalAttempts = 0;
+            failureThresholdPercent = 30.0;
 
             elapsedTime = 0;
             tic; %Start timer
@@ -124,7 +125,9 @@ classdef SessionTabController < handle
 
             while ( obj.Model.SessionInProgress )
                 pause(delay);
+                totalAttempts = totalAttempts + 1;
 
+                % Stop session if device not streaming
                 if (~obj.Model.bothIMUDevicesStreaming)
                     obj.Model.stopSession;
                     break
@@ -134,6 +137,14 @@ classdef SessionTabController < handle
                     latestAngle = obj.Model.LatestCalibratedAngle;
                 catch
                     failures = failures + 1;
+
+                    failurePercentage = round((failures * 100) / totalAttempts, 2);
+
+                    if (failurePercentage > failureThresholdPercent)
+                        warning("Aborting session due to high rate of lost packets!")
+                        obj.Model.stopSession;
+                    end
+                    
                     continue
                 end
 
@@ -164,20 +175,19 @@ classdef SessionTabController < handle
                     obj.Model.timeAboveThresholdAngle = obj.Model.timeAboveThresholdAngle + timeThisLoop;
                     obj.SessionTabView.TimeAboveMaxLabel.Text = "Time above threshold angle: " + round(obj.Model.timeAboveThresholdAngle, 2) + "s";
                 end
-
-                totalAttempts = totalAttempts + 1;
+                
                 elapsedTime = elapsedTime + timeThisLoop;
                 tic;
             end
 
-            disp("Failure rate: " + round((failures * 100) / totalAttempts, 2) + "% (" + failures + " failures out of " + totalAttempts + " read attempts)");
+            disp("Failure rate: " + failurePercentage + "% (" + failures + " failures out of " + totalAttempts + " read attempts)");
             updateSessionControls( obj );
         end
 
         function delay = calculateDelay( obj)
             %Calculate the delay from the lowest sampling
             %rate or polling override
-            
+
             if (obj.Model.PollingOverrideEnabled)
                 samplingRate = obj.Model.lowestSamplingRate;
             else
