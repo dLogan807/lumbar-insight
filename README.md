@@ -15,7 +15,7 @@ Requires the [Aerospace Toolbox](https://mathworks.com/products/aerospace-toolbo
 1. Open the project with MATLAB
 2. Run `launchLumbarInsight.m`
 
-## Usage
+## Configuration
 
 ### Supported IMU Devices
 
@@ -38,7 +38,7 @@ Adjust the `fontSize` variable in `launchLumbarInsight.m`.
 2. Find `updateTrafficLightGraph()`
 3. Modify as desired
 
-To change colour boundaries, `upperMax` (amber), `upperWarn` (yellow), `standing` (green), `lowerWarn` (yellow), and `lowerMax` (amber) can be modified. Each represents the subject's lumbosacral angle at which a colour begins. Red is set to the minimum and maximum of the graph.\
-`FullFlexionAngle` is the subject's calibrated full flexion angle. `ThresholdPercentage` is set through the slider on the Session tab, ranging from 0.0 to 1.0.
+To change colour boundaries, `upperMax` (amber), `upperWarn` (yellow), `standing` (green), `lowerWarn` (yellow), and `lowerMax` (amber) can be modified. Each represents the subject's lumbosacral angle at which a colour begins. Red is set at the minimum and maximum of the graph.\
+`FullFlexionAngle` is the subject's calibrated full flexion angle. `ThresholdPercentage` is set through the slider on the Session tab, ranging from 0.0 (0%) to 1.0 (100%).
 
-Colours (`red`,`green`,`yellow`,`amber`) can be in the range 0 to 1, where this is a gradient from red to green. To change the gradient itself, its colourmap in `CustomColourMaps.m` could be replaced. To create another, jdherman's [colourmap generator](https://jdherman.github.io/colormap/) can be used.
+Colours (`red`,`green`,`yellow`,`amber`) can be in the range 0 to 1, where this is a gradient from red to green. To change the gradient itself, replace its colourmap in `CustomColourMaps.m`. For convenience, use jdherman's [colourmap generator](https://jdherman.github.io/colormap/).
