@@ -25,8 +25,8 @@ Requires the [Aerospace Toolbox](https://mathworks.com/products/aerospace-toolbo
 Support for further IMUs can be added by:
 
 1. Implementing `IMUInterface.m`
-2. Adding a value to `DeviceTypes.m`
-3. Modifying `connectDevice()` in `Model.m`.
+2. Adding a value to the `DeviceTypes.m` enum
+3. Modifying `connectDevice()` in `Model.m`
 
 ### Changing Font Size
 

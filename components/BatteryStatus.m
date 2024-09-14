@@ -1,5 +1,5 @@
 classdef BatteryStatus < matlab.ui.componentcontainer.ComponentContainer
-    %DEVICECONNECT UI component for connecting to a device
+    %UI component for displaying IMU battery information
 
     properties
         FontSize double = 12
