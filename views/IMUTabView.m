@@ -30,6 +30,7 @@ classdef IMUTabView < matlab.ui.componentcontainer.ComponentContainer
         ConfigurationLabel matlab.ui.control.Label
         DeviceConfig1 DeviceConfig
         DeviceConfig2 DeviceConfig
+        PollingRateOverride PollingRateField
 
         CalibrationLabel matlab.ui.control.Label
         CalibrateStandingPositionButton CalibrationButton
@@ -114,7 +115,7 @@ classdef IMUTabView < matlab.ui.componentcontainer.ComponentContainer
 
             obj.GridLayout = uigridlayout( ...
                 "Parent", obj, ...
-                "RowHeight", {22, 30, 30, 30, 30, 30, 22, 30, 30, "1x", 22, 30, 30}, ...
+                "RowHeight", {22, 30, 30, 30, 30, 30, 30, 22, 30, 30, "1x", 22, 30, 30}, ...
                 "ColumnWidth", {"1x", "1x"}, ...
                 "Padding", 20, ...
                 "ColumnSpacing", 100 );
@@ -136,24 +137,24 @@ classdef IMUTabView < matlab.ui.componentcontainer.ComponentContainer
 
             obj.BTDeviceList = uitable("Parent", obj.GridLayout, ...
                 "Enable", "off" );
-            obj.BTDeviceList.Layout.Row = [3, 10];
+            obj.BTDeviceList.Layout.Row = [3, 11];
             obj.BTDeviceList.Layout.Column = 1;
 
             % Connection components
             obj.DeviceConnectLabel = uilabel("Parent", obj.GridLayout, ...
                 "Text", "Connection", ...
                 "FontWeight", "bold");
-            obj.DeviceConnectLabel.Layout.Row = 11;
+            obj.DeviceConnectLabel.Layout.Row = 12;
             obj.DeviceConnectLabel.Layout.Column = 1;
 
             obj.DeviceConnect1 = DeviceConnect("Parent", obj.GridLayout, ...
                 "FontSize", obj.FontSize );
-            obj.DeviceConnect1.Layout.Row = 12;
+            obj.DeviceConnect1.Layout.Row = 13;
             obj.DeviceConnect1.Layout.Column = 1;
             
             obj.DeviceConnect2 = DeviceConnect("Parent", obj.GridLayout, ...
                 "FontSize", obj.FontSize );
-            obj.DeviceConnect2.Layout.Row = 13;
+            obj.DeviceConnect2.Layout.Row = 14;
             obj.DeviceConnect2.Layout.Column = 1;
 
             % Battery components
@@ -189,40 +190,46 @@ classdef IMUTabView < matlab.ui.componentcontainer.ComponentContainer
             obj.DeviceConfig2.Layout.Row = 6;
             obj.DeviceConfig2.Layout.Column = 2;
 
+            % Polling rate override component
+            obj.PollingRateOverride = PollingRateField("Parent", obj.GridLayout, ...
+                "FontSize", obj.FontSize );
+            obj.PollingRateOverride.Layout.Row = 7;
+            obj.PollingRateOverride.Layout.Column = 2;
+
             % Calibration components
             obj.CalibrationLabel = uilabel("Parent", obj.GridLayout, ...
                 "Text", "Calibration", ...
                 "FontWeight", "bold");
-            obj.CalibrationLabel.Layout.Row = 7;
+            obj.CalibrationLabel.Layout.Row = 8;
             obj.CalibrationLabel.Layout.Column = 2;
 
             obj.CalibrateStandingPositionButton = CalibrationButton("Parent", obj.GridLayout, ...
                 "ButtonLabel", "Calibrate Standing Offset", ...
                 "FontSize", obj.FontSize );
-            obj.CalibrateStandingPositionButton.Layout.Row = 8;
+            obj.CalibrateStandingPositionButton.Layout.Row = 9;
             obj.CalibrateStandingPositionButton.Layout.Column = 2;
 
             obj.CalibrateFullFlexionButton = CalibrationButton("Parent", obj.GridLayout, ...
                 "ButtonLabel", "Calibrate Full Flexion", ...
                 "FontSize", obj.FontSize );
-            obj.CalibrateFullFlexionButton.Layout.Row = 9;
+            obj.CalibrateFullFlexionButton.Layout.Row = 10;
             obj.CalibrateFullFlexionButton.Layout.Column = 2;
 
             % Configuration status components
             AppStatusHeadingLabel = uilabel("Parent", obj.GridLayout, ...
                 "Text", "Configuration Status", ...
                 "FontWeight", "bold" );
-            AppStatusHeadingLabel.Layout.Row = 11;
+            AppStatusHeadingLabel.Layout.Row = 12;
             AppStatusHeadingLabel.Layout.Column = 2;
 
             obj.StatusLabel = uilabel("Parent", obj.GridLayout, ...
                 "Text", "Please two connect IMUs." );
-            obj.StatusLabel.Layout.Row = 12;
+            obj.StatusLabel.Layout.Row = 13;
             obj.StatusLabel.Layout.Column = 2;
 
             obj.OperationLabel = uilabel("Parent", obj.GridLayout, ...
                 "Text", "No operations are in progress." );
-            obj.OperationLabel.Layout.Row = 13;
+            obj.OperationLabel.Layout.Row = 14;
             obj.OperationLabel.Layout.Column = 2;
         end
 
