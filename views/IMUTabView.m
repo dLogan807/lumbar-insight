@@ -107,7 +107,7 @@ classdef IMUTabView < matlab.ui.componentcontainer.ComponentContainer
             obj.Listener(end+1) = listener( obj.PollingRateOverride, ...
                 "PollingOverrideEnabled", @obj.onPollingOverrideEnabled );
             obj.Listener(end+1) = listener( obj.PollingRateOverride, ...
-                "PollingOverrideDisabled", @obj.onPollingOverrideEnabled );
+                "PollingOverrideDisabled", @obj.onPollingOverrideDisabled );
 
             obj.Listener(end+1) = listener( obj.CalibrateStandingPositionButton, ... 
                 "CalibrateButtonPushed", @obj.onCalibrateStandingPushed );
@@ -292,12 +292,12 @@ classdef IMUTabView < matlab.ui.componentcontainer.ComponentContainer
             notify( obj, "PollingRateChanged" );
         end
 
-        function onPollingRateEnabled( obj, ~, ~ )
-            notify( obj, "PollingRateEnabled" );
+        function onPollingOverrideEnabled( obj, ~, ~ )
+            notify( obj, "PollingOverrideEnabled" );
         end
 
-        function onPollingRateDisabled( obj, ~, ~ )
-            notify( obj, "PollingRateDisabled" );
+        function onPollingOverrideDisabled( obj, ~, ~ )
+            notify( obj, "PollingOverrideDisabled" );
         end
 
         function onCalibrateStandingPushed( obj, ~, ~ )

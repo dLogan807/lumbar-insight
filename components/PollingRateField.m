@@ -68,7 +68,7 @@ classdef PollingRateField < matlab.ui.componentcontainer.ComponentContainer
         function pollingRateChanged( obj, ~, ~ )
             obj.PollingRate = obj.RateEditField.Value;
             
-            if (obj.PollingCheckbox.value == true)
+            if (obj.PollingCheckbox.Value == true)
                 notify( obj, "PollingRateChanged" )
             end
         end

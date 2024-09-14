@@ -176,9 +176,14 @@ classdef SessionTabController < handle
 
         function delay = calculateDelay( obj)
             %Calculate the delay from the lowest sampling
-            %rate
+            %rate or polling override
+            
+            if (obj.Model.PollingOverrideEnabled)
+                samplingRate = obj.Model.lowestSamplingRate;
+            else
+                samplingRate = obj.Model.PollingRateOverride;
+            end
 
-            samplingRate = obj.Model.lowestSamplingRate;
 
             if (samplingRate <= 0)
                 delay = 0.1;
