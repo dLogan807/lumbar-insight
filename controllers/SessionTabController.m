@@ -111,7 +111,8 @@ classdef SessionTabController < handle
             xAxisTimeDuration = 30;
             failures = 0;
             totalAttempts = 0;
-            failureThresholdPercent = 30.0;
+            failureThresholdPercent = 25.0;
+            failurePercentage = 0.0;
 
             elapsedTime = 0;
             tic; %Start timer
@@ -142,7 +143,7 @@ classdef SessionTabController < handle
                     failurePercentage = round((failures * 100) / totalAttempts, 2);
 
                     if (failurePercentage > failureThresholdPercent)
-                        warning("Aborting session due to high rate of lost packets!")
+                        disp("Warning: Aborting session due to high rate of lost packets!")
                         obj.Model.stopSession;
                     end
                     
@@ -192,9 +193,9 @@ classdef SessionTabController < handle
             %rate or polling override
 
             if (obj.Model.PollingOverrideEnabled)
-                samplingRate = obj.Model.lowestSamplingRate;
-            else
                 samplingRate = obj.Model.PollingRateOverride;
+            else
+                samplingRate = obj.Model.lowestSamplingRate;
             end
 
 
@@ -203,6 +204,8 @@ classdef SessionTabController < handle
             else
                 delay = 1 / samplingRate;
             end
+
+            disp("Sampling rate this session: " + samplingRate + " (delay of " + delay + " between read attempts)")
         end
 
         function updateCeilingAngles( obj, latestAngle )

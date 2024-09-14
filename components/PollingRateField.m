@@ -60,6 +60,7 @@ classdef PollingRateField < matlab.ui.componentcontainer.ComponentContainer
         function pollingOverrideToggled( obj, ~, ~ )
             if (obj.PollingCheckbox.Value == true)
                 notify( obj, "PollingOverrideEnabled" )
+                notify( obj, "PollingRateChanged" )
             else
                 notify( obj, "PollingOverrideDisabled" )
             end      
