@@ -126,6 +126,7 @@ classdef SessionTabController < handle
             while ( obj.Model.SessionInProgress )
                 pause(delay);
                 totalAttempts = totalAttempts + 1;
+                angleRetrievalFailed = false;
 
                 % Stop session if device not streaming
                 if (~obj.Model.bothIMUDevicesStreaming)
@@ -145,28 +146,30 @@ classdef SessionTabController < handle
                         obj.Model.stopSession;
                     end
                     
-                    continue
+                    angleRetrievalFailed = true;
                 end
 
-                updateCeilingAngles( obj, latestAngle );
-
-                %Plot lines and data
-                addpoints(lumbarAngleLine, elapsedTime, latestAngle);
-                latestAngleText.String = "Angle: " + round(latestAngle, 2) + "°";
-
-                thresholdAngle = (obj.Model.FullFlexionAngle * obj.Model.ThresholdAnglePercentage);
-                addpoints(thresholdLine, elapsedTime, thresholdAngle);
-
-                %Redraw gradient line
-                if (~isempty(gradientLine))
-                    delete(gradientLine);
-                end
-                gradientLine = yline(obj.SessionTabView.IndicatorGraph, latestAngle);
-
-                %Move along x-axis
-                if (elapsedTime > xAxisTimeDuration)
-                    obj.SessionTabView.LumbarAngleGraph.XLim = [(elapsedTime - xAxisTimeDuration) elapsedTime];
-                    latestAngleText.Position = [(elapsedTime - xAxisTimeDuration + 2) 85];
+                if (~angleRetrievalFailed)
+                    updateCeilingAngles( obj, latestAngle );
+    
+                    %Plot lines and data
+                    addpoints(lumbarAngleLine, elapsedTime, latestAngle);
+                    latestAngleText.String = "Angle: " + round(latestAngle, 2) + "°";
+    
+                    thresholdAngle = (obj.Model.FullFlexionAngle * obj.Model.ThresholdAnglePercentage);
+                    addpoints(thresholdLine, elapsedTime, thresholdAngle);
+    
+                    %Redraw gradient line
+                    if (~isempty(gradientLine))
+                        delete(gradientLine);
+                    end
+                    gradientLine = yline(obj.SessionTabView.IndicatorGraph, latestAngle);
+    
+                    %Move along x-axis
+                    if (elapsedTime > xAxisTimeDuration)
+                        obj.SessionTabView.LumbarAngleGraph.XLim = [(elapsedTime - xAxisTimeDuration) elapsedTime];
+                        latestAngleText.Position = [(elapsedTime - xAxisTimeDuration + 2) 85];
+                    end
                 end
 
                 %Timing
