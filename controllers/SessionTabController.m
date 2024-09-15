@@ -20,9 +20,8 @@ classdef SessionTabController < handle
                 sessionTabView SessionTabView
             end % arguments
 
-            % Store the model.
+            % Store the model and view
             obj.Model = model;
-
             obj.SessionTabView = sessionTabView;
 
             % Listen for changes to the view. 
