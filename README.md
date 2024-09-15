@@ -13,7 +13,9 @@ Requires the [Aerospace Toolbox](https://mathworks.com/products/aerospace-toolbo
 ## Launching
 
 1. Open the project with MATLAB
-2. Run `launchLumbarInsight.m`
+2. Run `launchLumbarInsight.m` or enter "LumbarInsight.instance" into the Command Window.
+
+If the application does not launch, it is already open in another window.
 
 ## Configuration
 
@@ -30,7 +32,7 @@ Support for further IMUs can be added by:
 
 ### Changing Font Size
 
-Adjust the `fontSize` variable in `launchLumbarInsight.m`.
+Adjust the `fontSize` variable in `LumbarInsight.m`.
 
 ### Modifying the Session Gradient Indicator
 
