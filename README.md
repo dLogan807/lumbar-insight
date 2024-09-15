@@ -30,6 +30,10 @@ Support for further IMUs can be added by:
 2. Adding a value to the `DeviceTypes.m` enum
 3. Modifying `connectDevice()` in `Model.m`
 
+### Additional IMU Sampling Rates
+
+Modify the `SamplingRates` array in the respective IMU's class (e.g. `shimmer/ShimmerIMU.m`).
+
 ### Changing Font Size
 
 Adjust the `fontSize` variable in `LumbarInsight.m`.

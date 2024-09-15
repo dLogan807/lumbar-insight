@@ -1,6 +1,6 @@
 classdef ShimmerIMU < IMUInterface
-    %SHIMMERIMU Class implmenting IMU Interface, utilising the Shimmer
-    %driver. ShimmerDriver may cause exceptions!
+    %Class implmenting IMU Interface, utilising the Shimmer
+    %driver. Note ShimmerDriver may cause exceptions.
     
     properties (GetAccess = private, SetAccess = immutable)
         Driver ShimmerDriver
@@ -11,7 +11,7 @@ classdef ShimmerIMU < IMUInterface
         Name
         IsConfigured = false
         BatteryInfo
-        SamplingRates = [60 120]
+        SamplingRates = [60 23 120]
         SamplingRate = -1
     end
 
@@ -23,7 +23,7 @@ classdef ShimmerIMU < IMUInterface
     
     methods
         function obj = ShimmerIMU( deviceName )
-            %SHIMMERIMU Constructor
+            %Constructor
 
             arguments
                 deviceName string {mustBeTextScalar}
@@ -35,7 +35,7 @@ classdef ShimmerIMU < IMUInterface
         end
 
         function isConnected = get.IsConnected( obj )
-            %GET.ISCONNECTED Return the imu's streaming state 
+            %Return the imu's streaming state 
 
             isConnected = false;
 
@@ -47,7 +47,7 @@ classdef ShimmerIMU < IMUInterface
         end
 
         function isStreaming = get.IsStreaming( obj )
-            %GET.ISSTREAMING Return the imu's streaming logical
+            %Return the imu's streaming logical
 
             isStreaming = false;
 
@@ -59,7 +59,7 @@ classdef ShimmerIMU < IMUInterface
         end
 
         function batteryInfo = get.BatteryInfo( obj )
-            %GET.BATTERYINFO Return a string describing the IMU's battery state
+            %Return a string describing the IMU's battery state
 
             state = obj.Driver.State;
 
