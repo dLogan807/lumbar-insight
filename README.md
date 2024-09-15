@@ -15,7 +15,7 @@ Requires the [Aerospace Toolbox](https://mathworks.com/products/aerospace-toolbo
 1. Open the project with MATLAB
 2. Run `launchLumbarInsight.m` or enter "LumbarInsight.instance" into the Command Window.
 
-If the application does not launch, it is already open in another window.
+If the application does not launch, it is already open in another window. To override this behaviour, set `allowMultipleAppInstances` in `launchLumbarInsight.m` to true.
 
 ## Configuration
 

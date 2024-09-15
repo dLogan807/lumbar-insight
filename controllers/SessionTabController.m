@@ -110,7 +110,7 @@ classdef SessionTabController < handle
             xAxisTimeDuration = 30;
             failures = 0;
             totalAttempts = 0;
-            failureThresholdPercent = 25.0;
+            failureThresholdPercent = 30.0;
             failurePercentage = 0.0;
 
             elapsedTime = 0;
@@ -134,6 +134,7 @@ classdef SessionTabController < handle
                     break
                 end
 
+                %Retrieve latest angle, recording failure
                 try
                     latestAngle = obj.Model.LatestCalibratedAngle;
                 catch
@@ -192,19 +193,19 @@ classdef SessionTabController < handle
             %rate or polling override
 
             if (obj.Model.PollingOverrideEnabled)
-                samplingRate = obj.Model.PollingRateOverride;
+                pollingRate = obj.Model.PollingRateOverride;
             else
-                samplingRate = obj.Model.lowestSamplingRate;
+                pollingRate = obj.Model.lowestSamplingRate;
             end
 
 
-            if (samplingRate <= 0)
+            if (pollingRate <= 0)
                 delay = 0.1;
             else
-                delay = 1 / samplingRate;
+                delay = 1 / pollingRate;
             end
 
-            disp("Sampling rate this session: " + samplingRate + " (delay of " + delay + " between read attempts)")
+            disp("Polling rate this session: " + pollingRate + "Hz (delay of " + delay + " between read attempts)")
         end
 
         function updateCeilingAngles( obj, latestAngle )
@@ -233,6 +234,7 @@ classdef SessionTabController < handle
             obj.SessionTabView.LumbarAngleGraph.XLim = [0 30];
 
             cla(obj.SessionTabView.IndicatorGraph);
+            obj.SessionTabView.updateTrafficLightGraph;
 
             %Reset measurements
             obj.SessionTabView.SmallestAngleLabel.Text = "Smallest Angle: No data";

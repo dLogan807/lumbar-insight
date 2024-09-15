@@ -58,7 +58,8 @@ classdef Model < handle
             %subject's standing position.
 
             if (isempty(obj.StandingOffsetAngle))
-                warning("LatestCalibratedAngle: Standing offset angle not calibrated!");
+                ME = MException("LatestCalibratedAngle: Standing offset angle not calibrated!");
+                throw(ME)
             end
 
             latestCalibratedAngle = obj.LatestAngle + obj.StandingOffsetAngle;
@@ -87,7 +88,8 @@ classdef Model < handle
             end
 
             connected = false;
-            if ( obj.OperationInProgress )
+            if ( obj.OperationInProgress || isempty(deviceName))
+                notify( obj, "DevicesConnectedChanged" )
                 return
             end
             operationStarted( obj );

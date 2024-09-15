@@ -81,6 +81,26 @@ classdef SessionTabView < matlab.ui.componentcontainer.ComponentContainer
             obj.ThresholdPercentage = percentage;
             obj.AngleUpdated = true;
         end
+
+        function updateTrafficLightGraph( obj )
+            %Draw traffic light indicator graph gradient
+
+            upperMax = obj.FullFlexionAngle * obj.ThresholdPercentage;
+            upperWarn = obj.FullFlexionAngle * (obj.ThresholdPercentage - 0.2);
+            standing = 0;
+            lowerWarn = obj.FullFlexionAngle * -0.1;
+            lowerMax = obj.FullFlexionAngle * -0.2;
+
+            red = 0;
+            amber = 0.25;
+            yellow = 0.6;
+            green = 1;
+
+            x = [0 1 1 1 1 1 1 1 0 0 0 0 0 0];
+            y = [obj.yAxisMinimum obj.yAxisMinimum lowerMax lowerWarn standing upperWarn upperMax obj.yAxisMaximum obj.yAxisMaximum upperMax upperWarn standing lowerWarn lowerMax];
+            c = [red; red; amber; yellow; green; yellow; amber; red; red; amber; yellow; green; yellow; amber];
+            fill(obj.IndicatorGraph,x,y,c, "EdgeColor","none");
+        end
     end
 
     methods ( Access = protected )
@@ -174,26 +194,6 @@ classdef SessionTabView < matlab.ui.componentcontainer.ComponentContainer
                 updateTrafficLightGraph( obj );
                 obj.AngleUpdated = false;
             end
-        end
-
-        function updateTrafficLightGraph( obj )
-            %Draw traffic light indicator graph gradient
-
-            upperMax = obj.FullFlexionAngle * obj.ThresholdPercentage;
-            upperWarn = obj.FullFlexionAngle * (obj.ThresholdPercentage - 0.2);
-            standing = 0;
-            lowerWarn = obj.FullFlexionAngle * -0.1;
-            lowerMax = obj.FullFlexionAngle * -0.2;
-
-            red = 0;
-            amber = 0.25;
-            yellow = 0.6;
-            green = 1;
-
-            x = [0 1 1 1 1 1 1 1 0 0 0 0 0 0];
-            y = [obj.yAxisMinimum obj.yAxisMinimum lowerMax lowerWarn standing upperWarn upperMax obj.yAxisMaximum obj.yAxisMaximum upperMax upperWarn standing lowerWarn lowerMax];
-            c = [red; red; amber; yellow; green; yellow; amber; red; red; amber; yellow; green; yellow; amber];
-            fill(obj.IndicatorGraph,x,y,c, "EdgeColor","none");
         end
 
     end
