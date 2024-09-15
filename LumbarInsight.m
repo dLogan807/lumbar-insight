@@ -11,6 +11,9 @@ classdef LumbarInsight < Singleton
       % to allow a single instance of this class.  See description in
       % Singleton superclass.
       function newObj = LumbarInsight()
+          if (~isvalid(newObj.Figure))
+            createFigure(newObj)
+          end
           launchLumbarInsight(newObj);
       end
    end
@@ -29,6 +32,7 @@ classdef LumbarInsight < Singleton
             if (~isvalid(obj.Figure))
                 % Previous figure handle was deleted
                 createFigure(obj);
+                launchLumbarInsight( obj );
             end
          end
       end
@@ -37,13 +41,10 @@ classdef LumbarInsight < Singleton
     methods (Access = private)
 
         function createFigure(obj)
-            disp("Creating figure")
             obj.Figure = uifigure( ...
                     "Name", "Lumbar Insight", ...
                     "Position", [50 100 900 500], ...
                     "WindowState", "maximized" );
-            
-            launchLumbarInsight( obj );
         end
 
         %Launch the application.
