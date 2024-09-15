@@ -233,6 +233,8 @@ classdef SessionTabController < handle
             cla(obj.SessionTabView.LumbarAngleGraph);
             obj.SessionTabView.LumbarAngleGraph.XLim = [0 30];
 
+            cla(obj.SessionTabView.IndicatorGraph);
+
             %Reset measurements
             obj.SessionTabView.SmallestAngleLabel.Text = "Smallest Angle: No data";
             obj.SessionTabView.LargestAngleLabel.Text = "Largest Angle: No data";
