@@ -91,8 +91,10 @@ classdef SessionTabController < handle
         end
 
         function onThresholdSliderValueChanged( obj, ~, ~ )
-            obj.Model.ThresholdAnglePercentage = obj.SessionTabView.AngleThresholdSlider.Value;
-            obj.SessionTabView.ThresholdPercentage = obj.Model.ThresholdAnglePercentage;
+            wholePercentageValue = round(obj.SessionTabView.AngleThresholdSlider.Value);
+            obj.Model.DecimalThresholdPercentage = wholePercentageValue;
+            obj.SessionTabView.ThresholdPercentage = obj.Model.DecimalThresholdPercentage;
+            obj.SessionTabView.setThresholdLabelPercentage(wholePercentageValue);
         end
 
         function onSessionStartButtonPushed( obj, ~, ~ )
@@ -100,7 +102,7 @@ classdef SessionTabController < handle
 
             obj.SessionTabView.SessionStartButton.Enable = "off";
             obj.SessionTabView.SessionStopButton.Enable = "on";
-            obj.Model.ThresholdAnglePercentage = obj.SessionTabView.AngleThresholdSlider.Value;
+            obj.Model.DecimalThresholdPercentage = obj.SessionTabView.AngleThresholdSlider.Value;
 
             obj.Model.startSession;
 
@@ -157,7 +159,7 @@ classdef SessionTabController < handle
                     addpoints(lumbarAngleLine, elapsedTime, latestAngle);
                     latestAngleText.String = "Angle: " + round(latestAngle, 2) + "°";
     
-                    thresholdAngle = (obj.Model.FullFlexionAngle * obj.Model.ThresholdAnglePercentage);
+                    thresholdAngle = (obj.Model.FullFlexionAngle * obj.Model.DecimalThresholdPercentage);
                     addpoints(thresholdLine, elapsedTime, thresholdAngle);
     
                     %Redraw gradient line

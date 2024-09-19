@@ -17,7 +17,7 @@ classdef SessionTabView < matlab.ui.componentcontainer.ComponentContainer
     properties
         FontSize double = 12
         FullFlexionAngle double = 30
-        ThresholdPercentage {mustBePositive} = 80;
+        ThresholdPercentage double {mustBePositive} = 80;
 
         %Components
         GridLayout matlab.ui.container.GridLayout
@@ -30,6 +30,7 @@ classdef SessionTabView < matlab.ui.componentcontainer.ComponentContainer
         SmallestAngleLabel matlab.ui.control.Label
         LargestAngleLabel matlab.ui.control.Label
 
+        AngleThresholdLabel matlab.ui.control.Label
         AngleThresholdSlider matlab.ui.control.Slider
 
         SessionStartButton matlab.ui.control.Button
@@ -80,6 +81,16 @@ classdef SessionTabView < matlab.ui.componentcontainer.ComponentContainer
         function set.ThresholdPercentage( obj, percentage)
             obj.ThresholdPercentage = percentage;
             obj.AngleUpdated = true;
+        end
+
+        function setThresholdLabelPercentage(obj, value)
+        
+            arguments
+                obj 
+                value double {mustBePositive} 
+            end
+        
+            obj.AngleThresholdLabel.Text = "Percentage threshold of Full Flexion angle: " + value + "%";
         end
 
         function updateTrafficLightGraph( obj )
@@ -149,10 +160,9 @@ classdef SessionTabView < matlab.ui.componentcontainer.ComponentContainer
             updateTrafficLightGraph( obj );
 
             %Threshold slider
-            sliderLabel = uilabel( "Parent", obj.GridLayout, ...
-                "Text", "Percentage threshold of Full Flexion angle" );
-            sliderLabel.Layout.Row = 2;
-            sliderLabel.Layout.Column = 1;
+            obj.AngleThresholdLabel = uilabel( "Parent", obj.GridLayout );
+            obj.AngleThresholdLabel.Layout.Row = 2;
+            obj.AngleThresholdLabel.Layout.Column = 1;
 
             obj.AngleThresholdSlider = uislider( "Parent", obj.GridLayout, ...
                 "Value", 80, ...
@@ -160,6 +170,8 @@ classdef SessionTabView < matlab.ui.componentcontainer.ComponentContainer
                 "ValueChangedFcn", @obj.onThresholdSliderValueChanged);
             obj.AngleThresholdSlider.Layout.Row = 3;
             obj.AngleThresholdSlider.Layout.Column = 1;
+
+            setThresholdLabelPercentage(obj, obj.AngleThresholdSlider.Value);
 
             %Session data
             obj.TimeAboveMaxLabel = uilabel( "Parent", obj.GridLayout, ...

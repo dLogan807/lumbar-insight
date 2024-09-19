@@ -18,7 +18,7 @@ classdef Model < handle
 
         FullFlexionAngle double = []
         StandingOffsetAngle double = []
-        ThresholdAnglePercentage uint8
+        DecimalThresholdPercentage double {mustBePositive}
         timeAboveThresholdAngle double = 0
     end
 
@@ -65,15 +65,15 @@ classdef Model < handle
             latestCalibratedAngle = obj.LatestAngle + obj.StandingOffsetAngle;
         end
 
-        function set.ThresholdAnglePercentage( obj, thresholdPercentage )
+        function set.DecimalThresholdPercentage( obj, thresholdPercentage )
             %Store int % value as a double for easier later use.
 
             arguments
                 obj 
-                thresholdPercentage int8 {mustBePositive}
+                thresholdPercentage double {mustBePositive}
             end
 
-            obj.ThresholdAnglePercentage = double(thresholdPercentage) * 0.01;
+            obj.DecimalThresholdPercentage = thresholdPercentage * 0.01;
         end
 
         function connected = connectDevice( obj, deviceName, deviceType, deviceIndex )
