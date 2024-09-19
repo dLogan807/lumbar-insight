@@ -7,7 +7,7 @@ classdef SessionTabView < matlab.ui.componentcontainer.ComponentContainer
         
         FontSet logical = false
 
-        AngleUpdated = false
+        AngleUpdated logical = false
 
         yAxisMinimum = -50
         yAxisMaximum = 90
@@ -17,12 +17,14 @@ classdef SessionTabView < matlab.ui.componentcontainer.ComponentContainer
     properties
         FontSize double = 12
         FullFlexionAngle double = 30
-        ThresholdPercentage = 80;
+        ThresholdPercentage {mustBePositive} = 80;
 
         %Components
         GridLayout matlab.ui.container.GridLayout
 
+        GraphLayout matlab.ui.container.GridLayout
         LumbarAngleGraph matlab.ui.control.UIAxes
+        IndicatorGraph matlab.ui.control.UIAxes
 
         TimeAboveMaxLabel matlab.ui.control.Label
         SmallestAngleLabel matlab.ui.control.Label
@@ -32,8 +34,6 @@ classdef SessionTabView < matlab.ui.componentcontainer.ComponentContainer
 
         SessionStartButton matlab.ui.control.Button
         SessionStopButton matlab.ui.control.Button
-
-        IndicatorGraph matlab.ui.control.UIAxes
     end
 
     events ( NotifyAccess = private )
@@ -115,17 +115,38 @@ classdef SessionTabView < matlab.ui.componentcontainer.ComponentContainer
                 "Padding", 20, ...
                 "ColumnSpacing", 100 );
 
+            obj.GraphLayout = uigridlayout( ...
+                "Parent", obj.GridLayout, ...
+                "RowHeight", {"1x"}, ...
+                "ColumnWidth", {"7x", "1x"}, ...
+                "Padding", 0, ...
+                "ColumnSpacing", 10 );
+            obj.GraphLayout.Layout.Row = 1;
+            obj.GraphLayout.Layout.Column = [1 2];
+
             %Create view components.
 
-            %Graph
-            obj.LumbarAngleGraph = uiaxes( "Parent", obj.GridLayout, ...
+            %Graphs
+            obj.LumbarAngleGraph = uiaxes( "Parent", obj.GraphLayout, ...
                 "XLim", [0 30], ...
                 "YLim", [obj.yAxisMinimum obj.yAxisMaximum], ...
                 "YTick", obj.yAxisMinimum:obj.yAxisTickInterval:obj.yAxisMaximum);
             obj.LumbarAngleGraph.XLabel.String = 'Time (Seconds)';
             obj.LumbarAngleGraph.YLabel.String = 'Lumbosacral Angle (Degrees)';
-            obj.LumbarAngleGraph.Layout.Row = 1;
             obj.LumbarAngleGraph.Layout.Column = 1;
+
+            obj.IndicatorGraph = uiaxes( "Parent", obj.GraphLayout, ...
+                "XLim", [0 1], ...
+                "YLim", [obj.yAxisMinimum obj.yAxisMaximum], ...
+                "YTick", obj.yAxisMinimum:obj.yAxisTickInterval:obj.yAxisMaximum, ...
+                "XTick", 0:1, ...
+                "YAxisLocation", "right", ...
+                "Layer", "top", ...
+                "Colormap", CustomColourMaps.TrafficLight);
+            obj.LumbarAngleGraph.XLabel.String = '';
+            obj.IndicatorGraph.Layout.Column = 2;
+
+            updateTrafficLightGraph( obj );
 
             %Threshold slider
             sliderLabel = uilabel( "Parent", obj.GridLayout, ...
@@ -135,6 +156,7 @@ classdef SessionTabView < matlab.ui.componentcontainer.ComponentContainer
 
             obj.AngleThresholdSlider = uislider( "Parent", obj.GridLayout, ...
                 "Value", 80, ...
+                "Limits", [1 100], ...
                 "ValueChangedFcn", @obj.onThresholdSliderValueChanged);
             obj.AngleThresholdSlider.Layout.Row = 3;
             obj.AngleThresholdSlider.Layout.Column = 1;
@@ -169,19 +191,6 @@ classdef SessionTabView < matlab.ui.componentcontainer.ComponentContainer
                 "ButtonPushedFcn", @obj.onSessionStopButtonPushed );
             obj.SessionStopButton.Layout.Row = 5;
             obj.SessionStopButton.Layout.Column = 2;
-
-            obj.IndicatorGraph = uiaxes( "Parent", obj.GridLayout, ...
-                "XLim", [0 1], ...
-                "YLim", [obj.yAxisMinimum obj.yAxisMaximum], ...
-                "XTick", [], ...
-                "YTick", obj.yAxisMinimum:obj.yAxisTickInterval:obj.yAxisMaximum, ...
-                "Layer", "top", ...
-                "Colormap", CustomColourMaps.TrafficLight);
-            obj.IndicatorGraph.YLabel.String = 'Lumbosacral Angle (Degrees)';
-            obj.IndicatorGraph.Layout.Row = 1;
-            obj.IndicatorGraph.Layout.Column = 2;
-
-            updateTrafficLightGraph( obj );
         end
 
         function update( obj )
