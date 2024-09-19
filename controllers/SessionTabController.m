@@ -71,7 +71,10 @@ classdef SessionTabController < handle
 
         function onFullFlexionAngleCalibrated( obj, ~, ~ )
             updateSessionControls( obj );
-            obj.SessionTabView.FullFlexionAngle = obj.Model.FullFlexionAngle;
+            
+            wholePercentageValue = round(obj.SessionTabView.AngleThresholdSlider.Value);
+            obj.Model.DecimalThresholdPercentage = wholePercentageValue;
+            obj.SessionTabView.updateTrafficLightGraph(obj.Model.FullFlexionAngle, obj.Model.DecimalThresholdPercentage);
         end
 
         function updateSessionControls( obj )
@@ -93,7 +96,7 @@ classdef SessionTabController < handle
         function onThresholdSliderValueChanged( obj, ~, ~ )
             wholePercentageValue = round(obj.SessionTabView.AngleThresholdSlider.Value);
             obj.Model.DecimalThresholdPercentage = wholePercentageValue;
-            obj.SessionTabView.ThresholdPercentage = obj.Model.DecimalThresholdPercentage;
+            obj.SessionTabView.updateTrafficLightGraph(obj.Model.FullFlexionAngle, obj.Model.DecimalThresholdPercentage);
             obj.SessionTabView.setThresholdLabelPercentage(wholePercentageValue);
         end
 
@@ -102,7 +105,6 @@ classdef SessionTabController < handle
 
             obj.SessionTabView.SessionStartButton.Enable = "off";
             obj.SessionTabView.SessionStopButton.Enable = "on";
-            obj.Model.DecimalThresholdPercentage = obj.SessionTabView.AngleThresholdSlider.Value;
 
             obj.Model.startSession;
 
@@ -200,7 +202,6 @@ classdef SessionTabController < handle
                 pollingRate = obj.Model.lowestSamplingRate;
             end
 
-
             if (pollingRate <= 0)
                 delay = 0.1;
             else
@@ -236,7 +237,7 @@ classdef SessionTabController < handle
             obj.SessionTabView.LumbarAngleGraph.XLim = [0 30];
 
             cla(obj.SessionTabView.IndicatorGraph);
-            obj.SessionTabView.updateTrafficLightGraph;
+            obj.SessionTabView.updateTrafficLightGraph(obj.Model.FullFlexionAngle, obj.Model.DecimalThresholdPercentage);
 
             %Reset measurements
             obj.SessionTabView.SmallestAngleLabel.Text = "Smallest Angle: No data";

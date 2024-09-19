@@ -7,17 +7,13 @@ classdef SessionTabView < matlab.ui.componentcontainer.ComponentContainer
         
         FontSet logical = false
 
-        AngleUpdated logical = false
-
-        yAxisMinimum = -50
-        yAxisMaximum = 90
-        yAxisTickInterval = 10
+        YAxisMinimum = -50
+        YAxisMaximum = 90
+        YAxisTickInterval = 10
     end
 
     properties
         FontSize double = 12
-        FullFlexionAngle double = 30
-        ThresholdPercentage double {mustBePositive} = 80;
 
         %Components
         GridLayout matlab.ui.container.GridLayout
@@ -73,34 +69,32 @@ classdef SessionTabView < matlab.ui.componentcontainer.ComponentContainer
     end
 
     methods
-        function set.FullFlexionAngle( obj, angle)
-            obj.FullFlexionAngle = angle;
-            obj.AngleUpdated = true;
-        end
 
-        function set.ThresholdPercentage( obj, percentage)
-            obj.ThresholdPercentage = percentage;
-            obj.AngleUpdated = true;
-        end
-
-        function setThresholdLabelPercentage(obj, value)
+        function setThresholdLabelPercentage(obj, percentage)
+            %Update the percentage value on the slider
         
             arguments
                 obj 
-                value double {mustBePositive} 
+                percentage double {mustBePositive} 
             end
         
-            obj.AngleThresholdLabel.Text = "Percentage threshold of Full Flexion angle: " + value + "%";
+            obj.AngleThresholdLabel.Text = "Percentage threshold of Full Flexion angle: " + percentage + "%";
         end
 
-        function updateTrafficLightGraph( obj )
+        function updateTrafficLightGraph( obj, fullFlexionAngle, decimalPercentage )
             %Draw traffic light indicator graph gradient
 
-            upperMax = obj.FullFlexionAngle * obj.ThresholdPercentage;
-            upperWarn = obj.FullFlexionAngle * (obj.ThresholdPercentage - 0.2);
+            arguments
+                obj
+                fullFlexionAngle double {mustBeNonempty}
+                decimalPercentage double {mustBePositive, mustBeNonempty}
+            end
+
+            upperMax = fullFlexionAngle * decimalPercentage;
+            upperWarn = fullFlexionAngle * (decimalPercentage - 0.2);
             standing = 0;
-            lowerWarn = obj.FullFlexionAngle * -0.1;
-            lowerMax = obj.FullFlexionAngle * -0.2;
+            lowerWarn = fullFlexionAngle * -0.1;
+            lowerMax = fullFlexionAngle * -0.2;
 
             red = 0;
             amber = 0.25;
@@ -108,7 +102,7 @@ classdef SessionTabView < matlab.ui.componentcontainer.ComponentContainer
             green = 1;
 
             x = [0 1 1 1 1 1 1 1 0 0 0 0 0 0];
-            y = [obj.yAxisMinimum obj.yAxisMinimum lowerMax lowerWarn standing upperWarn upperMax obj.yAxisMaximum obj.yAxisMaximum upperMax upperWarn standing lowerWarn lowerMax];
+            y = [obj.YAxisMinimum obj.YAxisMinimum lowerMax lowerWarn standing upperWarn upperMax obj.YAxisMaximum obj.YAxisMaximum upperMax upperWarn standing lowerWarn lowerMax];
             c = [red; red; amber; yellow; green; yellow; amber; red; red; amber; yellow; green; yellow; amber];
             fill(obj.IndicatorGraph,x,y,c, "EdgeColor","none");
         end
@@ -140,16 +134,16 @@ classdef SessionTabView < matlab.ui.componentcontainer.ComponentContainer
             %Graphs
             obj.LumbarAngleGraph = uiaxes( "Parent", obj.GraphLayout, ...
                 "XLim", [0 30], ...
-                "YLim", [obj.yAxisMinimum obj.yAxisMaximum], ...
-                "YTick", obj.yAxisMinimum:obj.yAxisTickInterval:obj.yAxisMaximum);
+                "YLim", [obj.YAxisMinimum obj.YAxisMaximum], ...
+                "YTick", obj.YAxisMinimum:obj.YAxisTickInterval:obj.YAxisMaximum);
             obj.LumbarAngleGraph.XLabel.String = 'Time (Seconds)';
             obj.LumbarAngleGraph.YLabel.String = 'Lumbosacral Angle (Degrees)';
             obj.LumbarAngleGraph.Layout.Column = 1;
 
             obj.IndicatorGraph = uiaxes( "Parent", obj.GraphLayout, ...
                 "XLim", [0 1], ...
-                "YLim", [obj.yAxisMinimum obj.yAxisMaximum], ...
-                "YTick", obj.yAxisMinimum:obj.yAxisTickInterval:obj.yAxisMaximum, ...
+                "YLim", [obj.YAxisMinimum obj.YAxisMaximum], ...
+                "YTick", obj.YAxisMinimum:obj.YAxisTickInterval:obj.YAxisMaximum, ...
                 "XTick", 0:1, ...
                 "YAxisLocation", "right", ...
                 "Layer", "top", ...
@@ -157,7 +151,9 @@ classdef SessionTabView < matlab.ui.componentcontainer.ComponentContainer
             obj.LumbarAngleGraph.XLabel.String = '';
             obj.IndicatorGraph.Layout.Column = 2;
 
-            updateTrafficLightGraph( obj );
+            initialSliderValue = 80;
+            placeholderFullFlexion = 30;
+            updateTrafficLightGraph( obj, placeholderFullFlexion, initialSliderValue );
 
             %Threshold slider
             obj.AngleThresholdLabel = uilabel( "Parent", obj.GridLayout );
@@ -165,7 +161,7 @@ classdef SessionTabView < matlab.ui.componentcontainer.ComponentContainer
             obj.AngleThresholdLabel.Layout.Column = 1;
 
             obj.AngleThresholdSlider = uislider( "Parent", obj.GridLayout, ...
-                "Value", 80, ...
+                "Value", initialSliderValue, ...
                 "Limits", [1 100], ...
                 "ValueChangedFcn", @obj.onThresholdSliderValueChanged);
             obj.AngleThresholdSlider.Layout.Row = 3;
@@ -209,11 +205,6 @@ classdef SessionTabView < matlab.ui.componentcontainer.ComponentContainer
             if (~obj.FontSet)
                 set(findall(obj.GridLayout,'-property','FontSize'),'FontSize', obj.FontSize);
                 obj.FontSet = true;
-            end
-
-            if (obj.AngleUpdated)
-                updateTrafficLightGraph( obj );
-                obj.AngleUpdated = false;
             end
         end
 

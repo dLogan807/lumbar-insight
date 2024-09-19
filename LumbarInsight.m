@@ -39,6 +39,8 @@ classdef LumbarInsight < Singleton
                 % Previous figure handle was deleted
                 createFigure(obj);
                 launchLumbarInsight( obj );
+            else
+                disp("The app is already open.")
             end
          end
       end
