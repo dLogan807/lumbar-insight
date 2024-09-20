@@ -291,8 +291,8 @@ classdef IMUTabController < handle
                 obj.IMUTabView.CalibrateStandingPositionButton.Enable = false;
                 obj.IMUTabView.CalibrateFullFlexionButton.Enable = false;
 
-                obj.IMUTabView.CalibrateStandingPositionButton.StatusText = "Not Calibrated.";
-                obj.IMUTabView.CalibrateFullFlexionButton.StatusText = "Not Calibrated.";
+                obj.IMUTabView.CalibrateStandingPositionButton.StatusText = "Not calibrated.";
+                obj.IMUTabView.CalibrateFullFlexionButton.StatusText = "Not calibrated.";
 
                 obj.Model.stopStreamingBoth;
             end

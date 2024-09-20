@@ -62,7 +62,7 @@ classdef BatteryStatus < matlab.ui.componentcontainer.ComponentContainer
 
             % Create status text label
             obj.BatteryLabel = uilabel(obj.GridLayout, ...
-                "Text", "Device not connected. No battery information.");
+                "Text", "Not connected. No battery information.");
             obj.BatteryLabel.Layout.Column = 2;
         end
 
