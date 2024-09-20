@@ -158,7 +158,7 @@ classdef IMUTabController < handle
                 return
             end
 
-            obj.IMUTabView.DeviceConnect1.setConnectButtonState("Connecting");
+            obj.IMUTabView.DeviceConnect1.setState("Connecting");
 
             obj.Model.connectDevice(obj.IMUTabView.DeviceConnect1.DeviceName, obj.IMUTabView.DeviceConnect1.DeviceType, 1);
         end
@@ -169,7 +169,7 @@ classdef IMUTabController < handle
                 return
             end
 
-            obj.IMUTabView.DeviceConnect2.setConnectButtonState("Connecting");
+            obj.IMUTabView.DeviceConnect2.setState("Connecting");
 
             obj.Model.connectDevice(obj.IMUTabView.DeviceConnect2.DeviceName, obj.IMUTabView.DeviceConnect2.DeviceType, 2);
         end
@@ -269,9 +269,9 @@ classdef IMUTabController < handle
             end
 
             if (imuDevice.IsConnected)
-                deviceConnect.setConnectButtonState("Disconnect");
+                deviceConnect.setState("Disconnect");
             else
-                deviceConnect.setConnectButtonState("Connect");
+                deviceConnect.setState("Connect");
             end
         end
 
@@ -306,12 +306,12 @@ classdef IMUTabController < handle
             end
 
             if (imuDevice.IsConfigured)
-                deviceConfig.State = "Configured";
+                deviceConfig.setState("Configured");
             elseif (imuDevice.IsConnected)
                 deviceConfig.setDeviceInfo(imuDevice.Name, imuDevice.SamplingRates);
-                deviceConfig.State = "Configure";
+                deviceConfig.setState("Configure");
             else
-                deviceConfig.State = "Disconnected";
+                deviceConfig.setState("Disconnected");
             end
         end
 
@@ -320,7 +320,7 @@ classdef IMUTabController < handle
                 return
             end
 
-            obj.IMUTabView.DeviceConfig1.State = "Configuring";
+            obj.IMUTabView.DeviceConfig1.setState("Configuring");
 
             samplingRate = obj.IMUTabView.DeviceConfig1.SamplingRate;
             obj.Model.configure(1, samplingRate);
@@ -331,7 +331,7 @@ classdef IMUTabController < handle
                 return
             end
             
-            obj.IMUTabView.DeviceConfig2.State = "Configuring";
+            obj.IMUTabView.DeviceConfig2.setState("Configuring");
 
             samplingRate = obj.IMUTabView.DeviceConfig2.SamplingRate;
             obj.Model.configure(2, samplingRate);

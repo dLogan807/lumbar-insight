@@ -60,7 +60,7 @@ classdef DeviceConnect < matlab.ui.componentcontainer.ComponentContainer
     end
 
     methods
-        function setConnectButtonState( obj, state)
+        function setState( obj, state)
             %Set the button's appearance based on enum
 
             arguments
