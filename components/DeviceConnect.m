@@ -4,7 +4,6 @@ classdef DeviceConnect < matlab.ui.componentcontainer.ComponentContainer
     properties
         DeviceName string
         DeviceType DeviceTypes
-        State ConnectButtonStates = "Connect"
 
         FontSize double = 12
     end
@@ -15,7 +14,6 @@ classdef DeviceConnect < matlab.ui.componentcontainer.ComponentContainer
         DeviceTypeDropDown matlab.ui.control.DropDown
         DeviceConnectButton matlab.ui.control.Button 
 
-        StateChanged logical = false
         FontSet logical = false;
     end
 
@@ -47,7 +45,7 @@ classdef DeviceConnect < matlab.ui.componentcontainer.ComponentContainer
             obj.DeviceType = DeviceTypes.Shimmer;
 
             % Create button to connect
-            obj.DeviceConnectButton = uibutton(obj.GridLayout, "Text", string(obj.State) );
+            obj.DeviceConnectButton = uibutton(obj.GridLayout, "Text", "Connect" );
             obj.DeviceConnectButton.ButtonPushedFcn = @obj.connectButtonPushed;
             obj.DeviceConnectButton.Layout.Column = 3;
         end
@@ -58,50 +56,40 @@ classdef DeviceConnect < matlab.ui.componentcontainer.ComponentContainer
                 set(findall(obj.GridLayout,'-property','FontSize'),'FontSize', obj.FontSize);
                 obj.FontSet = true;
             end
-
-            if (obj.StateChanged)
-                updateConnectButton( obj );
-            end
-        end
-
-        function updateConnectButton( obj )
-            obj.StateChanged = false;
-
-            obj.DeviceConnectButton.Text = string(obj.State);
-
-            if (obj.State == "Connect")
-                obj.DeviceConnectButton.Enable = "on";
-
-                obj.DeviceNameEditField.Enable = "on";
-                obj.DeviceTypeDropDown.Enable = "on";
-            elseif (obj.State == "Connecting")
-                obj.DeviceConnectButton.Enable = "off";
-                
-                obj.DeviceNameEditField.Enable = "off";
-                obj.DeviceTypeDropDown.Enable = "off";
-            elseif (obj.State == "Disconnect")
-                obj.DeviceConnectButton.Enable = "on";
-            end
         end
     end
 
     methods
-        function set.State( obj, state )
+        function setConnectButtonState( obj, state)
+            %Set the button's appearance based on enum
+
             arguments
                 obj
                 state ConnectButtonStates {mustBeNonempty}
             end
 
-            obj.State = state;
-            obj.StateChanged = true;
+            obj.DeviceConnectButton.Text = string(state);
+            
+            if (state == "Connect")
+                obj.DeviceConnectButton.Enable = "on";
+                obj.DeviceNameEditField.Enable = "on";
+                obj.DeviceTypeDropDown.Enable = "on";
+            elseif (state == "Connecting")
+                obj.DeviceConnectButton.Enable = "off";
+                
+                obj.DeviceNameEditField.Enable = "off";
+                obj.DeviceTypeDropDown.Enable = "off";
+            elseif (state == "Disconnect")
+                obj.DeviceConnectButton.Enable = "on";
+            end
 
-            drawnow;
+            drawnow
         end
     end
 
     methods (Access = private)
         function connectButtonPushed( obj, ~, ~ )
-            if (obj.State == "Connect")
+            if (obj.DeviceConnectButton.Text == "Connect")
                 notify(obj,'Connect' );
             else
                 notify( obj, "Disconnect" );

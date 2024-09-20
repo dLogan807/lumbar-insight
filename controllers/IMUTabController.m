@@ -158,7 +158,7 @@ classdef IMUTabController < handle
                 return
             end
 
-            obj.IMUTabView.DeviceConnect1.State = "Connecting";
+            obj.IMUTabView.DeviceConnect1.setConnectButtonState("Connecting");
 
             obj.Model.connectDevice(obj.IMUTabView.DeviceConnect1.DeviceName, obj.IMUTabView.DeviceConnect1.DeviceType, 1);
         end
@@ -169,7 +169,7 @@ classdef IMUTabController < handle
                 return
             end
 
-            obj.IMUTabView.DeviceConnect2.State = "Connecting";
+            obj.IMUTabView.DeviceConnect2.setConnectButtonState("Connecting");
 
             obj.Model.connectDevice(obj.IMUTabView.DeviceConnect2.DeviceName, obj.IMUTabView.DeviceConnect2.DeviceType, 2);
         end
@@ -269,9 +269,9 @@ classdef IMUTabController < handle
             end
 
             if (imuDevice.IsConnected)
-                deviceConnect.State = "Disconnect";
+                deviceConnect.setConnectButtonState("Disconnect");
             else
-                deviceConnect.State = "Connect";
+                deviceConnect.setConnectButtonState("Connect");
             end
         end
 
