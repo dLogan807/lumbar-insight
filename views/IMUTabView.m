@@ -5,8 +5,6 @@ classdef IMUTabView < matlab.ui.componentcontainer.ComponentContainer
         % Listener object used to respond dynamically to controller or component events.
         Listener(:, 1) event.listener
 
-        GridLayout
-
         FontSet logical = false
     end
 
@@ -14,8 +12,10 @@ classdef IMUTabView < matlab.ui.componentcontainer.ComponentContainer
         FontSize double = 12
 
         % Components
-        BTDeviceList 
-        BTScanButton
+        GridLayout matlab.ui.container.GridLayout
+
+        BTDeviceList matlab.ui.control.Table
+        BTScanButton matlab.ui.control.StateButton
         
         DeviceConnect1 DeviceConnect
         DeviceConnect2 DeviceConnect

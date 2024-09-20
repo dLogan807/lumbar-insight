@@ -40,7 +40,7 @@ classdef LumbarInsight < Singleton
                 createFigure(obj);
                 launchLumbarInsight( obj );
             else
-                disp("The app is already open.")
+                disp("Notice: The app is already open.")
             end
          end
       end
