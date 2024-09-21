@@ -1,6 +1,6 @@
 classdef ShimmerIMU < IMUInterface
     %Class implementing IMU Interface, utilising the Shimmer
-    %driver. Note ShimmerDriver may cause exceptions.
+    %driver.
     
     properties (GetAccess = private, SetAccess = immutable)
         Driver ShimmerDriver
@@ -96,7 +96,7 @@ classdef ShimmerIMU < IMUInterface
 
         function latestQuaternion = get.LatestQuaternion(obj)
             %Retrieve the most recent quaternion from the
-            %IMU
+            %Shimmer Bluetooth data buffer
 
             wasStreaming = obj.IsStreaming;
             ME = [];

@@ -4298,7 +4298,7 @@ classdef ShimmerDriver < handle   % Inherit from super class 'handle'
                 dataMode = varargin{1};
                 [parsedData,systemTime] = capturedata(thisShimmer);
                 parsedData = double(parsedData);
-                
+
                 if (~isempty(parsedData))
                                     
                     numSignals = length(thisShimmer.SignalNameArray);      % get number of signals from signalNameArray
@@ -11945,8 +11945,9 @@ classdef ShimmerDriver < handle   % Inherit from super class 'handle'
                 serialData = [];
 
                 numBytes = thisShimmer.bluetoothConn.NumBytesAvailable;
-                if (numBytes == 0)
-                    numBytes = 1;
+                %Return if a packet is not available in the Bluetooth buffer
+                if (numBytes < 22)
+                    return
                 end
                 
                 [serialData] = read(thisShimmer.bluetoothConn, numBytes);  % Read all available serial data from the com port

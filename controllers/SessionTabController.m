@@ -114,7 +114,7 @@ classdef SessionTabController < handle
             xAxisTimeDuration = 30;
             failures = 0;
             totalAttempts = 0;
-            failureThresholdPercent = 30.0;
+            failureThresholdPercent = 40.0;
             failurePercentage = 0.0;
 
             elapsedTime = 0;
