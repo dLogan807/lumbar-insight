@@ -48,7 +48,7 @@ classdef BeepConfigField < matlab.ui.componentcontainer.ComponentContainer
                 "ValueChangedFcn", @obj.beepRateChanged);
 
             %Create label
-            infoLabel = uilabel("Parent", obj.GridLayout, ...
+            uilabel("Parent", obj.GridLayout, ...
                 "Text", "above threshold");
         end
 
