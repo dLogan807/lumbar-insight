@@ -170,20 +170,26 @@ classdef SessionTabView < matlab.ui.componentcontainer.ComponentContainer
             setThresholdLabelPercentage(obj, obj.AngleThresholdSlider.Value);
 
             %Session data
+            dataHeaderLabel = uilabel("Parent", obj.GridLayout, ...
+                "Text", "Session Data Overview", ...
+                "FontWeight", "bold");
+            dataHeaderLabel.Layout.Row = 3;
+            dataHeaderLabel.Layout.Column = 3;
+
             obj.TimeAboveMaxLabel = uilabel( "Parent", obj.GridLayout, ...
                 "Text", "Time above threshold angle: 0s");
             obj.TimeAboveMaxLabel.Layout.Row = 4;
-            obj.TimeAboveMaxLabel.Layout.Column = 1;
+            obj.TimeAboveMaxLabel.Layout.Column = 3;
 
             obj.SmallestAngleLabel = uilabel( "Parent", obj.GridLayout, ...
                 "Text", "Smallest angle:");
             obj.SmallestAngleLabel.Layout.Row = 5;
-            obj.SmallestAngleLabel.Layout.Column = 1;
+            obj.SmallestAngleLabel.Layout.Column = 3;
 
             obj.LargestAngleLabel = uilabel( "Parent", obj.GridLayout, ...
                 "Text", "Largest angle:");
             obj.LargestAngleLabel.Layout.Row = 6;
-            obj.LargestAngleLabel.Layout.Column = 1;
+            obj.LargestAngleLabel.Layout.Column = 3;
 
             %Session control
             obj.SessionStartButton = uibutton( "Parent", obj.GridLayout, ...
