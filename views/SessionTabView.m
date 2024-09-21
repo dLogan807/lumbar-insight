@@ -29,6 +29,8 @@ classdef SessionTabView < matlab.ui.componentcontainer.ComponentContainer
         AngleThresholdLabel matlab.ui.control.Label
         AngleThresholdSlider matlab.ui.control.Slider
 
+        WarningBeepField BeepConfigField
+
         SessionStartButton matlab.ui.control.Button
         SessionStopButton matlab.ui.control.Button
     end
@@ -168,6 +170,12 @@ classdef SessionTabView < matlab.ui.componentcontainer.ComponentContainer
             obj.AngleThresholdSlider.Layout.Column = 1;
 
             setThresholdLabelPercentage(obj, obj.AngleThresholdSlider.Value);
+
+            %Warning beep configuration
+            obj.WarningBeepField = BeepConfigField("Parent", obj.GridLayout, ...
+                "FontSize", obj.FontSize);
+            obj.WarningBeepField.Layout.Row = 4;
+            obj.WarningBeepField.Layout.Column = 1;
 
             %Session data
             dataHeaderLabel = uilabel("Parent", obj.GridLayout, ...
