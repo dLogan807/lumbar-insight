@@ -32,6 +32,11 @@ classdef SessionTabController < handle
             obj.Listener(end+1) = listener( obj.SessionTabView, ... 
                 "SessionStopButtonPushed", @obj.onSessionStopButtonPushed );
 
+            obj.Listener(end+1) = listener( obj.SessionTabView, ... 
+                "BeepToggled", @obj.onBeepToggled);
+            obj.Listener(end+1) = listener( obj.SessionTabView, ... 
+                "BeepRateChanged", @obj.onBeepRateChanged );
+
             % Listen for changes to the model data.
             obj.Listener(end+1) = listener( obj.Model, ...
                 "DevicesConnectedChanged", @obj.onDevicesConnectedChanged );
@@ -118,8 +123,7 @@ classdef SessionTabController < handle
             failurePercentage = 0.0;
 
             elapsedTime = 0;
-            soundTimer = 0;
-            timeToPlaySound = 1;
+            beepTimer = 0;
             tic; %Start timer
 
             lumbarAngleLine = animatedline(obj.SessionTabView.LumbarAngleGraph);
@@ -185,13 +189,13 @@ classdef SessionTabController < handle
                     obj.Model.timeAboveThresholdAngle = obj.Model.timeAboveThresholdAngle + timeThisLoop;
                     obj.SessionTabView.TimeAboveMaxLabel.Text = "Time above threshold angle: " + round(obj.Model.timeAboveThresholdAngle, 2) + "s";
 
-                    if (soundTimer > timeToPlaySound)
+                    if (beepTimer > obj.Model.BeepRate && obj.Model.BeepEnabled)
                         obj.Model.playWarningBeep();
-                        soundTimer = 0;
+                        beepTimer = 0;
                     end
                 end
                 
-                soundTimer = soundTimer + timeThisLoop;
+                beepTimer = beepTimer + timeThisLoop;
                 elapsedTime = elapsedTime + timeThisLoop;
                 tic;
             end
@@ -261,6 +265,15 @@ classdef SessionTabController < handle
         function onSessionStopButtonPushed( obj, ~, ~ )
             obj.Model.stopSession;
             obj.SessionTabView.SessionStopButton.Enable = "off";
+        end
+
+        %Beep configuration events
+        function onBeepToggled( obj, ~, ~ )
+            obj.Model.BeepEnabled = obj.SessionTabView.WarningBeepField.BeepCheckbox.Value;
+        end
+
+        function onBeepRateChanged( obj, ~, ~ )
+            obj.Model.BeepRate = obj.SessionTabView.WarningBeepField.RateEditField.Value;
         end
 
     end % methods ( Access = private )

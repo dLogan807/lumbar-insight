@@ -37,6 +37,8 @@ classdef SessionTabView < matlab.ui.componentcontainer.ComponentContainer
 
     events ( NotifyAccess = private )
         %Event broadcast when view is interacted with
+        BeepRateChanged
+        BeepToggled
         ThresholdSliderValueChanged
         SessionStartButtonPushed
         SessionStopButtonPushed
@@ -67,9 +69,7 @@ classdef SessionTabView < matlab.ui.componentcontainer.ComponentContainer
 
             % Listen for changes in components
             obj.Listener(end+1) = listener( obj.WarningBeepField, ... 
-                "BeepEnabled", @obj.onBeepEnabled);
-            obj.Listener(end+1) = listener( obj.WarningBeepField, ... 
-                "BeepDisabled", @obj.onBeepDisabled);
+                "BeepToggled", @obj.onBeepToggled);
             obj.Listener(end+1) = listener( obj.WarningBeepField, ... 
                 "BeepRateChanged", @obj.onBeepRateChanged );
         end
@@ -242,12 +242,8 @@ classdef SessionTabView < matlab.ui.componentcontainer.ComponentContainer
             notify( obj, "SessionStopButtonPushed" )
         end
 
-        function onBeepEnabled( obj, ~, ~ )
-            notify( obj, "BeepEnabled")
-        end
-
-        function onBeepDisabled( obj, ~, ~ )
-            notify( obj, "BeepDisabled")
+        function onBeepToggled( obj, ~, ~ )
+            notify( obj, "BeepToggled")
         end
 
         function onBeepRateChanged( obj, ~, ~ )

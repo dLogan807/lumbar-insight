@@ -7,19 +7,18 @@ classdef BeepConfigField < matlab.ui.componentcontainer.ComponentContainer
 
     properties (GetAccess = public, SetAccess = private)
         RateEditField matlab.ui.control.NumericEditField
+        BeepCheckbox matlab.ui.control.CheckBox
     end
     
     properties (Access = private, Transient, NonCopyable)
         GridLayout matlab.ui.container.GridLayout 
-        BeepCheckbox matlab.ui.control.CheckBox
 
         FontSet logical = false
     end
 
     events (HasCallbackProperty, NotifyAccess = protected) 
         BeepRateChanged
-        BeepEnabled
-        BeepDisabled
+        BeepToggled
     end
 
     methods (Access = protected)
@@ -42,7 +41,7 @@ classdef BeepConfigField < matlab.ui.componentcontainer.ComponentContainer
             %Create numeric input field
             obj.RateEditField = uieditfield( obj.GridLayout, ...
                 "numeric", ...
-                "ValueDisplayFormat", "%.0f seconds", ...
+                "ValueDisplayFormat", "%.1f seconds", ...
                 "Limits", [0.1 inf], ...
                 "Value", 1, ...
                 "ValueChangedFcn", @obj.beepRateChanged);
@@ -64,12 +63,8 @@ classdef BeepConfigField < matlab.ui.componentcontainer.ComponentContainer
 
     methods (Access = private)
         function beepEnabledToggled( obj, ~, ~ )
-            if (obj.BeepCheckbox.Value == true)
-                notify( obj, "BeepEnabled" )
-                notify( obj, "BeepRateChanged" )
-            else
-                notify( obj, "BeepDisabled" )
-            end      
+            notify( obj, "BeepToggled" )
+            notify( obj, "BeepRateChanged" )    
         end
         
         function beepRateChanged( obj, ~, ~ )

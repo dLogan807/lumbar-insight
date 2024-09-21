@@ -11,6 +11,9 @@ classdef Model < handle
         PollingRateOverride double = 60
         PollingOverrideEnabled logical = false
 
+        BeepEnabled logical = true
+        BeepRate double = 1
+
         LatestAngle double
         LatestCalibratedAngle double
         SmallestAngle double = [];
