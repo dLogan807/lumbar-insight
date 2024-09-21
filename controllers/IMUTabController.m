@@ -306,12 +306,11 @@ classdef IMUTabController < handle
             end
 
             if (imuDevice.IsConfigured)
-                deviceConfig.setState("Configured");
+                deviceConfig.setConfigured(imuDevice.Name, imuDevice.SamplingRates, imuDevice.SamplingRate);
             elseif (imuDevice.IsConnected)
-                deviceConfig.setDeviceInfo(imuDevice.Name, imuDevice.SamplingRates);
-                deviceConfig.setState("Configure");
+                deviceConfig.setConfigurable(imuDevice.Name, imuDevice.SamplingRates);
             else
-                deviceConfig.setState("Disconnected");
+                deviceConfig.setDisconnected();
             end
         end
 
@@ -320,9 +319,9 @@ classdef IMUTabController < handle
                 return
             end
 
-            obj.IMUTabView.DeviceConfig1.setState("Configuring");
+            obj.IMUTabView.DeviceConfig1.setConfiguring();
 
-            samplingRate = obj.IMUTabView.DeviceConfig1.SamplingRate;
+            samplingRate = str2double(obj.IMUTabView.DeviceConfig1.SamplingRateDropDown.Value);
             obj.Model.configure(1, samplingRate);
         end
 
@@ -331,9 +330,9 @@ classdef IMUTabController < handle
                 return
             end
             
-            obj.IMUTabView.DeviceConfig2.setState("Configuring");
+            obj.IMUTabView.DeviceConfig2.setConfiguring();
 
-            samplingRate = obj.IMUTabView.DeviceConfig2.SamplingRate;
+            samplingRate = str2double(obj.IMUTabView.DeviceConfig2.SamplingRateDropDown.Value);
             obj.Model.configure(2, samplingRate);
         end
 

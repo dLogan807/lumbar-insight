@@ -208,7 +208,7 @@ classdef SessionTabController < handle
                 delay = 1 / pollingRate;
             end
 
-            disp("Polling rate this session: " + pollingRate + "Hz (delay of " + delay + " between read attempts)")
+            disp("Polling rate this session: " + pollingRate + "Hz (delay of " + delay + "s between read attempts)")
         end
 
         function updateCeilingAngles( obj, latestAngle )

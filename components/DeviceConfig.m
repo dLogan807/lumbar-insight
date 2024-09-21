@@ -2,18 +2,16 @@ classdef DeviceConfig < matlab.ui.componentcontainer.ComponentContainer
     %DEVICECONFIG UI component for configuring a device
 
     properties
-        SamplingRate double = 60
-        AvailableSamplingRates (1,:) double
-        DeviceName string = ""
-        DeviceType DeviceTypes
-
         FontSize double = 12
+    end
+
+    properties (GetAccess = public, SetAccess = private)
+        SamplingRateDropDown matlab.ui.control.DropDown
     end
     
     properties (Access = private, Transient, NonCopyable)
         GridLayout matlab.ui.container.GridLayout 
         SamplingRateLabel matlab.ui.control.Label
-        SamplingRateDropDown matlab.ui.control.DropDown
         DeviceConfigButton matlab.ui.control.Button 
 
         FontSet logical = false;
@@ -40,7 +38,6 @@ classdef DeviceConfig < matlab.ui.componentcontainer.ComponentContainer
                 "Placeholder", "Sampling Rate (Hz)", ...
                 "Editable", "off", ...
                 "Enable", "off");
-            obj.SamplingRateDropDown.ValueChangedFcn = @obj.samplingRateChanged;
             obj.SamplingRateDropDown.Layout.Column = 1;
 
             %Create button to configure
@@ -70,66 +67,79 @@ classdef DeviceConfig < matlab.ui.componentcontainer.ComponentContainer
         function set.FontSize( obj, fontSize )
             arguments
                 obj 
-                fontSize double {mustBePositive} 
+                fontSize double {mustBePositive, mustBeNonempty} 
             end
 
             obj.FontSize = fontSize;
         end
 
-        function setDeviceInfo( obj, name, samplingRates )
-            arguments
-                obj 
-                name string {mustBeTextScalar}
-                samplingRates double {mustBePositive}
-            end
+        function setDisconnected( obj )
 
-            obj.DeviceName = name;
-            obj.AvailableSamplingRates = samplingRates;
-        end
-
-        function setState( obj, state )
-            arguments
-                obj
-                state ConfigButtonStates {mustBeNonempty}
-            end
-
-            if (state == "Configure")
-                obj.SamplingRateLabel.Text = obj.DeviceName + " not configured.";
-                setConfigureable( obj );
-            elseif (state == "Configuring")
-                obj.DeviceConfigButton.Enable = "off";
-                obj.DeviceConfigButton.Text = "Configuring";
-                obj.SamplingRateDropDown.Enable = "off";
-            elseif (state == "Configured")
-                obj.SamplingRateLabel.Text = obj.DeviceName + " set to " + obj.SamplingRate + "Hz.";
-                setConfigureable( obj );
-            elseif ( state == "Disconnected" )
-                obj.SamplingRateLabel.Text = "Not configured.";
-                obj.SamplingRateDropDown.Enable = "off";
-                obj.SamplingRateDropDown.Items = "";
-                obj.DeviceConfigButton.Enable = "off";
-                obj.DeviceConfigButton.Text = "Configure";
-            end
+            obj.SamplingRateLabel.Text = "Not configured.";
+            obj.SamplingRateDropDown.Enable = "off";
+            obj.SamplingRateDropDown.Items = "";
+            obj.DeviceConfigButton.Enable = "off";
+            obj.DeviceConfigButton.Text = "Configure";
 
             drawnow;
         end
+
+        function setConfigurable( obj, name, availableSamplingRates)
+            
+            arguments
+                obj 
+                name string {mustBeTextScalar, mustBeNonempty}
+                availableSamplingRates (1,:) double {mustBePositive, mustBeNonempty}
+            end
+
+            obj.SamplingRateLabel.Text = name + " not configured.";
+            setConfigureable( obj, availableSamplingRates );
+
+            drawnow;
+        end
+
+        function setConfiguring( obj )
+
+            obj.DeviceConfigButton.Enable = "off";
+            obj.DeviceConfigButton.Text = "Configuring";
+            obj.SamplingRateDropDown.Enable = "off";
+            
+            drawnow;
+        end
+
+        function setConfigured( obj, name, availableSamplingRates, samplingRate)
+
+            arguments
+                obj
+                name string {mustBeTextScalar, mustBeNonempty}
+                availableSamplingRates (1,:) double {mustBePositive, mustBeNonempty}
+                samplingRate double {mustBePositive, mustBeNonempty}
+            end
+
+            obj.SamplingRateLabel.Text = name + " set to " + samplingRate + "Hz.";
+            setConfigureable( obj, availableSamplingRates );
+
+            drawnow;
+        end
+
     end
 
     methods (Access = private)
-        function setConfigureable( obj )
+        function setConfigureable( obj, availableSamplingRates )
+            
+            arguments
+                obj 
+                availableSamplingRates (1,:) double {mustBePositive}
+            end
+
             obj.SamplingRateDropDown.Enable = "on";
             obj.DeviceConfigButton.Text = "Configure";
-            obj.SamplingRateDropDown.Items = string(obj.AvailableSamplingRates);
-            obj.SamplingRate = str2double(obj.SamplingRateDropDown.Value);
+            obj.SamplingRateDropDown.Items = string(availableSamplingRates);
             obj.DeviceConfigButton.Enable = "on";
         end
 
         function configureButtonPushed( obj, ~, ~ )
             notify( obj, "Configure" );
-        end
-
-        function samplingRateChanged( obj, ~, ~)
-            obj.SamplingRate = str2double(obj.SamplingRateDropDown.Value);
         end
     end
 end
