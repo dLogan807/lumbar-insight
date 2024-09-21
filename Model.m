@@ -121,6 +121,8 @@ classdef Model < handle
 
             disconnected = obj.IMUDevices(deviceIndex).disconnect;
 
+            obj.IMUDevices(deviceIndex) = ShimmerIMU("placeholder" + deviceIndex);
+
             operationCompleted( obj );
 
             %Reset angle calibration
