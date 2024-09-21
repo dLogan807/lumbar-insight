@@ -118,6 +118,8 @@ classdef SessionTabController < handle
             failurePercentage = 0.0;
 
             elapsedTime = 0;
+            soundTimer = 0;
+            timeToPlaySound = 1;
             tic; %Start timer
 
             lumbarAngleLine = animatedline(obj.SessionTabView.LumbarAngleGraph);
@@ -182,8 +184,14 @@ classdef SessionTabController < handle
                 if (latestAngle > thresholdAngle)
                     obj.Model.timeAboveThresholdAngle = obj.Model.timeAboveThresholdAngle + timeThisLoop;
                     obj.SessionTabView.TimeAboveMaxLabel.Text = "Time above threshold angle: " + round(obj.Model.timeAboveThresholdAngle, 2) + "s";
+
+                    if (soundTimer > timeToPlaySound)
+                        obj.Model.playWarningBeep();
+                        soundTimer = 0;
+                    end
                 end
                 
+                soundTimer = soundTimer + timeThisLoop;
                 elapsedTime = elapsedTime + timeThisLoop;
                 tic;
             end

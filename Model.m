@@ -26,6 +26,11 @@ classdef Model < handle
         SessionInProgress logical = false
         OperationInProgress logical = false
     end
+
+    properties (Access = private)
+        BeepSoundData
+        BeepSoundSampleRate
+    end
     
     events ( NotifyAccess = private )
         %Events broadcast when the model is altered.
@@ -44,6 +49,11 @@ classdef Model < handle
     end % events ( NotifyAccess = private )
 
     methods
+
+        function obj = Model()
+            %Constructor. Initialises beep warning sound
+            [obj.BeepSoundData, obj.BeepSoundSampleRate] = audioread('warningbeep.mp3');
+        end
 
         function latestAngle = get.LatestAngle( obj )
             %Update and store the latest angle between the
@@ -302,6 +312,10 @@ classdef Model < handle
             obj.SessionInProgress = false;
 
         end % stopStreaming
+
+        function playWarningBeep( obj )
+            sound(obj.BeepSoundData, obj.BeepSoundSampleRate);
+        end
 
     end % methods
 
