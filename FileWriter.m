@@ -2,8 +2,9 @@ classdef FileWriter < handle
     %Class for managing data written to .csv files and accompanying videos
     
     properties (SetAccess = private, GetAccess = public)
-        ParentExportDir
-        CurrentExportDir
+        ParentExportDir string {mustBeTextScalar} = ""
+        FullExportDir string {mustBeTextScalar} = ""
+        FileInUse string {mustBeTextScalar} = ""
     end
     
     methods
@@ -14,24 +15,67 @@ classdef FileWriter < handle
                 exportParentDir string {mustBeTextScalar, mustBeNonempty}
             end
 
-            makeDirIfNotExist(obj, exportParentDir);
-
+            createDirIfNotExist(obj, exportParentDir);
             obj.ParentExportDir = exportParentDir;
-            currentDate = datetime('now');
-            obj.CurrentExportDir = exportParentDir + "/" + string(currentDate.Day + "-" + currentDate.Month + "-" + currentDate.Year);
+
+            currentTime = datetime('now');
+            obj.FullExportDir = exportParentDir + "\" + string(currentTime.Day + "-" + currentTime.Month + "-" + currentTime.Year);
+        end
+
+        function initialiseNewFile(obj)
+            %Create a new file with headers
+
+            csvHeaders = ["Date and Time", "Angle", "Threshold Angle", "Has Exceeded Threshold"];
+
+            obj.FileInUse = generateFileName(obj);
+
+            createDirIfNotExist(obj, obj.FullExportDir);
+
+            fullPath = obj.FullExportDir + "\" + obj.FileInUse;
+
+            writematrix(csvHeaders, fullPath);
         end
     end
 
     methods (Access = private)
-        function makeDirIfNotExist(~, directory)
+        function createDirIfNotExist(~, directory)
+            %Create directory if not existing
+
             arguments
                 ~
                 directory string {mustBeTextScalar, mustBeNonempty}
             end
 
-            %Create directory if not existing
             if ~exist(directory, 'dir')
                mkdir(directory)
+            end
+        end
+
+        function fileName = generateFileName(obj)
+            %Generated a formatted file name for this recording
+            currentTime = datetime('now');
+
+            fileName = currentTime.Day + "-" + currentTime.Month + "-" + currentTime.Year + "--" + formatTime(obj, currentTime.Hour) + "-" + formatTime(obj, currentTime.Minute) + "-" + formatTime(obj, currentTime.Second) + ".csv";
+        end
+
+        function formattedText = formatTime( ~, time )
+            %Round and add a leading zero if only one character is present
+
+            arguments
+                ~ 
+                time double 
+            end
+
+            if (isempty(time))
+                formattedText = "00";
+                return
+            end
+
+            timeString = string(round(time, 0));
+            if (strlength(timeString) == 1)
+                formattedText = "0" + timeString;
+            else
+                formattedText = timeString;
             end
         end
     end
