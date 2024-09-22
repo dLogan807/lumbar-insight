@@ -35,6 +35,19 @@ classdef FileWriter < handle
 
             writematrix(csvHeaders, fullPath);
         end
+
+        function writeToFile(obj, csvData)
+            %Write data of any format to the file
+
+            arguments
+                obj 
+                csvData (1,:) {mustBeNonempty} 
+            end
+
+            fullPath = obj.FullExportDir + "\" + obj.FileInUse;
+
+            writematrix(csvData, fullPath);
+        end
     end
 
     methods (Access = private)
