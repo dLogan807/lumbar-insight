@@ -25,7 +25,7 @@ classdef FileWriter < handle
         function initialiseNewFile(obj)
             %Create a new file with headers
 
-            csvHeaders = ["Date and Time", "Angle", "Threshold Angle", "Has Exceeded Threshold"];
+            csvHeaders = ["Date and Time", "Angle", "Threshold Angle", "Exceeded Threshold?"];
 
             obj.FileInUse = generateFileName(obj);
 
@@ -44,9 +44,15 @@ classdef FileWriter < handle
                 csvData (1,:) {mustBeNonempty} 
             end
 
+            if (strcmp(obj.FileInUse, ""))
+                warning("FileWriter.writeToFile: file not initialised. Data not recorded.")
+                return
+            end
+
             fullPath = obj.FullExportDir + "\" + obj.FileInUse;
 
-            writematrix(csvData, fullPath);
+            writematrix(csvData, fullPath, ...
+                "WriteMode", "append");
         end
     end
 
