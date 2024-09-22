@@ -25,6 +25,10 @@ classdef Model < handle
         timeAboveThresholdAngle double = 0
     end
 
+    properties (SetAccess = private, GetAccess = public)
+        ExportManager FileWriter
+    end
+
     properties (SetAccess = private)
         SessionInProgress logical = false
         OperationInProgress logical = false
@@ -54,8 +58,9 @@ classdef Model < handle
     methods
 
         function obj = Model()
-            %Constructor. Initialises beep warning sound
+            %Constructor. Initialises beep warning sound and data exporting
             [obj.BeepSoundData, obj.BeepSoundSampleRate] = audioread('warningbeep.mp3');
+            obj.ExportManager = FileWriter("exports");
         end
 
         function latestAngle = get.LatestAngle( obj )
