@@ -1,7 +1,7 @@
 classdef SessionTabController < handle
     %Provides an interactive control to generate new data.
 
-    properties ( Access = private )
+    properties (Access = private)
         % Application data model.
         Model(1, 1) Model
         % IMU View
@@ -9,12 +9,12 @@ classdef SessionTabController < handle
         % Listener object used to respond dynamically to view events.
         Listener(:, 1) event.listener
     end % properties ( Access = private )
-    
+
     methods
-        
-        function obj = SessionTabController( model, sessionTabView )
+
+        function obj = SessionTabController(model, sessionTabView)
             %Controller constructor.
-            
+
             arguments
                 model(1, 1) Model
                 sessionTabView SessionTabView
@@ -24,65 +24,65 @@ classdef SessionTabController < handle
             obj.Model = model;
             obj.SessionTabView = sessionTabView;
 
-            % Listen for changes to the view. 
-            obj.Listener(end+1) = listener( obj.SessionTabView, ... 
-                "ThresholdSliderValueChanged", @obj.onThresholdSliderValueChanged );
-            obj.Listener(end+1) = listener( obj.SessionTabView, ... 
-                "StreamingButtonPushed", @obj.onStreamingButtonPushed );
-            obj.Listener(end+1) = listener( obj.SessionTabView, ... 
-                "RecordingButtonPushed", @obj.onRecordingButtonPushed );
+            % Listen for changes to the view.
+            obj.Listener(end + 1) = listener(obj.SessionTabView, ...
+                "ThresholdSliderValueChanged", @obj.onThresholdSliderValueChanged);
+            obj.Listener(end + 1) = listener(obj.SessionTabView, ...
+                "StreamingButtonPushed", @obj.onStreamingButtonPushed);
+            obj.Listener(end + 1) = listener(obj.SessionTabView, ...
+                "RecordingButtonPushed", @obj.onRecordingButtonPushed);
 
-            obj.Listener(end+1) = listener( obj.SessionTabView, ... 
+            obj.Listener(end + 1) = listener(obj.SessionTabView, ...
                 "BeepToggled", @obj.onBeepToggled);
-            obj.Listener(end+1) = listener( obj.SessionTabView, ... 
-                "BeepRateChanged", @obj.onBeepRateChanged );
+            obj.Listener(end + 1) = listener(obj.SessionTabView, ...
+                "BeepRateChanged", @obj.onBeepRateChanged);
 
             % Listen for changes to the model data.
-            obj.Listener(end+1) = listener( obj.Model, ...
-                "DevicesConnectedChanged", @obj.onDevicesConnectedChanged );
-            obj.Listener(end+1) = listener( obj.Model, ...
-                "StandingOffsetAngleCalibrated", @obj.onStandingOffsetAngleCalibrated );
-            obj.Listener(end+1) = listener( obj.Model, ...
-                "FullFlexionAngleCalibrated", @obj.onFullFlexionAngleCalibrated );
-            
+            obj.Listener(end + 1) = listener(obj.Model, ...
+                "DevicesConnectedChanged", @obj.onDevicesConnectedChanged);
+            obj.Listener(end + 1) = listener(obj.Model, ...
+                "StandingOffsetAngleCalibrated", @obj.onStandingOffsetAngleCalibrated);
+            obj.Listener(end + 1) = listener(obj.Model, ...
+                "FullFlexionAngleCalibrated", @obj.onFullFlexionAngleCalibrated);
+
         end % constructor
-        
+
     end % methods
-    
-    methods ( Access = protected )
-        
-        function setup( ~ )
+
+    methods (Access = protected)
+
+        function setup(~)
             %Initialize the controller.
-            
+
         end % setup
-        
-        function update( ~ )
-            %Update the controller. This method is empty because 
+
+        function update(~)
+            %Update the controller. This method is empty because
             %there are no public properties of the controller.
-            
+
         end % update
-        
+
     end % methods ( Access = protected )
-    
-    methods ( Access = private )
 
-        function onDevicesConnectedChanged( obj, ~, ~ )
-            updateSessionControls( obj );
+    methods (Access = private)
+
+        function onDevicesConnectedChanged(obj, ~, ~)
+            updateSessionControls(obj);
         end
 
-        function onStandingOffsetAngleCalibrated( obj, ~, ~ )
-            updateSessionControls( obj );
+        function onStandingOffsetAngleCalibrated(obj, ~, ~)
+            updateSessionControls(obj);
         end
 
-        function onFullFlexionAngleCalibrated( obj, ~, ~ )
-            updateSessionControls( obj );
-            
+        function onFullFlexionAngleCalibrated(obj, ~, ~)
+            updateSessionControls(obj);
+
             wholePercentageValue = round(obj.SessionTabView.AngleThresholdSlider.Value);
             obj.Model.DecimalThresholdPercentage = wholePercentageValue;
             obj.SessionTabView.updateTrafficLightGraph(obj.Model.FullFlexionAngle, obj.Model.DecimalThresholdPercentage);
         end
 
-        function updateSessionControls( obj )
+        function updateSessionControls(obj)
             %Enable session control buttons depending on
             %angle calibration
 
@@ -91,40 +91,43 @@ classdef SessionTabController < handle
             if (obj.Model.bothIMUDevicesConnected && obj.Model.calibrationCompleted)
                 obj.SessionTabView.StreamingButton.Enable = "on";
             else
-               stopStreaming( obj );
+                stopStreaming(obj);
             end
+
         end
 
-        function onThresholdSliderValueChanged( obj, ~, ~ )
+        function onThresholdSliderValueChanged(obj, ~, ~)
             wholePercentageValue = round(obj.SessionTabView.AngleThresholdSlider.Value);
             obj.Model.DecimalThresholdPercentage = wholePercentageValue;
             obj.SessionTabView.updateTrafficLightGraph(obj.Model.FullFlexionAngle, obj.Model.DecimalThresholdPercentage);
             obj.SessionTabView.setThresholdLabelPercentage(wholePercentageValue);
         end
 
-        function onStreamingButtonPushed( obj, ~, ~ )
+        function onStreamingButtonPushed(obj, ~, ~)
             %Stop or start IMU streaming
 
             if (~obj.Model.StreamingInProgress)
                 disp("controller: Trying to start streaming")
-                startStreaming( obj );
+                startStreaming(obj);
             else
-                stopStreaming( obj );
+                stopStreaming(obj);
             end
+
         end
 
-        function startStreaming( obj )
-            resetSessionData( obj );
+        function startStreaming(obj)
+            resetSessionData(obj);
 
-            if(obj.Model.startSessionStreaming())
+            if (obj.Model.startSessionStreaming())
                 obj.SessionTabView.StreamingButton.Text = "Stop IMU Streaming";
                 obj.SessionTabView.RecordingButton.Enable = "on";
 
-                doSessionStreaming( obj );
+                doSessionStreaming(obj);
             end
+
         end
 
-        function stopStreaming( obj )
+        function stopStreaming(obj)
             obj.Model.stopSessionStreaming()
             obj.SessionTabView.StreamingButton.Text = "Start IMU Streaming";
 
@@ -132,9 +135,9 @@ classdef SessionTabController < handle
             obj.SessionTabView.RecordingButton.Enable = "off";
         end
 
-        function onRecordingButtonPushed( obj, ~, ~ )
+        function onRecordingButtonPushed(obj, ~, ~)
             %Stop or start recording data
-            
+
             if (~obj.Model.RecordingInProgress)
                 obj.Model.startRecording();
                 obj.SessionTabView.RecordingButton.Text = "Stop Recording";
@@ -145,10 +148,10 @@ classdef SessionTabController < handle
 
         end
 
-        function doSessionStreaming( obj )
+        function doSessionStreaming(obj)
             %Update graphs and values while session is active.
 
-            delay = calculateDelay( obj );
+            delay = calculateDelay(obj);
 
             %make function in beepconfigfield and check for actual value < delay
             obj.SessionTabView.WarningBeepField.RateEditField.Limits = [delay inf];
@@ -170,7 +173,7 @@ classdef SessionTabController < handle
 
             gradientLine = [];
 
-            while ( obj.Model.StreamingInProgress )
+            while (obj.Model.StreamingInProgress)
                 pause(delay);
                 totalAttempts = totalAttempts + 1;
                 angleRetrievalFailed = false;
@@ -194,35 +197,38 @@ classdef SessionTabController < handle
                         disp("Warning: Aborting session due to high rate of lost packets!")
                         stopStreaming(obj)
                     end
-                    
+
                     angleRetrievalFailed = true;
                 end
 
                 if (~angleRetrievalFailed)
-                    updateCeilingAngles( obj, latestAngle );
-    
+                    updateCeilingAngles(obj, latestAngle);
+
                     %Plot lines and data
                     addpoints(lumbarAngleLine, elapsedTime, latestAngle);
                     latestAngleText.String = "Angle: " + round(latestAngle, 2) + "°";
-    
+
                     thresholdAngle = (obj.Model.FullFlexionAngle * obj.Model.DecimalThresholdPercentage);
                     addpoints(thresholdLine, elapsedTime, thresholdAngle);
-    
+
                     %Redraw gradient line
                     if (~isempty(gradientLine))
                         delete(gradientLine);
                     end
+
                     gradientLine = yline(obj.SessionTabView.IndicatorGraph, latestAngle);
-    
+
                     %Move along x-axis
                     if (elapsedTime > xAxisTimeDuration)
                         obj.SessionTabView.LumbarAngleGraph.XLim = [(elapsedTime - xAxisTimeDuration) elapsedTime];
                         latestAngleText.Position = [(elapsedTime - xAxisTimeDuration + 2) 85];
                     end
+
                 end
 
                 %Timing
                 timeThisLoop = toc;
+
                 if (latestAngle > thresholdAngle)
                     obj.Model.TimeAboveThresholdAngle = obj.Model.TimeAboveThresholdAngle + round(timeThisLoop, 2);
                     obj.SessionTabView.TimeAboveMaxLabel.Text = "Time above threshold angle: " + obj.Model.TimeAboveThresholdAngle + "s";
@@ -231,8 +237,9 @@ classdef SessionTabController < handle
                         obj.Model.playWarningBeep();
                         beepTimer = 0;
                     end
+
                 end
-                
+
                 beepTimer = beepTimer + timeThisLoop;
                 elapsedTime = elapsedTime + timeThisLoop;
                 tic;
@@ -247,10 +254,10 @@ classdef SessionTabController < handle
             end
 
             disp("Failure rate: " + failurePercentage + "% (" + failures + " failures out of " + totalAttempts + " read attempts)");
-            updateSessionControls( obj );
+            updateSessionControls(obj);
         end
 
-        function delay = calculateDelay( obj)
+        function delay = calculateDelay(obj)
             %Calculate the delay from the lowest sampling
             %rate or polling override
 
@@ -269,12 +276,12 @@ classdef SessionTabController < handle
             disp("Polling rate this session: " + pollingRate + "Hz (delay of " + delay + "s between read attempts)")
         end
 
-        function updateCeilingAngles( obj, latestAngle )
+        function updateCeilingAngles(obj, latestAngle)
             %Update the smallest and largest angles
             %recorded
 
             arguments
-                obj 
+                obj
                 latestAngle double {mustBeNonempty}
             end
 
@@ -289,9 +296,10 @@ classdef SessionTabController < handle
                 obj.Model.LargestAngle = latestAngle;
                 obj.SessionTabView.LargestAngleLabel.Text = "Largest Angle: " + latestAngle + "°";
             end
+
         end
 
-        function resetSessionData( obj )
+        function resetSessionData(obj)
             %Reset graph
             cla(obj.SessionTabView.LumbarAngleGraph);
             obj.SessionTabView.LumbarAngleGraph.XLim = [0 30];
@@ -311,14 +319,14 @@ classdef SessionTabController < handle
         end
 
         %Beep configuration events
-        function onBeepToggled( obj, ~, ~ )
+        function onBeepToggled(obj, ~, ~)
             obj.Model.BeepEnabled = obj.SessionTabView.WarningBeepField.BeepCheckbox.Value;
         end
 
-        function onBeepRateChanged( obj, ~, ~ )
+        function onBeepRateChanged(obj, ~, ~)
             obj.Model.BeepRate = obj.SessionTabView.WarningBeepField.RateEditField.Value;
         end
 
     end % methods ( Access = private )
-    
+
 end % classdef

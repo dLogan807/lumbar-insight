@@ -1,6 +1,6 @@
 classdef Model < handle
     %MODEL Application data model.
-    
+
     properties
         %Application data.
 
@@ -42,8 +42,8 @@ classdef Model < handle
         RecordingStarted
         RecordingStopped
     end
-    
-    events ( NotifyAccess = private )
+
+    events (NotifyAccess = private)
         %Events broadcast when the model is altered.
         OperationStarted
         OperationCompleted
@@ -64,15 +64,15 @@ classdef Model < handle
             obj.FileExportManager = FileWriter("exports");
         end
 
-        function latestAngle = get.LatestAngle( obj )
+        function latestAngle = get.LatestAngle(obj)
             %Update and store the latest angle between the
             %IMUs
 
-            quat3dDifference = getQuat3dDifference( obj );
+            quat3dDifference = getQuat3dDifference(obj);
             latestAngle = calculateAngle(obj, quat3dDifference);
         end
 
-        function latestCalibratedAngle = get.LatestCalibratedAngle( obj )
+        function latestCalibratedAngle = get.LatestCalibratedAngle(obj)
             %Get the latest angle zeroed to the
             %subject's standing position.
 
@@ -84,34 +84,36 @@ classdef Model < handle
             latestCalibratedAngle = obj.LatestAngle + obj.StandingOffsetAngle;
         end
 
-        function set.DecimalThresholdPercentage( obj, thresholdPercentage )
+        function set.DecimalThresholdPercentage(obj, thresholdPercentage)
             %Store int % value as a double for easier later use.
 
             arguments
-                obj 
+                obj
                 thresholdPercentage double {mustBePositive}
             end
 
             obj.DecimalThresholdPercentage = thresholdPercentage * 0.01;
         end
 
-        function connected = connectDevice( obj, deviceName, deviceType, deviceIndex )
+        function connected = connectDevice(obj, deviceName, deviceType, deviceIndex)
             %Attempt device connection, notify controller,
             % and configure device
-            
+
             arguments
-                obj 
+                obj
                 deviceName string
                 deviceType DeviceTypes
-                deviceIndex int8 {mustBeInRange(deviceIndex,1,2)}
+                deviceIndex int8 {mustBeInRange(deviceIndex, 1, 2)}
             end
 
             connected = false;
-            if ( obj.OperationInProgress || isempty(deviceName))
-                notify( obj, "DevicesConnectedChanged" )
+
+            if (obj.OperationInProgress || isempty(deviceName))
+                notify(obj, "DevicesConnectedChanged")
                 return
             end
-            operationStarted( obj );
+
+            operationStarted(obj);
 
             if (deviceType == DeviceTypes.Shimmer)
                 obj.IMUDevices(deviceIndex) = ShimmerIMU(deviceName);
@@ -120,99 +122,104 @@ classdef Model < handle
                 disp("Device of type " + string(deviceType) + " is not implemented.");
             end
 
-            operationCompleted( obj );
+            operationCompleted(obj);
 
             %Reset angle calibration
             obj.FullFlexionAngle = [];
             obj.StandingOffsetAngle = [];
-            notify( obj, "DevicesConnectedChanged" )
+            notify(obj, "DevicesConnectedChanged")
 
         end % connectDevice
 
-        function disconnected = disconnectDevice( obj, deviceIndex )
+        function disconnected = disconnectDevice(obj, deviceIndex)
             %Disconnect a device
 
             disconnected = false;
-            if ( obj.OperationInProgress )
+
+            if (obj.OperationInProgress)
                 return
             end
-            operationStarted( obj );
+
+            operationStarted(obj);
 
             disconnected = obj.IMUDevices(deviceIndex).disconnect;
 
             obj.IMUDevices(deviceIndex) = ShimmerIMU("placeholder" + deviceIndex);
 
-            operationCompleted( obj );
+            operationCompleted(obj);
 
             %Reset angle calibration
             obj.StandingOffsetAngle = [];
             obj.FullFlexionAngle = [];
-            notify( obj, "DevicesConnectedChanged" )
+            notify(obj, "DevicesConnectedChanged")
 
         end % disconnectDevice
 
-        function devicesConnected = bothIMUDevicesConnected( obj )
+        function devicesConnected = bothIMUDevicesConnected(obj)
             devicesConnected = (obj.IMUDevices(1).IsConnected && obj.IMUDevices(2).IsConnected);
         end
 
-        function devicesConfigured = bothIMUDevicesConfigured( obj )
+        function devicesConfigured = bothIMUDevicesConfigured(obj)
             devicesConfigured = (obj.IMUDevices(1).IsConfigured && obj.IMUDevices(2).IsConfigured);
         end
 
-        function devicesStreaming = bothIMUDevicesStreaming( obj )
+        function devicesStreaming = bothIMUDevicesStreaming(obj)
             devicesStreaming = (obj.IMUDevices(1).IsStreaming && obj.IMUDevices(2).IsStreaming);
         end
 
-        function anglesCalibrated = calibrationCompleted( obj )
-            anglesCalibrated = ~isempty(obj.StandingOffsetAngle) && ~isempty(obj.FullFlexionAngle); 
+        function anglesCalibrated = calibrationCompleted(obj)
+            anglesCalibrated = ~isempty(obj.StandingOffsetAngle) && ~isempty(obj.FullFlexionAngle);
         end
 
-        function batteryInfo = getBatteryInfo( obj, deviceIndex )
+        function batteryInfo = getBatteryInfo(obj, deviceIndex)
             %Get battery information of the IMU
 
             arguments
-                obj 
-                deviceIndex int8 {mustBeInRange(deviceIndex,1,2)}
+                obj
+                deviceIndex int8 {mustBeInRange(deviceIndex, 1, 2)}
             end
 
-            if ( obj.OperationInProgress )
+            if (obj.OperationInProgress)
                 batteryInfo = "An operation was ongoing. Failed to retrieve.";
                 return
             elseif (obj.StreamingInProgress)
                 batteryInfo = "Battery info cannot be retrieved whilst streaming.";
                 return
             end
-            operationStarted( obj );
+
+            operationStarted(obj);
 
             batteryInfo = obj.IMUDevices(deviceIndex).BatteryInfo;
 
-            operationCompleted( obj );
+            operationCompleted(obj);
         end
 
-        function configured = configure( obj, deviceIndex, samplingRate )
+        function configured = configure(obj, deviceIndex, samplingRate)
             %Configure the IMU with the specified sampling rate
 
             arguments
-                obj 
-                deviceIndex int8 {mustBeInRange(deviceIndex,1,2)}
+                obj
+                deviceIndex int8 {mustBeInRange(deviceIndex, 1, 2)}
                 samplingRate double {mustBePositive}
             end
 
             configured = false;
-            if ( obj.OperationInProgress )
+
+            if (obj.OperationInProgress)
                 return
             end
-            operationStarted( obj );
+
+            operationStarted(obj);
 
             device = obj.IMUDevices(deviceIndex);
             configured = device.configure(samplingRate);
 
-            operationCompleted( obj );
+            operationCompleted(obj);
 
-            notify( obj, "DevicesConfiguredChanged" )
+            notify(obj, "DevicesConfiguredChanged")
         end
 
-        function samplingRate = lowestSamplingRate( obj )
+        function samplingRate = lowestSamplingRate(obj)
             %Retrieve the lowest sampling rate of the
             %IMUs
 
@@ -223,12 +230,14 @@ classdef Model < handle
             end
 
             device2Rate = obj.IMUDevices(2).SamplingRate;
+
             if (obj.IMUDevices(2).IsConfigured && (device2Rate < samplingRate))
                 samplingRate = device2Rate;
             end
+
         end
 
-        function calibrated = calibrateAngle( obj, angleType )
+        function calibrated = calibrateAngle(obj, angleType)
             %Calibrate the standing or full flexion angle.
             % "f" for Full Flexion, "s" for standing offset
 
@@ -238,44 +247,51 @@ classdef Model < handle
             end
 
             calibrated = false;
-            if (obj.OperationInProgress || isInvalidAngleType( obj, angleType ) || ...
+
+            if (obj.OperationInProgress || isInvalidAngleType(obj, angleType) || ...
                     (isempty(obj.StandingOffsetAngle) && strcmp(angleType, "f")))
                 return
             end
-            operationStarted( obj );
 
-            startStreamingBoth( obj );
+            operationStarted(obj);
+
+            startStreamingBoth(obj);
             calibrated = true;
+
             try
+
                 if (strcmp(angleType, "s"))
                     angle = 0 - obj.LatestAngle;
                 else
                     angle = obj.LatestCalibratedAngle;
                 end
+
             catch
                 calibrated = false;
                 warning("Failed to retrieve angle. Could not calibrate.");
             end
 
             if (calibrated)
+
                 if (strcmp(angleType, "s"))
                     obj.StandingOffsetAngle = angle;
                     obj.FullFlexionAngle = [];
-                    notify( obj, "StandingOffsetAngleCalibrated" )
+                    notify(obj, "StandingOffsetAngleCalibrated")
                 else
                     obj.FullFlexionAngle = angle;
-                    notify( obj, "FullFlexionAngleCalibrated" )
+                    notify(obj, "FullFlexionAngleCalibrated")
                 end
+
             end
 
-            operationCompleted( obj );
-            notify( obj, "OperationCompleted" )
+            operationCompleted(obj);
+            notify(obj, "OperationCompleted")
         end
 
-        function startedBoth = startStreamingBoth( obj )
+        function startedBoth = startStreamingBoth(obj)
             %Start streaming on both devices, if
             %possible
-            
+
             device1 = obj.IMUDevices(1);
             device2 = obj.IMUDevices(2);
 
@@ -293,9 +309,10 @@ classdef Model < handle
             else
                 startedBoth = false;
             end
+
         end
 
-        function stopStreamingBoth( obj )
+        function stopStreamingBoth(obj)
             %Stop streaming on both devices
 
             device1 = obj.IMUDevices(1);
@@ -308,11 +325,12 @@ classdef Model < handle
             if (device2.IsConnected && device2.IsStreaming)
                 device2.stopStreaming;
             end
+
         end
 
-        function started = startSessionStreaming( obj ) 
-        
-            started = startStreamingBoth( obj );
+        function started = startSessionStreaming(obj)
+
+            started = startStreamingBoth(obj);
 
             if (started)
                 obj.StreamingInProgress = true;
@@ -320,16 +338,16 @@ classdef Model < handle
 
         end % startStreaming
 
-        function stopSessionStreaming( obj ) 
-        
-            stopStreamingBoth( obj );
-            stopRecording( obj );
+        function stopSessionStreaming(obj)
+
+            stopStreamingBoth(obj);
+            stopRecording(obj);
 
             obj.StreamingInProgress = false;
 
         end % stopStreaming
 
-        function started = startRecording( obj )
+        function started = startRecording(obj)
             started = true;
 
             if (obj.StreamingInProgress)
@@ -338,41 +356,44 @@ classdef Model < handle
             else
                 started = false;
             end
+
         end
 
-        function stopRecording( obj )
+        function stopRecording(obj)
             obj.RecordingInProgress = false;
         end
 
-        function playWarningBeep( obj )
+        function playWarningBeep(obj)
             sound(obj.BeepSoundData, obj.BeepSoundSampleRate);
         end
 
     end % methods
 
     methods (Access = private)
-        function operationStarted( obj )
+
+        function operationStarted(obj)
             obj.OperationInProgress = true;
 
-            notify( obj, "OperationStarted" )
+            notify(obj, "OperationStarted")
         end
 
-        function operationCompleted( obj )
+        function operationCompleted(obj)
             obj.OperationInProgress = false;
 
-            notify( obj, "OperationCompleted" )
+            notify(obj, "OperationCompleted")
         end
 
-        function isInvalid = isInvalidAngleType( ~, angleType )
+        function isInvalid = isInvalidAngleType(~, angleType)
+
             arguments
-                ~ 
+                ~
                 angleType string {mustBeTextScalar}
             end
 
             isInvalid = ~strcmp(angleType, "s") && ~strcmp(angleType, "f");
         end
 
-        function quat3dDifference = getQuat3dDifference( obj )
+        function quat3dDifference = getQuat3dDifference(obj)
             %Find the difference between IMU quaternions.
 
             quaternion1 = obj.IMUDevices(2).LatestQuaternion;
@@ -381,7 +402,7 @@ classdef Model < handle
             quat3dDifference = quatmultiply(quatconj(quaternion1), quaternion2);
         end
 
-        function angle = calculateAngle( ~, quat3dDifference)
+        function angle = calculateAngle(~, quat3dDifference)
             %Find the angle between the IMUs in terms of the
             %X axis.
 

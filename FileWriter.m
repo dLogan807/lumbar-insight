@@ -1,13 +1,14 @@
 classdef FileWriter < handle
     %Class for managing data written to .csv files and accompanying videos
-    
+
     properties (SetAccess = private, GetAccess = public)
         ParentExportDir string {mustBeTextScalar} = ""
         FullExportDir string {mustBeTextScalar} = ""
         FileInUse string {mustBeTextScalar} = ""
     end
-    
+
     methods
+
         function obj = FileWriter(exportParentDir)
             %Constructor. Creates parent export folder.
 
@@ -40,8 +41,8 @@ classdef FileWriter < handle
             %Write data of any format to the file
 
             arguments
-                obj 
-                csvData (1,:) {mustBeNonempty} 
+                obj
+                csvData (1, :) {mustBeNonempty}
             end
 
             if (strcmp(obj.FileInUse, ""))
@@ -54,9 +55,11 @@ classdef FileWriter < handle
             writematrix(csvData, fullPath, ...
                 "WriteMode", "append");
         end
+
     end
 
     methods (Access = private)
+
         function createDirIfNotExist(~, directory)
             %Create directory if not existing
 
@@ -66,8 +69,9 @@ classdef FileWriter < handle
             end
 
             if ~exist(directory, 'dir')
-               mkdir(directory)
+                mkdir(directory)
             end
+
         end
 
         function fileName = generateFileName(obj)
@@ -77,12 +81,12 @@ classdef FileWriter < handle
             fileName = currentTime.Day + "-" + currentTime.Month + "-" + currentTime.Year + "--" + formatTime(obj, currentTime.Hour) + "-" + formatTime(obj, currentTime.Minute) + "-" + formatTime(obj, currentTime.Second) + ".csv";
         end
 
-        function formattedText = formatTime( ~, time )
+        function formattedText = formatTime(~, time)
             %Round and add a leading zero if only one character is present
 
             arguments
-                ~ 
-                time double 
+                ~
+                time double
             end
 
             if (isempty(time))
@@ -91,12 +95,15 @@ classdef FileWriter < handle
             end
 
             timeString = string(round(time, 0));
+
             if (strlength(timeString) == 1)
                 formattedText = "0" + timeString;
             else
                 formattedText = timeString;
             end
-        end
-    end
-end
 
+        end
+
+    end
+
+end

@@ -4,9 +4,9 @@ classdef BatteryStatus < matlab.ui.componentcontainer.ComponentContainer
     properties
         FontSize double = 12
     end
-    
+
     properties (Access = private, Transient, NonCopyable)
-        GridLayout matlab.ui.container.GridLayout 
+        GridLayout matlab.ui.container.GridLayout
         RefreshButton matlab.ui.control.Button
         BatteryLabel matlab.ui.control.Label
 
@@ -14,14 +14,16 @@ classdef BatteryStatus < matlab.ui.componentcontainer.ComponentContainer
         StatusTextChanged logical = false
     end
 
-    events (HasCallbackProperty, NotifyAccess = protected) 
+    events (HasCallbackProperty, NotifyAccess = protected)
         RefreshBatteryStatusButtonPushed
     end
 
     methods
-        function setButtonEnabled( obj, enabled )
+
+        function setButtonEnabled(obj, enabled)
+
             arguments
-                obj 
+                obj
                 enabled logical {mustBeNonempty}
             end
 
@@ -30,28 +32,31 @@ classdef BatteryStatus < matlab.ui.componentcontainer.ComponentContainer
             else
                 obj.RefreshButton.Enable = "off";
             end
+
         end
-        
-        function setStatusText( obj, text )
+
+        function setStatusText(obj, text)
+
             arguments
-                obj 
+                obj
                 text string {mustBeTextScalar}
             end
 
             obj.BatteryLabel.Text = text;
         end
+
     end
 
     methods (Access = protected)
 
-        function setup( obj ) 
-            % Create grid layout to manage building blocks 
+        function setup(obj)
+            % Create grid layout to manage building blocks
             obj.GridLayout = uigridlayout( ...
                 "Parent", obj, ...
-                "RowHeight", { 30 }, ...
-                "ColumnWidth", {"1x", "4x"} , ...
+                "RowHeight", {30}, ...
+                "ColumnWidth", {"1x", "4x"}, ...
                 "Padding", 0, ...
-                "ColumnSpacing", 22 );
+                "ColumnSpacing", 22);
 
             % Create battery refresh button
             obj.RefreshButton = uibutton(obj.GridLayout, ...
@@ -66,20 +71,24 @@ classdef BatteryStatus < matlab.ui.componentcontainer.ComponentContainer
             obj.BatteryLabel.Layout.Column = 2;
         end
 
-        function update( obj )
+        function update(obj)
             %Update component properties
 
             if (~obj.FontSet)
-                set(findall(obj.GridLayout,'-property','FontSize'),'FontSize', obj.FontSize);
+                set(findall(obj.GridLayout, '-property', 'FontSize'), 'FontSize', obj.FontSize);
                 obj.FontSet = true;
             end
+
         end
+
     end
 
     methods (Access = private)
-        function refreshBatteryStatusButtonPushed( obj, ~, ~ )
-            notify( obj, "RefreshBatteryStatusButtonPushed" )
-        end
-    end
-end
 
+        function refreshBatteryStatusButtonPushed(obj, ~, ~)
+            notify(obj, "RefreshBatteryStatusButtonPushed")
+        end
+
+    end
+
+end
