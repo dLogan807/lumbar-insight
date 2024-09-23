@@ -1,10 +1,14 @@
 classdef FileWriter < handle
     %Class for managing data written to .csv files and accompanying videos
 
-    properties (SetAccess = private, GetAccess = public)
+    properties (SetAccess = private)
         ParentExportDir string {mustBeTextScalar} = ""
         FullExportDir string {mustBeTextScalar} = ""
         FileInUse string {mustBeTextScalar} = ""
+    end
+
+    properties (Access = private)
+        prohibitWriteFlag logical {mustBeNonempty} = true;
     end
 
     methods
@@ -35,25 +39,42 @@ classdef FileWriter < handle
             fullPath = obj.FullExportDir + "\" + obj.FileInUse;
 
             writematrix(csvHeaders, fullPath);
-        end
 
-        function writeToFile(obj, csvData)
-            %Write data of any format to the file
+            obj.prohibitWriteFlag = false;
+        end
+        
+        function writeAngleData(obj, dataArray)
+            %Write body data to the csv file
 
             arguments
                 obj
-                csvData (1, :) {mustBeNonempty}
+                dataArray (1, 4) {mustBeNonempty}
             end
 
-            if (strcmp(obj.FileInUse, ""))
-                warning("FileWriter.writeToFile: file not initialised. Data not recorded.")
+            if (obj.prohibitWriteFlag)
                 return
             end
 
-            fullPath = obj.FullExportDir + "\" + obj.FileInUse;
+            writeToFile(obj, round(dataArray, 2));
+        end
 
-            writematrix(csvData, fullPath, ...
-                "WriteMode", "append");
+        function closeFile(obj, dataArray)
+            %Write closing data to file and delete file name reference
+
+            arguments
+                obj
+                dataArray (1, 4) double {mustBeNonempty}
+            end
+
+            headers = ["Smallest Angle", "Largest Angle", "Time Above Threshold Angle", "Recording duration"];
+            
+            %Prevent further writes while adding closing data
+            obj.prohibitWriteFlag = true;
+
+            writeToFile(obj, headers);
+            writeToFile(obj, round(dataArray, 2));
+                
+            obj.FileInUse = "";
         end
 
     end
@@ -102,6 +123,25 @@ classdef FileWriter < handle
                 formattedText = timeString;
             end
 
+        end
+
+        function writeToFile(obj, dataArray)
+            %Write data of any format to the file
+
+            arguments
+                obj
+                dataArray (1, :) {mustBeNonempty}
+            end
+
+            if (strcmp(obj.FileInUse, ""))
+                warning("FileWriter.writeToFile: file not initialised. Data not recorded.")
+                return
+            end
+
+            fullPath = obj.FullExportDir + "\" + obj.FileInUse;
+
+            writematrix(dataArray, fullPath, ...
+                "WriteMode", "append");
         end
 
     end

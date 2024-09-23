@@ -8,6 +8,11 @@ classdef SessionTabController < handle
         SessionTabView SessionTabView
         % Listener object used to respond dynamically to view events.
         Listener(:, 1) event.listener
+
+        %Graph lines
+        LumbarAngleLine
+        ThresholdLine
+        GradientLine
     end % properties ( Access = private )
 
     methods
@@ -31,6 +36,9 @@ classdef SessionTabController < handle
                 "StreamingButtonPushed", @obj.onStreamingButtonPushed);
             obj.Listener(end + 1) = listener(obj.SessionTabView, ...
                 "RecordingButtonPushed", @obj.onRecordingButtonPushed);
+
+            obj.Listener(end + 1) = listener(obj.SessionTabView, ...
+                "StopButtonPushed", @obj.onStopButtonPushed);
 
             obj.Listener(end + 1) = listener(obj.SessionTabView, ...
                 "BeepToggled", @obj.onBeepToggled);
@@ -76,10 +84,22 @@ classdef SessionTabController < handle
 
         function onFullFlexionAngleCalibrated(obj, ~, ~)
             updateSessionControls(obj);
+            updateThresholdData(obj)
+        end
+
+        function onThresholdSliderValueChanged(obj, ~, ~)
+            updateThresholdData(obj);
+        end
+
+        function updateThresholdData(obj)
+            %Update data and graphs relating to the threshold angle
 
             wholePercentageValue = round(obj.SessionTabView.AngleThresholdSlider.Value);
             obj.Model.DecimalThresholdPercentage = wholePercentageValue;
+            obj.Model.ThresholdAngle = obj.Model.FullFlexionAngle * obj.Model.DecimalThresholdPercentage;
+
             obj.SessionTabView.updateTrafficLightGraph(obj.Model.FullFlexionAngle, obj.Model.DecimalThresholdPercentage);
+            obj.SessionTabView.setThresholdLabelPercentage(wholePercentageValue);
         end
 
         function updateSessionControls(obj)
@@ -88,7 +108,7 @@ classdef SessionTabController < handle
 
             obj.SessionTabView.StreamingButton.Enable = "off";
 
-            if (obj.Model.bothIMUDevicesConnected && obj.Model.calibrationCompleted)
+            if (obj.Model.bothIMUDevicesConnected && obj.Model.calibrationCompleted())
                 obj.SessionTabView.StreamingButton.Enable = "on";
             else
                 stopStreaming(obj);
@@ -96,18 +116,14 @@ classdef SessionTabController < handle
 
         end
 
-        function onThresholdSliderValueChanged(obj, ~, ~)
-            wholePercentageValue = round(obj.SessionTabView.AngleThresholdSlider.Value);
-            obj.Model.DecimalThresholdPercentage = wholePercentageValue;
-            obj.SessionTabView.updateTrafficLightGraph(obj.Model.FullFlexionAngle, obj.Model.DecimalThresholdPercentage);
-            obj.SessionTabView.setThresholdLabelPercentage(wholePercentageValue);
+        function onStopButtonPushed(obj ,~, ~)
+            stopStreaming(obj);
         end
 
         function onStreamingButtonPushed(obj, ~, ~)
-            %Stop or start IMU streaming
+            %Start or stop IMU streaming
 
             if (~obj.Model.StreamingInProgress)
-                disp("controller: Trying to start streaming")
                 startStreaming(obj);
             else
                 stopStreaming(obj);
@@ -131,8 +147,8 @@ classdef SessionTabController < handle
             obj.Model.stopSessionStreaming()
             obj.SessionTabView.StreamingButton.Text = "Start IMU Streaming";
 
-            obj.SessionTabView.RecordingButton.Text = "Start Recording";
             obj.SessionTabView.RecordingButton.Enable = "off";
+            obj.SessionTabView.RecordingButton.Text = "Start Recording";
         end
 
         function onRecordingButtonPushed(obj, ~, ~)
@@ -153,10 +169,6 @@ classdef SessionTabController < handle
 
             delay = calculateDelay(obj);
 
-            %make function in beepconfigfield and check for actual value < delay
-            obj.SessionTabView.WarningBeepField.RateEditField.Limits = [delay inf];
-
-            xAxisTimeDuration = 30;
             failures = 0;
             totalAttempts = 0;
             failureThresholdPercent = 40.0;
@@ -166,12 +178,10 @@ classdef SessionTabController < handle
             beepTimer = 0;
             tic; %Start timer
 
-            lumbarAngleLine = animatedline(obj.SessionTabView.LumbarAngleGraph);
-            latestAngleText = text(obj.SessionTabView.LumbarAngleGraph, 2, 85, "Angle:");
-            latestAngleText.FontSize = 16;
-            thresholdLine = animatedline(obj.SessionTabView.LumbarAngleGraph, "Color", "r");
-
-            gradientLine = [];
+            %Initialise graph lines
+            obj.LumbarAngleLine = animatedline(obj.SessionTabView.LumbarAngleGraph);
+            obj.ThresholdLine = animatedline(obj.SessionTabView.LumbarAngleGraph, "Color", "r");
+            obj.GradientLine = [];
 
             while (obj.Model.StreamingInProgress)
                 pause(delay);
@@ -184,11 +194,10 @@ classdef SessionTabController < handle
                     break
                 end
 
-                %Retrieve latest angle, recording failure
+                % Retrieve latest angle, recording failure
                 try
                     latestAngle = obj.Model.LatestCalibratedAngle;
                 catch
-                    %Should convert to rolling average
                     failures = failures + 1;
 
                     failurePercentage = round((failures * 100) / totalAttempts, 2);
@@ -202,34 +211,13 @@ classdef SessionTabController < handle
                 end
 
                 if (~angleRetrievalFailed)
-                    updateCeilingAngles(obj, latestAngle);
-
-                    %Plot lines and data
-                    addpoints(lumbarAngleLine, elapsedTime, latestAngle);
-                    latestAngleText.String = "Angle: " + round(latestAngle, 2) + "°";
-
-                    thresholdAngle = (obj.Model.FullFlexionAngle * obj.Model.DecimalThresholdPercentage);
-                    addpoints(thresholdLine, elapsedTime, thresholdAngle);
-
-                    %Redraw gradient line
-                    if (~isempty(gradientLine))
-                        delete(gradientLine);
-                    end
-
-                    gradientLine = yline(obj.SessionTabView.IndicatorGraph, latestAngle);
-
-                    %Move along x-axis
-                    if (elapsedTime > xAxisTimeDuration)
-                        obj.SessionTabView.LumbarAngleGraph.XLim = [(elapsedTime - xAxisTimeDuration) elapsedTime];
-                        latestAngleText.Position = [(elapsedTime - xAxisTimeDuration + 2) 85];
-                    end
-
+                    drawGraphs(obj, latestAngle, elapsedTime);
                 end
 
                 %Timing
                 timeThisLoop = toc;
 
-                if (latestAngle > thresholdAngle)
+                if (latestAngle > obj.Model.ThresholdAngle)
                     obj.Model.TimeAboveThresholdAngle = obj.Model.TimeAboveThresholdAngle + round(timeThisLoop, 2);
                     obj.SessionTabView.TimeAboveMaxLabel.Text = "Time above threshold angle: " + obj.Model.TimeAboveThresholdAngle + "s";
 
@@ -242,19 +230,43 @@ classdef SessionTabController < handle
 
                 beepTimer = beepTimer + timeThisLoop;
                 elapsedTime = elapsedTime + timeThisLoop;
+                if (obj.Model.RecordingInProgress)
+                    obj.Model.TimeRecording = obj.Model.TimeRecording + timeThisLoop;
+                end
                 tic;
             end
 
-            %Write session data to bottom of file -> move to stop function!
-            if (obj.Model.RecordingInProgress)
-                csvHeaders = ["Smallest Angle", "Largest Angle", "Time Above Threshold Angle", "Recording duration"];
-                csvData = [obj.Model.SmallestAngle, obj.Model.LargestAngle, obj.Model.TimeAboveThresholdAngle, round(elapsedTime, 2)];
-                obj.Model.FileExportManager.writeToFile(csvHeaders);
-                obj.Model.FileExportManager.writeToFile(csvData);
+            disp("Failure rate: " + failurePercentage + "% (" + failures + " failures out of " + totalAttempts + " read attempts)");
+        end
+
+        function drawGraphs(obj, latestAngle, elapsedTime)
+            
+            arguments
+                obj
+                latestAngle double
+                elapsedTime double
             end
 
-            disp("Failure rate: " + failurePercentage + "% (" + failures + " failures out of " + totalAttempts + " read attempts)");
-            updateSessionControls(obj);
+            %Update and draw angle and gradient graphs 
+            xAxisTimeDuration = 30;
+
+            updateCeilingAngles(obj, latestAngle);
+
+            %Plot lines and data
+            addpoints(obj.ThresholdLine, elapsedTime, obj.Model.ThresholdAngle);
+            addpoints(obj.LumbarAngleLine, elapsedTime, latestAngle);
+
+            %Redraw gradient line
+            if (~isempty(obj.GradientLine))
+                delete(obj.GradientLine);
+            end
+
+            obj.GradientLine = yline(obj.SessionTabView.IndicatorGraph, latestAngle);
+
+            %Move along x-axis
+            if (elapsedTime > xAxisTimeDuration)
+                obj.SessionTabView.LumbarAngleGraph.XLim = [(elapsedTime - xAxisTimeDuration) elapsedTime];
+            end
         end
 
         function delay = calculateDelay(obj)
@@ -308,12 +320,13 @@ classdef SessionTabController < handle
             obj.SessionTabView.updateTrafficLightGraph(obj.Model.FullFlexionAngle, obj.Model.DecimalThresholdPercentage);
 
             %Reset measurements
-            obj.SessionTabView.SmallestAngleLabel.Text = "Smallest Angle: No data";
-            obj.SessionTabView.LargestAngleLabel.Text = "Largest Angle: No data";
+            obj.SessionTabView.SmallestAngleLabel.Text = "Smallest angle: No data";
+            obj.SessionTabView.LargestAngleLabel.Text = "Largest angle: No data";
             obj.SessionTabView.TimeAboveMaxLabel.Text = "Time above threshold angle: 0s";
 
             %Reset data
             obj.Model.TimeAboveThresholdAngle = 0;
+            obj.Model.TimeRecording = 0;
             obj.Model.SmallestAngle = [];
             obj.Model.LargestAngle = [];
         end

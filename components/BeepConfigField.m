@@ -42,7 +42,7 @@ classdef BeepConfigField < matlab.ui.componentcontainer.ComponentContainer
             obj.RateEditField = uieditfield(obj.GridLayout, ...
                 "numeric", ...
                 "ValueDisplayFormat", "%.1f seconds", ...
-                "Limits", [0.1 inf], ...
+                "Limits", [0 inf], ...
                 "Value", 1, ...
                 "ValueChangedFcn", @obj.beepRateChanged);
 
@@ -71,11 +71,7 @@ classdef BeepConfigField < matlab.ui.componentcontainer.ComponentContainer
         end
 
         function beepRateChanged(obj, ~, ~)
-
-            if (obj.BeepCheckbox.Value == true)
-                notify(obj, "BeepRateChanged")
-            end
-
+            notify(obj, "BeepRateChanged")
         end
 
     end

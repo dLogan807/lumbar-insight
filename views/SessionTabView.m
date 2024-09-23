@@ -32,6 +32,7 @@ classdef SessionTabView < matlab.ui.componentcontainer.ComponentContainer
         WarningBeepField BeepConfigField
 
         StreamingButton matlab.ui.control.Button
+        StopButton matlab.ui.control.Button
         RecordingButton matlab.ui.control.Button
     end
 
@@ -41,6 +42,7 @@ classdef SessionTabView < matlab.ui.componentcontainer.ComponentContainer
         BeepToggled
         ThresholdSliderValueChanged
         StreamingButtonPushed
+        StopButtonPushed
         RecordingButtonPushed
 
     end % events ( NotifyAccess = private )
@@ -220,6 +222,13 @@ classdef SessionTabView < matlab.ui.componentcontainer.ComponentContainer
                 "ButtonPushedFcn", @obj.onRecordingButtonPushed);
             obj.RecordingButton.Layout.Row = 5;
             obj.RecordingButton.Layout.Column = 2;
+
+            obj.StopButton = uibutton("Parent", obj.GridLayout, ...
+                "Text", "Stop", ...
+                "Enable", "on", ...
+                "ButtonPushedFcn", @obj.onStopButtonPushed);
+            obj.StopButton.Layout.Row = 1;
+            obj.StopButton.Layout.Column = 3;
         end
 
         function update(obj)
@@ -241,6 +250,10 @@ classdef SessionTabView < matlab.ui.componentcontainer.ComponentContainer
 
         function onStreamingButtonPushed(obj, ~, ~)
             notify(obj, "StreamingButtonPushed")
+        end
+
+        function onStopButtonPushed(obj, ~, ~)
+            notify(obj, "StopButtonPushed")
         end
 
         function onRecordingButtonPushed(obj, ~, ~)

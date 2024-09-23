@@ -1,5 +1,5 @@
 classdef Model < handle
-    %MODEL Application data model.
+    %Application data model.
 
     properties
         %Application data.
@@ -22,7 +22,9 @@ classdef Model < handle
         FullFlexionAngle double = []
         StandingOffsetAngle double = []
         DecimalThresholdPercentage double {mustBePositive}
+        ThresholdAngle double {mustBePositive}
         TimeAboveThresholdAngle double = 0
+        TimeRecording double = 0
     end
 
     properties (SetAccess = private, GetAccess = public)
@@ -35,12 +37,6 @@ classdef Model < handle
     properties (Access = private)
         BeepSoundData
         BeepSoundSampleRate
-
-        SessionStreamingStarted
-        SessionStreamingStopped
-
-        RecordingStarted
-        RecordingStopped
     end
 
     events (NotifyAccess = private)
@@ -127,6 +123,7 @@ classdef Model < handle
             %Reset angle calibration
             obj.FullFlexionAngle = [];
             obj.StandingOffsetAngle = [];
+            obj.ThresholdAngle = [];
             notify(obj, "DevicesConnectedChanged")
 
         end % connectDevice
@@ -336,31 +333,37 @@ classdef Model < handle
                 obj.StreamingInProgress = true;
             end
 
-        end % startStreaming
+        end
 
         function stopSessionStreaming(obj)
+
+            obj.StreamingInProgress = false;
 
             stopStreamingBoth(obj);
             stopRecording(obj);
 
-            obj.StreamingInProgress = false;
+        end
 
-        end % stopStreaming
-
-        function started = startRecording(obj)
-            started = true;
+        function startRecording(obj)
+            %Create a file to write to and start recording data
 
             if (obj.StreamingInProgress)
                 obj.FileExportManager.initialiseNewFile();
                 obj.RecordingInProgress = true;
-            else
-                started = false;
             end
 
         end
 
         function stopRecording(obj)
-            obj.RecordingInProgress = false;
+            %Stop recording and close the file with session stats
+
+            if (obj.RecordingInProgress)
+                obj.RecordingInProgress = false;
+
+                csvData = [obj.SmallestAngle, obj.LargestAngle, obj.TimeAboveThresholdAngle, obj.TimeRecording];
+
+                obj.FileExportManager.closeFile(csvData);
+            end
         end
 
         function playWarningBeep(obj)
