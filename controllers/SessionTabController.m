@@ -28,9 +28,9 @@ classdef SessionTabController < handle
             obj.Listener(end+1) = listener( obj.SessionTabView, ... 
                 "ThresholdSliderValueChanged", @obj.onThresholdSliderValueChanged );
             obj.Listener(end+1) = listener( obj.SessionTabView, ... 
-                "SessionStartButtonPushed", @obj.onSessionStartButtonPushed );
+                "StreamingButtonPushed", @obj.onStreamingButtonPushed );
             obj.Listener(end+1) = listener( obj.SessionTabView, ... 
-                "SessionStopButtonPushed", @obj.onSessionStopButtonPushed );
+                "RecordingButtonPushed", @obj.onRecordingButtonPushed );
 
             obj.Listener(end+1) = listener( obj.SessionTabView, ... 
                 "BeepToggled", @obj.onBeepToggled);
@@ -86,15 +86,12 @@ classdef SessionTabController < handle
             %Enable session control buttons depending on
             %angle calibration
 
-            obj.SessionTabView.SessionStopButton.Enable = "off";
+            obj.SessionTabView.StreamingButton.Enable = "off";
 
             if (obj.Model.bothIMUDevicesConnected && obj.Model.calibrationCompleted)
-                obj.SessionTabView.SessionStartButton.Enable = "on";
+                obj.SessionTabView.StreamingButton.Enable = "on";
             else
-                obj.SessionTabView.SessionStartButton.Enable = "off";
-                if (obj.Model.SessionInProgress)
-                    obj.Model.stopSession;
-                end
+               stopStreaming( obj );
             end
         end
 
@@ -105,17 +102,57 @@ classdef SessionTabController < handle
             obj.SessionTabView.setThresholdLabelPercentage(wholePercentageValue);
         end
 
-        function onSessionStartButtonPushed( obj, ~, ~ )
-            %Update graphs and values while session is active.
+        function onStreamingButtonPushed( obj, ~, ~ )
+            %Stop or start IMU streaming
 
-            obj.SessionTabView.SessionStartButton.Enable = "off";
-            obj.SessionTabView.SessionStopButton.Enable = "on";
+            if (~obj.Model.StreamingInProgress)
+                disp("controller: Trying to start streaming")
+                startStreaming( obj );
+            else
+                stopStreaming( obj );
+            end
+        end
 
-            obj.Model.startSession;
-
+        function startStreaming( obj )
             resetSessionData( obj );
 
+            if(obj.Model.startSessionStreaming())
+                obj.SessionTabView.StreamingButton.Text = "Stop IMU Streaming";
+                obj.SessionTabView.RecordingButton.Enable = "on";
+
+                doSessionStreaming( obj );
+            end
+        end
+
+        function stopStreaming( obj )
+            obj.Model.stopSessionStreaming()
+            obj.SessionTabView.StreamingButton.Text = "Start IMU Streaming";
+
+            obj.SessionTabView.RecordingButton.Text = "Start Recording";
+            obj.SessionTabView.RecordingButton.Enable = "off";
+        end
+
+        function onRecordingButtonPushed( obj, ~, ~ )
+            %Stop or start recording data
+            
+            if (~obj.Model.RecordingInProgress)
+                obj.Model.startRecording();
+                obj.SessionTabView.RecordingButton.Text = "Stop Recording";
+            else
+                obj.Model.stopRecording();
+                obj.SessionTabView.RecordingButton.Text = "Start Recording";
+            end
+
+        end
+
+        function doSessionStreaming( obj )
+            %Update graphs and values while session is active.
+
             delay = calculateDelay( obj );
+
+            %make function in beepconfigfield and check for actual value < delay
+            obj.SessionTabView.WarningBeepField.RateEditField.Limits = [delay inf];
+
             xAxisTimeDuration = 30;
             failures = 0;
             totalAttempts = 0;
@@ -133,14 +170,14 @@ classdef SessionTabController < handle
 
             gradientLine = [];
 
-            while ( obj.Model.SessionInProgress )
+            while ( obj.Model.StreamingInProgress )
                 pause(delay);
                 totalAttempts = totalAttempts + 1;
                 angleRetrievalFailed = false;
 
                 % Stop session if device not streaming
                 if (~obj.Model.bothIMUDevicesStreaming)
-                    obj.Model.stopSession;
+                    stopStreaming(obj);
                     break
                 end
 
@@ -148,13 +185,14 @@ classdef SessionTabController < handle
                 try
                     latestAngle = obj.Model.LatestCalibratedAngle;
                 catch
+                    %Should convert to rolling average
                     failures = failures + 1;
 
                     failurePercentage = round((failures * 100) / totalAttempts, 2);
 
                     if (failurePercentage > failureThresholdPercent)
                         disp("Warning: Aborting session due to high rate of lost packets!")
-                        obj.Model.stopSession;
+                        stopStreaming(obj)
                     end
                     
                     angleRetrievalFailed = true;
@@ -186,8 +224,8 @@ classdef SessionTabController < handle
                 %Timing
                 timeThisLoop = toc;
                 if (latestAngle > thresholdAngle)
-                    obj.Model.timeAboveThresholdAngle = obj.Model.timeAboveThresholdAngle + timeThisLoop;
-                    obj.SessionTabView.TimeAboveMaxLabel.Text = "Time above threshold angle: " + round(obj.Model.timeAboveThresholdAngle, 2) + "s";
+                    obj.Model.TimeAboveThresholdAngle = obj.Model.TimeAboveThresholdAngle + round(timeThisLoop, 2);
+                    obj.SessionTabView.TimeAboveMaxLabel.Text = "Time above threshold angle: " + obj.Model.TimeAboveThresholdAngle + "s";
 
                     if (beepTimer > obj.Model.BeepRate && obj.Model.BeepEnabled)
                         obj.Model.playWarningBeep();
@@ -198,6 +236,14 @@ classdef SessionTabController < handle
                 beepTimer = beepTimer + timeThisLoop;
                 elapsedTime = elapsedTime + timeThisLoop;
                 tic;
+            end
+
+            %Write session data to bottom of file -> move to stop function!
+            if (obj.Model.RecordingInProgress)
+                csvHeaders = ["Smallest Angle", "Largest Angle", "Time Above Threshold Angle", "Recording duration"];
+                csvData = [obj.Model.SmallestAngle, obj.Model.LargestAngle, obj.Model.TimeAboveThresholdAngle, round(elapsedTime, 2)];
+                obj.Model.FileExportManager.writeToFile(csvHeaders);
+                obj.Model.FileExportManager.writeToFile(csvData);
             end
 
             disp("Failure rate: " + failurePercentage + "% (" + failures + " failures out of " + totalAttempts + " read attempts)");
@@ -232,14 +278,16 @@ classdef SessionTabController < handle
                 latestAngle double {mustBeNonempty}
             end
 
+            round(latestAngle, 2);
+
             if (isempty(obj.Model.SmallestAngle) || latestAngle < obj.Model.SmallestAngle)
                 obj.Model.SmallestAngle = latestAngle;
-                obj.SessionTabView.SmallestAngleLabel.Text = "Smallest Angle: " + round(latestAngle, 2) + "°";
+                obj.SessionTabView.SmallestAngleLabel.Text = "Smallest Angle: " + latestAngle + "°";
             end
 
             if (isempty(obj.Model.LargestAngle) || latestAngle > obj.Model.LargestAngle)
                 obj.Model.LargestAngle = latestAngle;
-                obj.SessionTabView.LargestAngleLabel.Text = "Largest Angle: " + round(latestAngle, 2) + "°";
+                obj.SessionTabView.LargestAngleLabel.Text = "Largest Angle: " + latestAngle + "°";
             end
         end
 
@@ -257,14 +305,9 @@ classdef SessionTabController < handle
             obj.SessionTabView.TimeAboveMaxLabel.Text = "Time above threshold angle: 0s";
 
             %Reset data
-            obj.Model.timeAboveThresholdAngle = 0;
+            obj.Model.TimeAboveThresholdAngle = 0;
             obj.Model.SmallestAngle = [];
             obj.Model.LargestAngle = [];
-        end
-
-        function onSessionStopButtonPushed( obj, ~, ~ )
-            obj.Model.stopSession;
-            obj.SessionTabView.SessionStopButton.Enable = "off";
         end
 
         %Beep configuration events

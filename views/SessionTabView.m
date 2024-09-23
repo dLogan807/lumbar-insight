@@ -31,8 +31,8 @@ classdef SessionTabView < matlab.ui.componentcontainer.ComponentContainer
 
         WarningBeepField BeepConfigField
 
-        SessionStartButton matlab.ui.control.Button
-        SessionStopButton matlab.ui.control.Button
+        StreamingButton matlab.ui.control.Button
+        RecordingButton matlab.ui.control.Button
     end
 
     events ( NotifyAccess = private )
@@ -40,8 +40,8 @@ classdef SessionTabView < matlab.ui.componentcontainer.ComponentContainer
         BeepRateChanged
         BeepToggled
         ThresholdSliderValueChanged
-        SessionStartButtonPushed
-        SessionStopButtonPushed
+        StreamingButtonPushed
+        RecordingButtonPushed
 
     end % events ( NotifyAccess = private )
         
@@ -195,29 +195,29 @@ classdef SessionTabView < matlab.ui.componentcontainer.ComponentContainer
             obj.TimeAboveMaxLabel.Layout.Column = 3;
 
             obj.SmallestAngleLabel = uilabel( "Parent", obj.GridLayout, ...
-                "Text", "Smallest angle:");
+                "Text", "Smallest angle: No data");
             obj.SmallestAngleLabel.Layout.Row = 5;
             obj.SmallestAngleLabel.Layout.Column = 3;
 
             obj.LargestAngleLabel = uilabel( "Parent", obj.GridLayout, ...
-                "Text", "Largest angle:");
+                "Text", "Largest angle: No data");
             obj.LargestAngleLabel.Layout.Row = 6;
             obj.LargestAngleLabel.Layout.Column = 3;
 
-            %Session control
-            obj.SessionStartButton = uibutton( "Parent", obj.GridLayout, ...
-                "Text", "Start Session", ...
+            %Streaming and recording control
+            obj.StreamingButton = uibutton( "Parent", obj.GridLayout, ...
+                "Text", "Start IMU Streaming", ...
                 "Enable", "off", ...
-                "ButtonPushedFcn", @obj.onSessionStartButtonPushed );
-            obj.SessionStartButton.Layout.Row = 4;
-            obj.SessionStartButton.Layout.Column = 2;
+                "ButtonPushedFcn", @obj.onStreamingButtonPushed );
+            obj.StreamingButton.Layout.Row = 4;
+            obj.StreamingButton.Layout.Column = 2;
 
-            obj.SessionStopButton = uibutton( "Parent", obj.GridLayout, ...
-                "Text", "Stop Session", ...
+            obj.RecordingButton = uibutton( "Parent", obj.GridLayout, ...
+                "Text", "Start Recording", ...
                 "Enable", "off", ...
-                "ButtonPushedFcn", @obj.onSessionStopButtonPushed );
-            obj.SessionStopButton.Layout.Row = 5;
-            obj.SessionStopButton.Layout.Column = 2;
+                "ButtonPushedFcn", @obj.onRecordingButtonPushed );
+            obj.RecordingButton.Layout.Row = 5;
+            obj.RecordingButton.Layout.Column = 2;
         end
 
         function update( obj )
@@ -234,12 +234,12 @@ classdef SessionTabView < matlab.ui.componentcontainer.ComponentContainer
             notify( obj, "ThresholdSliderValueChanged" )
         end
 
-        function onSessionStartButtonPushed( obj, ~, ~ )
-            notify( obj, "SessionStartButtonPushed" )
+        function onStreamingButtonPushed( obj, ~, ~ )
+            notify( obj, "StreamingButtonPushed" )
         end
 
-        function onSessionStopButtonPushed( obj, ~, ~ )
-            notify( obj, "SessionStopButtonPushed" )
+        function onRecordingButtonPushed( obj, ~, ~ )
+            notify( obj, "RecordingButtonPushed" )
         end
 
         function onBeepToggled( obj, ~, ~ )

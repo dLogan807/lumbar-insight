@@ -22,21 +22,25 @@ classdef Model < handle
         FullFlexionAngle double = []
         StandingOffsetAngle double = []
         DecimalThresholdPercentage double {mustBePositive}
-        timeAboveThresholdAngle double = 0
+        TimeAboveThresholdAngle double = 0
     end
 
     properties (SetAccess = private, GetAccess = public)
-        ExportManager FileWriter
-    end
-
-    properties (SetAccess = private)
-        SessionInProgress logical = false
+        FileExportManager FileWriter
+        StreamingInProgress logical = false
+        RecordingInProgress logical = false
         OperationInProgress logical = false
     end
 
     properties (Access = private)
         BeepSoundData
         BeepSoundSampleRate
+
+        SessionStreamingStarted
+        SessionStreamingStopped
+
+        RecordingStarted
+        RecordingStopped
     end
     
     events ( NotifyAccess = private )
@@ -50,9 +54,6 @@ classdef Model < handle
         StandingOffsetAngleCalibrated
         FullFlexionAngleCalibrated
 
-        SessionStarted
-        SessionEnded
-
     end % events ( NotifyAccess = private )
 
     methods
@@ -60,7 +61,7 @@ classdef Model < handle
         function obj = Model()
             %Constructor. Initialises beep warning sound and data exporting
             [obj.BeepSoundData, obj.BeepSoundSampleRate] = audioread('warningbeep.mp3');
-            obj.ExportManager = FileWriter("exports");
+            obj.FileExportManager = FileWriter("exports");
         end
 
         function latestAngle = get.LatestAngle( obj )
@@ -177,8 +178,8 @@ classdef Model < handle
             if ( obj.OperationInProgress )
                 batteryInfo = "An operation was ongoing. Failed to retrieve.";
                 return
-            elseif (obj.SessionInProgress)
-                batteryInfo = "Battery info cannot be retrieved during a session.";
+            elseif (obj.StreamingInProgress)
+                batteryInfo = "Battery info cannot be retrieved whilst streaming.";
                 return
             end
             operationStarted( obj );
@@ -271,10 +272,10 @@ classdef Model < handle
             notify( obj, "OperationCompleted" )
         end
 
-        function startStreamingBoth( obj )
+        function startedBoth = startStreamingBoth( obj )
             %Start streaming on both devices, if
             %possible
-
+            
             device1 = obj.IMUDevices(1);
             device2 = obj.IMUDevices(2);
 
@@ -286,8 +287,12 @@ classdef Model < handle
                 device2.startStreaming;
             end
 
-            % Wait for data
-            pause(2);
+            if (device1.IsStreaming && device2.IsStreaming)
+                startedBoth = true;
+                pause(2); %Wait for data
+            else
+                startedBoth = false;
+            end
         end
 
         function stopStreamingBoth( obj )
@@ -305,21 +310,39 @@ classdef Model < handle
             end
         end
 
-        function startSession( obj ) 
+        function started = startSessionStreaming( obj ) 
         
-            startStreamingBoth( obj );
+            started = startStreamingBoth( obj );
 
-            obj.SessionInProgress = true;
+            if (started)
+                obj.StreamingInProgress = true;
+            end
 
         end % startStreaming
 
-        function stopSession( obj ) 
+        function stopSessionStreaming( obj ) 
         
             stopStreamingBoth( obj );
+            stopRecording( obj );
 
-            obj.SessionInProgress = false;
+            obj.StreamingInProgress = false;
 
         end % stopStreaming
+
+        function started = startRecording( obj )
+            started = true;
+
+            if (obj.StreamingInProgress)
+                obj.FileExportManager.initialiseNewFile();
+                obj.RecordingInProgress = true;
+            else
+                started = false;
+            end
+        end
+
+        function stopRecording( obj )
+            obj.RecordingInProgress = false;
+        end
 
         function playWarningBeep( obj )
             sound(obj.BeepSoundData, obj.BeepSoundSampleRate);
