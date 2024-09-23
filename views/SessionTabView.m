@@ -224,11 +224,11 @@ classdef SessionTabView < matlab.ui.componentcontainer.ComponentContainer
             obj.RecordingButton.Layout.Column = 2;
 
             obj.StopButton = uibutton("Parent", obj.GridLayout, ...
-                "Text", "Stop", ...
+                "Text", "(temp) Stop", ...
                 "Enable", "on", ...
                 "ButtonPushedFcn", @obj.onStopButtonPushed);
-            obj.StopButton.Layout.Row = 1;
-            obj.StopButton.Layout.Column = 3;
+            obj.StopButton.Layout.Row = 6;
+            obj.StopButton.Layout.Column = 2;
         end
 
         function update(obj)

@@ -55,7 +55,7 @@ classdef FileWriter < handle
                 return
             end
 
-            writeToFile(obj, round(dataArray, 2));
+            writeToFile(obj, dataArray);
         end
 
         function closeFile(obj, dataArray)
