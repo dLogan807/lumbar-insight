@@ -88,7 +88,9 @@ classdef SessionTabController < handle
         end
 
         function onThresholdSliderValueChanged(obj, ~, ~)
-            updateThresholdData(obj);
+            if (obj.Model.calibrationCompleted())
+                updateThresholdData(obj);
+            end
         end
 
         function updateThresholdData(obj)
