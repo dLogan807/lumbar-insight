@@ -178,7 +178,6 @@ classdef SessionTabController < handle
 
             elapsedTime = 0;
             beepTimer = 0;
-            tic; %Start timer
 
             %Initialise graph lines
             obj.LumbarAngleLine = animatedline(obj.SessionTabView.LumbarAngleGraph);
@@ -186,6 +185,12 @@ classdef SessionTabController < handle
             obj.GradientLine = [];
 
             while (obj.Model.StreamingInProgress)
+                %Timing
+                if (totalAttempts > 0)
+                    timeThisLoop = toc;
+                end
+                tic; %Start timer
+
                 pause(delay);
                 totalAttempts = totalAttempts + 1;
                 angleRetrievalFailed = false;
@@ -216,9 +221,6 @@ classdef SessionTabController < handle
                     drawGraphs(obj, latestAngle, elapsedTime);
                 end
 
-                %Timing
-                timeThisLoop = toc;
-
                 overThresholdAngle = (latestAngle > obj.Model.ThresholdAngle);
                 if (overThresholdAngle)
                     obj.Model.TimeAboveThresholdAngle = obj.Model.TimeAboveThresholdAngle + round(timeThisLoop, 2);
@@ -233,6 +235,8 @@ classdef SessionTabController < handle
 
                 beepTimer = beepTimer + timeThisLoop;
                 elapsedTime = elapsedTime + timeThisLoop;
+
+                %Data recording
                 if (obj.Model.RecordingInProgress)
                     obj.Model.TimeRecording = obj.Model.TimeRecording + timeThisLoop;
                     
