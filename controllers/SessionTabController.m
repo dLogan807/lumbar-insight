@@ -220,7 +220,7 @@ classdef SessionTabController < handle
                 timeThisLoop = toc;
 
                 overThresholdAngle = (latestAngle > obj.Model.ThresholdAngle);
-                if (latestAngle > obj.Model.ThresholdAngle)
+                if (overThresholdAngle)
                     obj.Model.TimeAboveThresholdAngle = obj.Model.TimeAboveThresholdAngle + round(timeThisLoop, 2);
                     obj.SessionTabView.TimeAboveMaxLabel.Text = "Time above threshold angle: " + obj.Model.TimeAboveThresholdAngle + "s";
 
@@ -235,7 +235,13 @@ classdef SessionTabController < handle
                 elapsedTime = elapsedTime + timeThisLoop;
                 if (obj.Model.RecordingInProgress)
                     obj.Model.TimeRecording = obj.Model.TimeRecording + timeThisLoop;
-                    obj.Model.FileExportManager.writeAngleData([string(datetime("now")), latestAngle, obj.Model.ThresholdAngle, overThresholdAngle]);
+                    
+                    angleToWrite = latestAngle;
+                    if(angleRetrievalFailed)
+                        angleToWrite = "?";
+                    end
+                    
+                    obj.Model.FileExportManager.writeAngleData([string(datetime("now")), angleToWrite, obj.Model.ThresholdAngle, overThresholdAngle]);
                 end
                 tic;
             end
