@@ -57,7 +57,7 @@ classdef Model < handle
         function obj = Model()
             %Constructor. Initialises beep warning sound and data exporting
             [obj.BeepSoundData, obj.BeepSoundSampleRate] = audioread('warningbeep.mp3');
-            obj.FileExportManager = FileWriter("exports");
+            obj.FileExportManager = FileWriter("data");
         end
 
         function latestAngle = get.LatestAngle(obj)
