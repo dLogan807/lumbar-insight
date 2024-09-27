@@ -8,19 +8,11 @@ classdef Model < handle
 
         Cameras (:, 2) Camera
 
-        PollingRateOverride double = 60
+        PollingRateOverride double = 20
         PollingOverrideEnabled logical = false
 
         BeepEnabled logical = true
         BeepRate double = 1
-
-        LatestAngle double
-        LatestCalibratedAngle double
-
-        FullFlexionAngle double = []
-        StandingOffsetAngle double = []
-        DecimalThresholdPercentage double {mustBePositive}
-        ThresholdAngle double
     end
 
     properties (SetAccess = private, GetAccess = public)
@@ -28,6 +20,14 @@ classdef Model < handle
         StreamingInProgress logical = false
         RecordingInProgress logical = false
         OperationInProgress logical = false
+
+        LatestAngle double
+        LatestCalibratedAngle double
+        FullFlexionAngle double = []
+        StandingOffsetAngle double = []
+
+        DecimalThresholdPercentage double {mustBePositive}
+        ThresholdAngle double = []
         
         SmallestStreamedAngle double = [];
         LargestStreamedAngle double = [];
@@ -119,8 +119,8 @@ classdef Model < handle
             end
         end
 
-        function set.DecimalThresholdPercentage(obj, thresholdPercentage)
-            %Store int % value as a double for easier later use.
+        function setThresholdValues(obj, thresholdPercentage)
+            %Store percentage value threshold and calculate threshold angle
 
             arguments
                 obj
@@ -128,6 +128,10 @@ classdef Model < handle
             end
 
             obj.DecimalThresholdPercentage = thresholdPercentage * 0.01;
+
+            if (obj.calibrationCompleted)
+                obj.ThresholdAngle = obj.FullFlexionAngle * obj.DecimalThresholdPercentage;
+            end
         end
 
         function connected = connectDevice(obj, deviceName, deviceType, deviceIndex)
@@ -187,6 +191,7 @@ classdef Model < handle
             %Reset angle calibration
             obj.StandingOffsetAngle = [];
             obj.FullFlexionAngle = [];
+            obj.ThresholdAngle = [];
             notify(obj, "DevicesConnectedChanged")
 
         end % disconnectDevice

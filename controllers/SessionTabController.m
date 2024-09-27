@@ -97,8 +97,8 @@ classdef SessionTabController < handle
             %Update data and graphs relating to the threshold angle
 
             wholePercentageValue = round(obj.SessionTabView.AngleThresholdSlider.Value);
-            obj.Model.DecimalThresholdPercentage = wholePercentageValue;
-            obj.Model.ThresholdAngle = obj.Model.FullFlexionAngle * obj.Model.DecimalThresholdPercentage;
+
+            obj.Model.setThresholdValues(wholePercentageValue);
 
             obj.SessionTabView.updateTrafficLightGraph(obj.Model.FullFlexionAngle, obj.Model.DecimalThresholdPercentage);
             obj.SessionTabView.setThresholdLabelPercentage(wholePercentageValue);

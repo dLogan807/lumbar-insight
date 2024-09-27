@@ -229,7 +229,7 @@ classdef IMUTabController < handle
                 statusLabel.Text = "Please calibrate the subject's angle whilst standing.";
             elseif (isempty(obj.Model.FullFlexionAngle))
                 statusLabel.Text = "Please calibrate the subject's angle whilst at full flexion.";
-            elseif (obj.Model.IMUDevices(1).SamplingRate ~= obj.Model.IMUDevices(2).SamplingRate)
+            elseif (~obj.Model.PollingOverrideEnabled && obj.Model.IMUDevices(1).SamplingRate ~= obj.Model.IMUDevices(2).SamplingRate)
                 statusLabel.Text = "Setup completed. Note the lowest sampling rate will be used! A session can be started.";
             else
                 statusLabel.Text = "Setup completed. A session can be started.";
