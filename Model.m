@@ -449,8 +449,8 @@ classdef Model < handle
 
             arguments
                 ~ 
-                smallestAngle double {mustBeNonempty}
-                largestAngle double {mustBeNonempty}
+                smallestAngle double
+                largestAngle double
                 angle double {mustBeNonempty}
             end
 
