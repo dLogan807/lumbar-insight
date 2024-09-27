@@ -127,7 +127,7 @@ classdef SessionTabView < matlab.ui.componentcontainer.ComponentContainer
 
             obj.GridLayout = uigridlayout( ...
                 "Parent", obj, ...
-                "RowHeight", {"1x", 22, 40, 30, 30, 22}, ...
+                "RowHeight", {22, "1x", 22, 30, 40, 30, 30}, ...
                 "ColumnWidth", {"2x", ".5x", "1x"}, ...
                 "Padding", 20, ...
                 "ColumnSpacing", 40);
@@ -138,7 +138,7 @@ classdef SessionTabView < matlab.ui.componentcontainer.ComponentContainer
                 "ColumnWidth", {"7x", "1x"}, ...
                 "Padding", 0, ...
                 "ColumnSpacing", 10);
-            obj.GraphLayout.Layout.Row = 1;
+            obj.GraphLayout.Layout.Row = [1 2];
             obj.GraphLayout.Layout.Column = [1 2];
 
             %Create view components.
@@ -168,15 +168,21 @@ classdef SessionTabView < matlab.ui.componentcontainer.ComponentContainer
             updateTrafficLightGraph(obj, placeholderFullFlexion, initialSliderValue);
 
             %Threshold slider
+            thresholdLabel = uilabel("Parent", obj.GridLayout, ...
+                "Text", "Threshold Configuration", ...
+                "FontWeight", "bold");
+            thresholdLabel.Layout.Row = 3;
+            thresholdLabel.Layout.Column = 1;
+
             obj.AngleThresholdLabel = uilabel("Parent", obj.GridLayout);
-            obj.AngleThresholdLabel.Layout.Row = 2;
+            obj.AngleThresholdLabel.Layout.Row = 4;
             obj.AngleThresholdLabel.Layout.Column = 1;
 
             obj.AngleThresholdSlider = uislider("Parent", obj.GridLayout, ...
                 "Value", initialSliderValue, ...
                 "Limits", [1 100], ...
                 "ValueChangedFcn", @obj.onThresholdSliderValueChanged);
-            obj.AngleThresholdSlider.Layout.Row = 3;
+            obj.AngleThresholdSlider.Layout.Row = 5;
             obj.AngleThresholdSlider.Layout.Column = 1;
 
             setThresholdLabelPercentage(obj, obj.AngleThresholdSlider.Value);
@@ -184,7 +190,7 @@ classdef SessionTabView < matlab.ui.componentcontainer.ComponentContainer
             %Warning beep configuration
             obj.WarningBeepField = BeepConfigField("Parent", obj.GridLayout, ...
                 "FontSize", obj.FontSize);
-            obj.WarningBeepField.Layout.Row = 4;
+            obj.WarningBeepField.Layout.Row = 6;
             obj.WarningBeepField.Layout.Column = 1;
 
             %Session data
@@ -209,14 +215,20 @@ classdef SessionTabView < matlab.ui.componentcontainer.ComponentContainer
             obj.LargestAngleLabel.Layout.Row = 6;
             obj.LargestAngleLabel.Layout.Column = 3;
 
-            %Streaming and recording control
+            %Streaming control
+            streamingLabel = uilabel("Parent", obj.GridLayout, ...
+                "Text", "Streaming", ...
+                "FontWeight", "bold");
+            streamingLabel.Layout.Row = 3;
+            streamingLabel.Layout.Column = 2;
+
             streamingButtonGrid = uigridlayout( ...
                 "Parent", obj.GridLayout, ...
                 "RowHeight", {30}, ...
                 "ColumnWidth", {"1x", "1x"}, ...
                 "Padding", 0, ...
                 "ColumnSpacing", 10);
-            streamingButtonGrid.Layout.Row = 3;
+            streamingButtonGrid.Layout.Row = 4;
             streamingButtonGrid.Layout.Column = 2;
 
             obj.StreamingButton = uibutton("Parent", streamingButtonGrid, ...
@@ -233,13 +245,26 @@ classdef SessionTabView < matlab.ui.componentcontainer.ComponentContainer
             obj.StopStreamingButton.Layout.Row = 1;
             obj.StopStreamingButton.Layout.Column = 2;
 
+            %Recording control
+            recordingLabel = uilabel("Parent", obj.GridLayout, ...
+                "Text", "Recording", ...
+                "FontWeight", "bold");
+            recordingLabel.Layout.Row = 5;
+            recordingLabel.Layout.Column = 2;
+
             obj.RecordingButton = uibutton("Parent", obj.GridLayout, ...
                 "Text", "Start Recording", ...
                 "Enable", "off", ...
                 "ButtonPushedFcn", @obj.onRecordingButtonPushed);
-            obj.RecordingButton.Layout.Row = 5;
+            obj.RecordingButton.Layout.Row = 6;
             obj.RecordingButton.Layout.Column = 2;
 
+            %Camera
+            cameraLabel = uilabel("Parent", obj.GridLayout, ...
+                "Text", "Cameras", ...
+                "FontWeight", "bold");
+            cameraLabel.Layout.Row = 1;
+            cameraLabel.Layout.Column = 3;
             
         end
 

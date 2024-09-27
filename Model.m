@@ -4,10 +4,6 @@ classdef Model < handle
     properties
         %Application data.
 
-        IMUDevices (1, 2) IMUInterface = [ShimmerIMU("placeholder1"), ShimmerIMU("placeholder2")]
-
-        Cameras (:, 2) Camera
-
         PollingRateOverride double = 20
         PollingOverrideEnabled logical = false
 
@@ -16,6 +12,9 @@ classdef Model < handle
     end
 
     properties (SetAccess = private, GetAccess = public)
+        IMUDevices (1, 2) IMUInterface = [ShimmerIMU("placeholder1"), ShimmerIMU("placeholder2")]
+        Cameras (:, 2) Camera
+
         FileExportManager FileWriter
         StreamingInProgress logical = false
         RecordingInProgress logical = false
