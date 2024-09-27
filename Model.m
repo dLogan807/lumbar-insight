@@ -16,15 +16,11 @@ classdef Model < handle
 
         LatestAngle double
         LatestCalibratedAngle double
-        SmallestAngle double = [];
-        LargestAngle double = [];
 
         FullFlexionAngle double = []
         StandingOffsetAngle double = []
         DecimalThresholdPercentage double {mustBePositive}
-        ThresholdAngle double {mustBePositive}
-        TimeAboveThresholdAngle double = 0
-        TimeRecording double = 0
+        ThresholdAngle double
     end
 
     properties (SetAccess = private, GetAccess = public)
@@ -32,6 +28,15 @@ classdef Model < handle
         StreamingInProgress logical = false
         RecordingInProgress logical = false
         OperationInProgress logical = false
+        
+        SmallestStreamedAngle double = [];
+        LargestStreamedAngle double = [];
+        TimeAboveThreshold double = 0
+
+        SmallestRecordedAngle double = [];
+        LargestRecordedAngle double = [];
+        RecordedTimeAboveThreshold double = 0
+        TimeRecording double = 0
     end
 
     properties (Access = private)
@@ -78,6 +83,40 @@ classdef Model < handle
             end
 
             latestCalibratedAngle = obj.LatestAngle + obj.StandingOffsetAngle;
+        end
+
+        function updateCeilingAngles(obj, angle)
+            %Update the smallest and largest angles stored
+
+            arguments
+                obj 
+                angle double {mustBeNonempty} 
+            end
+
+            if (obj.StreamingInProgress)
+                [obj.SmallestStreamedAngle, obj.LargestStreamedAngle] = findExtremities(obj, obj.SmallestStreamedAngle, obj.LargestStreamedAngle, angle);
+
+                if (obj.RecordingInProgress)
+                    [obj.SmallestRecordedAngle, obj.LargestRecordedAngle] = findExtremities(obj, obj.SmallestRecordedAngle, obj.LargestRecordedAngle, angle);
+                end
+            end
+        end
+
+        function addTimeAboveThreshold(obj, seconds)
+            %Add time to when subject is above threshold angle
+
+            arguments
+                obj 
+                seconds double {mustBeNonempty}
+            end
+
+            if (obj.StreamingInProgress)
+                obj.TimeAboveThreshold = obj.TimeAboveThreshold + seconds;
+
+                if (obj.RecordingInProgress)
+                    obj.RecordedTimeAboveThreshold = obj.RecordedTimeAboveThreshold + seconds;
+                end
+            end
         end
 
         function set.DecimalThresholdPercentage(obj, thresholdPercentage)
@@ -216,20 +255,24 @@ classdef Model < handle
             notify(obj, "DevicesConfiguredChanged")
         end
 
-        function samplingRate = lowestSamplingRate(obj)
-            %Retrieve the lowest sampling rate of the
-            %IMUs
+        function pollingRate = getPollingRate(obj)
+            %Polling rate is lowest sampling rate or defined override
 
-            samplingRate = -1;
+            pollingRate = -1;
+
+            if (obj.PollingOverrideEnabled)
+                pollingRate = obj.PollingRateOverride;
+                return
+            end
 
             if (obj.IMUDevices(1).IsConfigured)
-                samplingRate = obj.IMUDevices(1).SamplingRate;
+                pollingRate = obj.IMUDevices(1).SamplingRate;
             end
 
             device2Rate = obj.IMUDevices(2).SamplingRate;
 
-            if (obj.IMUDevices(2).IsConfigured && (device2Rate < samplingRate))
-                samplingRate = device2Rate;
+            if (obj.IMUDevices(2).IsConfigured && (device2Rate < pollingRate))
+                pollingRate = device2Rate;
             end
 
         end
@@ -330,6 +373,10 @@ classdef Model < handle
             started = startStreamingBoth(obj);
 
             if (started)
+                obj.SmallestStreamedAngle = [];
+                obj.LargestStreamedAngle = [];
+                obj.TimeAboveThreshold = 0;
+
                 obj.StreamingInProgress = true;
             end
 
@@ -348,6 +395,11 @@ classdef Model < handle
             %Create a file to write to and start recording data
 
             if (obj.StreamingInProgress)
+                obj.TimeRecording = 0;
+                obj.SmallestRecordedAngle = [];
+                obj.LargestRecordedAngle = [];
+                obj.RecordedTimeAboveThreshold = 0;
+
                 obj.FileExportManager.initialiseNewFile();
                 obj.RecordingInProgress = true;
             end
@@ -355,12 +407,13 @@ classdef Model < handle
         end
 
         function stopRecording(obj)
-            %Stop recording and close the file with session stats
+            %Stop recording, close the file with session stats, and reset
+            %recording data
 
             if (obj.RecordingInProgress)
                 obj.RecordingInProgress = false;
 
-                csvData = [obj.SmallestAngle, obj.LargestAngle, obj.TimeAboveThresholdAngle, obj.TimeRecording];
+                csvData = [obj.SmallestRecordedAngle, obj.LargestRecordedAngle, obj.RecordedTimeAboveThreshold, obj.TimeRecording];
 
                 obj.FileExportManager.closeFile(csvData);
             end
@@ -384,6 +437,25 @@ classdef Model < handle
             obj.OperationInProgress = false;
 
             notify(obj, "OperationCompleted")
+        end
+
+        function [smallestAngle, largestAngle] = findExtremities(~, smallestAngle, largestAngle, angle)
+            %Check if the angle is smaller or larger than specified values.
+
+            arguments
+                ~ 
+                smallestAngle double {mustBeNonempty}
+                largestAngle double {mustBeNonempty}
+                angle double {mustBeNonempty}
+            end
+
+            if (isempty(smallestAngle) || angle < smallestAngle)
+                smallestAngle = angle;
+            end
+
+            if (isempty(largestAngle) || angle > largestAngle)
+                largestAngle = angle;
+            end
         end
 
         function isInvalid = isInvalidAngleType(~, angleType)

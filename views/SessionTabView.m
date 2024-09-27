@@ -195,7 +195,7 @@ classdef SessionTabView < matlab.ui.componentcontainer.ComponentContainer
             dataHeaderLabel.Layout.Column = 3;
 
             obj.TimeAboveMaxLabel = uilabel("Parent", obj.GridLayout, ...
-                "Text", "Time above threshold angle: 0s");
+                "Text", "Time above threshold: 0s");
             obj.TimeAboveMaxLabel.Layout.Row = 4;
             obj.TimeAboveMaxLabel.Layout.Column = 3;
 

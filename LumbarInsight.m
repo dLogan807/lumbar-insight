@@ -72,8 +72,8 @@ classdef LumbarInsight < Singleton
                 "Position", [0 0 1 1]);
             imuTab = uitab(tabgroup, "Title", "IMU Configuration");
             % cameraTab = uitab(tabgroup,"Title","Camera Configuration");
-            sessionTab = uitab(tabgroup, "Title", "Session");
-            % managementTab = uitab(tabgroup,"Title","Session Management");
+            streamingTab = uitab(tabgroup, "Title", "Streaming");
+            % managementTab = uitab(tabgroup,"Title","Recording Management");
 
             %Create the model
             obj.AppModel = Model;
@@ -83,7 +83,7 @@ classdef LumbarInsight < Singleton
 
             imuTabView = IMUTabView("Parent", imuTab, ...
                 "FontSize", fontSize);
-            sessionTabView = SessionTabView("Parent", sessionTab, ...
+            sessionTabView = SessionTabView("Parent", streamingTab, ...
                 "FontSize", fontSize);
 
             %Create the controllers

@@ -176,6 +176,7 @@ classdef SessionTabController < handle
             failureThresholdPercent = 40.0;
             failurePercentage = 0.0;
 
+            timeLastLoop = 0;
             elapsedTime = 0;
             beepTimer = 0;
 
@@ -185,10 +186,6 @@ classdef SessionTabController < handle
             obj.GradientLine = [];
 
             while (obj.Model.StreamingInProgress)
-                %Timing
-                if (totalAttempts > 0)
-                    timeThisLoop = toc;
-                end
                 tic; %Start timer
 
                 pause(delay);
@@ -223,8 +220,8 @@ classdef SessionTabController < handle
 
                 overThresholdAngle = (latestAngle > obj.Model.ThresholdAngle);
                 if (overThresholdAngle)
-                    obj.Model.TimeAboveThresholdAngle = obj.Model.TimeAboveThresholdAngle + round(timeThisLoop, 2);
-                    obj.SessionTabView.TimeAboveMaxLabel.Text = "Time above threshold angle: " + obj.Model.TimeAboveThresholdAngle + "s";
+                    obj.Model.addTimeAboveThreshold(timeLastLoop)
+                    obj.SessionTabView.TimeAboveMaxLabel.Text = "Time above threshold: " + round(obj.Model.TimeAboveThreshold, 2) + "s";
 
                     if (beepTimer > obj.Model.BeepRate && obj.Model.BeepEnabled)
                         obj.Model.playWarningBeep();
@@ -233,12 +230,11 @@ classdef SessionTabController < handle
 
                 end
 
-                beepTimer = beepTimer + timeThisLoop;
-                elapsedTime = elapsedTime + timeThisLoop;
+                beepTimer = beepTimer + timeLastLoop;
+                elapsedTime = elapsedTime + timeLastLoop;
 
                 %Data recording
                 if (obj.Model.RecordingInProgress)
-                    obj.Model.TimeRecording = obj.Model.TimeRecording + timeThisLoop;
                     
                     angleToWrite = latestAngle;
                     if(angleRetrievalFailed)
@@ -247,7 +243,8 @@ classdef SessionTabController < handle
                     
                     obj.Model.FileExportManager.writeAngleData([string(datetime("now")), angleToWrite, obj.Model.ThresholdAngle, overThresholdAngle]);
                 end
-                tic;
+
+                timeLastLoop = toc;
             end
 
             disp("Failure rate: " + failurePercentage + "% (" + failures + " failures out of " + totalAttempts + " read attempts)");
@@ -264,7 +261,7 @@ classdef SessionTabController < handle
             %Update and draw angle and gradient graphs 
             xAxisTimeDuration = 30;
 
-            updateCeilingAngles(obj, latestAngle);
+            updateStoredAngles(obj, latestAngle);
 
             %Plot lines and data
             addpoints(obj.ThresholdLine, elapsedTime, obj.Model.ThresholdAngle);
@@ -287,11 +284,7 @@ classdef SessionTabController < handle
             %Calculate the delay from the lowest sampling
             %rate or polling override
 
-            if (obj.Model.PollingOverrideEnabled)
-                pollingRate = obj.Model.PollingRateOverride;
-            else
-                pollingRate = obj.Model.lowestSamplingRate;
-            end
+            pollingRate = obj.Model.getPollingRate();
 
             if (pollingRate <= 0)
                 delay = 0.1;
@@ -299,10 +292,10 @@ classdef SessionTabController < handle
                 delay = 1 / pollingRate;
             end
 
-            disp("Polling rate this session: " + pollingRate + "Hz (delay of " + delay + "s between read attempts)")
+            disp("Polling rate this session: " + pollingRate + "Hz (delay of " + delay + "s between attempts to read data)")
         end
 
-        function updateCeilingAngles(obj, latestAngle)
+        function updateStoredAngles(obj, latestAngle)
             %Update the smallest and largest angles
             %recorded
 
@@ -311,17 +304,10 @@ classdef SessionTabController < handle
                 latestAngle double {mustBeNonempty}
             end
 
-            round(latestAngle, 2);
+            obj.Model.updateCeilingAngles(latestAngle);
 
-            if (isempty(obj.Model.SmallestAngle) || latestAngle < obj.Model.SmallestAngle)
-                obj.Model.SmallestAngle = latestAngle;
-                obj.SessionTabView.SmallestAngleLabel.Text = "Smallest Angle: " + latestAngle + "°";
-            end
-
-            if (isempty(obj.Model.LargestAngle) || latestAngle > obj.Model.LargestAngle)
-                obj.Model.LargestAngle = latestAngle;
-                obj.SessionTabView.LargestAngleLabel.Text = "Largest Angle: " + latestAngle + "°";
-            end
+            obj.SessionTabView.SmallestAngleLabel.Text = "Smallest Angle: " + round(obj.Model.SmallestStreamedAngle, 2) + "°";
+            obj.SessionTabView.LargestAngleLabel.Text = "Largest Angle: " + round(obj.Model.LargestStreamedAngle, 2) + "°";
 
         end
 
@@ -333,16 +319,10 @@ classdef SessionTabController < handle
             cla(obj.SessionTabView.IndicatorGraph);
             obj.SessionTabView.updateTrafficLightGraph(obj.Model.FullFlexionAngle, obj.Model.DecimalThresholdPercentage);
 
-            %Reset measurements
+            %Reset displayed measurements
             obj.SessionTabView.SmallestAngleLabel.Text = "Smallest angle: No data";
             obj.SessionTabView.LargestAngleLabel.Text = "Largest angle: No data";
             obj.SessionTabView.TimeAboveMaxLabel.Text = "Time above threshold angle: 0s";
-
-            %Reset data
-            obj.Model.TimeAboveThresholdAngle = 0;
-            obj.Model.TimeRecording = 0;
-            obj.Model.SmallestAngle = [];
-            obj.Model.LargestAngle = [];
         end
 
         %Beep configuration events
