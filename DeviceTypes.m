@@ -1,7 +1,8 @@
 classdef DeviceTypes
     %Defines types of IMU devices
 
-   enumeration
-      Shimmer
-   end
+    enumeration
+        Shimmer
+    end
+
 end

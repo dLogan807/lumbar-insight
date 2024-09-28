@@ -8,29 +8,29 @@ classdef CalibrationButton < matlab.ui.componentcontainer.ComponentContainer
 
         FontSize double = 12
     end
-    
+
     properties (Access = private, Transient, NonCopyable)
-        GridLayout matlab.ui.container.GridLayout 
+        GridLayout matlab.ui.container.GridLayout
         CalibrateButton matlab.ui.control.Button
         CalibrationLabel matlab.ui.control.Label
 
         FontSet logical = false
     end
 
-    events (HasCallbackProperty, NotifyAccess = protected) 
+    events (HasCallbackProperty, NotifyAccess = protected)
         CalibrateButtonPushed
     end
 
     methods (Access = protected)
 
-        function setup( obj ) 
-            % Create grid layout to manage building blocks 
+        function setup(obj)
+            % Create grid layout to manage building blocks
             obj.GridLayout = uigridlayout( ...
                 "Parent", obj, ...
-                "RowHeight", { 30 }, ...
-                "ColumnWidth", {"1x", "1x"} , ...
+                "RowHeight", {30}, ...
+                "ColumnWidth", {"1x", "1x"}, ...
                 "Padding", 0, ...
-                "ColumnSpacing", 22 );
+                "ColumnSpacing", 22);
 
             % Create calibration button
             obj.CalibrateButton = uibutton(obj.GridLayout, ...
@@ -44,7 +44,7 @@ classdef CalibrationButton < matlab.ui.componentcontainer.ComponentContainer
             obj.CalibrationLabel.Layout.Column = 2;
         end
 
-        function update( obj )
+        function update(obj)
             %Update component properties
             if (obj.ButtonLabel ~= "")
                 obj.CalibrateButton.Text = obj.ButtonLabel;
@@ -61,16 +61,20 @@ classdef CalibrationButton < matlab.ui.componentcontainer.ComponentContainer
             end
 
             if (~obj.FontSet)
-                set(findall(obj.GridLayout,'-property','FontSize'),'FontSize', obj.FontSize);
+                set(findall(obj.GridLayout, '-property', 'FontSize'), 'FontSize', obj.FontSize);
                 obj.FontSet = true;
             end
+
         end
+
     end
 
     methods (Access = private)
-        function calibrationButtonPushed( obj, ~, ~ )
-            notify( obj, "CalibrateButtonPushed" )
-        end
-    end
-end
 
+        function calibrationButtonPushed(obj, ~, ~)
+            notify(obj, "CalibrateButtonPushed")
+        end
+
+    end
+
+end

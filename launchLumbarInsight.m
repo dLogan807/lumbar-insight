@@ -4,7 +4,7 @@
 allowMultipleAppInstances = false;
 
 if (allowMultipleAppInstances)
-    NonSingletonLumbarInsight
+    NonSingletonLumbarInsight;
 else
     LumbarInsight.instance;
 end

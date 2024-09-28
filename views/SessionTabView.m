@@ -1,10 +1,10 @@
 classdef SessionTabView < matlab.ui.componentcontainer.ComponentContainer
     %Visualizes the data, responding to any relevant model events.
 
-    properties ( Access = private )
+    properties (Access = private)
         % Listener object used to respond dynamically to controller or component events.
         Listener(:, 1) event.listener
-        
+
         FontSet logical = false
 
         YAxisMinimum = -50
@@ -17,37 +17,46 @@ classdef SessionTabView < matlab.ui.componentcontainer.ComponentContainer
 
         %Components
         GridLayout matlab.ui.container.GridLayout
-
+        DataOverviewLayout matlab.ui.container.GridLayout
         GraphLayout matlab.ui.container.GridLayout
+
         LumbarAngleGraph matlab.ui.control.UIAxes
         IndicatorGraph matlab.ui.control.UIAxes
 
-        TimeAboveMaxLabel matlab.ui.control.Label
-        SmallestAngleLabel matlab.ui.control.Label
-        LargestAngleLabel matlab.ui.control.Label
+        StreamingTimeAboveThresholdLabel matlab.ui.control.Label
+        StreamingSmallestAngleLabel matlab.ui.control.Label
+        StreamingLargestAngleLabel matlab.ui.control.Label
+        StreamingTimeLabel matlab.ui.control.Label
+
+        RecordedTimeAboveThresholdLabel matlab.ui.control.Label
+        RecordedSmallestAngleLabel matlab.ui.control.Label
+        RecordedLargestAngleLabel matlab.ui.control.Label
+        RecordingTimeLabel matlab.ui.control.Label
 
         AngleThresholdLabel matlab.ui.control.Label
         AngleThresholdSlider matlab.ui.control.Slider
 
         WarningBeepField BeepConfigField
 
-        SessionStartButton matlab.ui.control.Button
-        SessionStopButton matlab.ui.control.Button
+        StartStreamingButton matlab.ui.control.Button
+        StopStreamingButton matlab.ui.control.Button
+        RecordingButton matlab.ui.control.Button
     end
 
-    events ( NotifyAccess = private )
+    events (NotifyAccess = private)
         %Event broadcast when view is interacted with
         BeepRateChanged
         BeepToggled
         ThresholdSliderValueChanged
-        SessionStartButtonPushed
-        SessionStopButtonPushed
+        StartStreamingButtonPushed
+        StopStreamingButtonPushed
+        RecordingButtonPushed
 
     end % events ( NotifyAccess = private )
-        
+
     methods
 
-        function obj = SessionTabView( namedArgs )
+        function obj = SessionTabView(namedArgs)
             %View constructor.
 
             arguments
@@ -62,33 +71,34 @@ classdef SessionTabView < matlab.ui.componentcontainer.ComponentContainer
             obj@matlab.ui.componentcontainer.ComponentContainer( ...
                 "Parent", [], ...
                 "Units", "normalized", ...
-                "Position", [0, 0, 1, 1] )
+                "Position", [0, 0, 1, 1])
 
             % Set any user-specified properties.
-            set( obj, namedArgs )
+            set(obj, namedArgs)
 
             % Listen for changes in components
-            obj.Listener(end+1) = listener( obj.WarningBeepField, ... 
+            obj.Listener(end + 1) = listener(obj.WarningBeepField, ...
                 "BeepToggled", @obj.onBeepToggled);
-            obj.Listener(end+1) = listener( obj.WarningBeepField, ... 
-                "BeepRateChanged", @obj.onBeepRateChanged );
+            obj.Listener(end + 1) = listener(obj.WarningBeepField, ...
+                "BeepRateChanged", @obj.onBeepRateChanged);
         end
+
     end
 
     methods
 
         function setThresholdLabelPercentage(obj, percentage)
             %Update the percentage value on the slider
-        
+
             arguments
-                obj 
-                percentage double {mustBePositive} 
+                obj
+                percentage double {mustBePositive}
             end
-        
+
             obj.AngleThresholdLabel.Text = "Percentage threshold of Full Flexion angle: " + percentage + "%";
         end
 
-        function updateTrafficLightGraph( obj, fullFlexionAngle, decimalPercentage )
+        function updateTrafficLightGraph(obj, fullFlexionAngle, decimalPercentage)
             %Draw traffic light indicator graph gradient
 
             arguments
@@ -111,35 +121,45 @@ classdef SessionTabView < matlab.ui.componentcontainer.ComponentContainer
             x = [0 1 1 1 1 1 1 1 0 0 0 0 0 0];
             y = [obj.YAxisMinimum obj.YAxisMinimum lowerMax lowerWarn standing upperWarn upperMax obj.YAxisMaximum obj.YAxisMaximum upperMax upperWarn standing lowerWarn lowerMax];
             c = [red; red; amber; yellow; green; yellow; amber; red; red; amber; yellow; green; yellow; amber];
-            fill(obj.IndicatorGraph,x,y,c, "EdgeColor","none");
+            fill(obj.IndicatorGraph, x, y, c, "EdgeColor", "none");
         end
+
     end
 
-    methods ( Access = protected )
+    methods (Access = protected)
 
-        function setup( obj )
+        function setup(obj)
             %Initialize the view.
 
             obj.GridLayout = uigridlayout( ...
                 "Parent", obj, ...
-                "RowHeight", {"1x", 22, 40, 30, 30, 22}, ...
+                "RowHeight", {22, "1x", 22, 30, 40, 30, 30}, ...
                 "ColumnWidth", {"2x", ".5x", "1x"}, ...
                 "Padding", 20, ...
-                "ColumnSpacing", 100 );
+                "ColumnSpacing", 40);
 
             obj.GraphLayout = uigridlayout( ...
                 "Parent", obj.GridLayout, ...
                 "RowHeight", {"1x"}, ...
                 "ColumnWidth", {"7x", "1x"}, ...
                 "Padding", 0, ...
-                "ColumnSpacing", 10 );
-            obj.GraphLayout.Layout.Row = 1;
+                "ColumnSpacing", 10);
+            obj.GraphLayout.Layout.Row = [1 2];
             obj.GraphLayout.Layout.Column = [1 2];
+
+            obj.DataOverviewLayout = uigridlayout( ...
+                "Parent", obj.GridLayout, ...
+                "RowHeight", {"1x"}, ...
+                "ColumnWidth", {"1.5x", "1x", "1x"}, ...
+                "Padding", 0, ...
+                "ColumnSpacing", 10);
+            obj.DataOverviewLayout.Layout.Row = [3 7];
+            obj.DataOverviewLayout.Layout.Column = 3;
 
             %Create view components.
 
             %Graphs
-            obj.LumbarAngleGraph = uiaxes( "Parent", obj.GraphLayout, ...
+            obj.LumbarAngleGraph = uiaxes("Parent", obj.GraphLayout, ...
                 "XLim", [0 30], ...
                 "YLim", [obj.YAxisMinimum obj.YAxisMaximum], ...
                 "YTick", obj.YAxisMinimum:obj.YAxisTickInterval:obj.YAxisMaximum);
@@ -147,7 +167,7 @@ classdef SessionTabView < matlab.ui.componentcontainer.ComponentContainer
             obj.LumbarAngleGraph.YLabel.String = 'Lumbosacral Angle (Degrees)';
             obj.LumbarAngleGraph.Layout.Column = 1;
 
-            obj.IndicatorGraph = uiaxes( "Parent", obj.GraphLayout, ...
+            obj.IndicatorGraph = uiaxes("Parent", obj.GraphLayout, ...
                 "XLim", [0 1], ...
                 "YLim", [obj.YAxisMinimum obj.YAxisMaximum], ...
                 "YTick", obj.YAxisMinimum:obj.YAxisTickInterval:obj.YAxisMaximum, ...
@@ -160,18 +180,24 @@ classdef SessionTabView < matlab.ui.componentcontainer.ComponentContainer
 
             initialSliderValue = 80;
             placeholderFullFlexion = 30;
-            updateTrafficLightGraph( obj, placeholderFullFlexion, initialSliderValue );
+            updateTrafficLightGraph(obj, placeholderFullFlexion, initialSliderValue);
 
             %Threshold slider
-            obj.AngleThresholdLabel = uilabel( "Parent", obj.GridLayout );
-            obj.AngleThresholdLabel.Layout.Row = 2;
+            thresholdLabel = uilabel("Parent", obj.GridLayout, ...
+                "Text", "Threshold Configuration", ...
+                "FontWeight", "bold");
+            thresholdLabel.Layout.Row = 3;
+            thresholdLabel.Layout.Column = 1;
+
+            obj.AngleThresholdLabel = uilabel("Parent", obj.GridLayout);
+            obj.AngleThresholdLabel.Layout.Row = 4;
             obj.AngleThresholdLabel.Layout.Column = 1;
 
-            obj.AngleThresholdSlider = uislider( "Parent", obj.GridLayout, ...
+            obj.AngleThresholdSlider = uislider("Parent", obj.GridLayout, ...
                 "Value", initialSliderValue, ...
                 "Limits", [1 100], ...
                 "ValueChangedFcn", @obj.onThresholdSliderValueChanged);
-            obj.AngleThresholdSlider.Layout.Row = 3;
+            obj.AngleThresholdSlider.Layout.Row = 5;
             obj.AngleThresholdSlider.Layout.Column = 1;
 
             setThresholdLabelPercentage(obj, obj.AngleThresholdSlider.Value);
@@ -179,75 +205,172 @@ classdef SessionTabView < matlab.ui.componentcontainer.ComponentContainer
             %Warning beep configuration
             obj.WarningBeepField = BeepConfigField("Parent", obj.GridLayout, ...
                 "FontSize", obj.FontSize);
-            obj.WarningBeepField.Layout.Row = 4;
+            obj.WarningBeepField.Layout.Row = 6;
             obj.WarningBeepField.Layout.Column = 1;
 
-            %Session data
-            dataHeaderLabel = uilabel("Parent", obj.GridLayout, ...
-                "Text", "Session Data Overview", ...
+            %Session data headings and rows
+            sessionDataHeaderLabel = uilabel("Parent", obj.DataOverviewLayout, ...
+                "Text", "Session Stats", ...
                 "FontWeight", "bold");
-            dataHeaderLabel.Layout.Row = 3;
-            dataHeaderLabel.Layout.Column = 3;
+            sessionDataHeaderLabel.Layout.Row = 1;
+            sessionDataHeaderLabel.Layout.Column = 2;
 
-            obj.TimeAboveMaxLabel = uilabel( "Parent", obj.GridLayout, ...
-                "Text", "Time above threshold angle: 0s");
-            obj.TimeAboveMaxLabel.Layout.Row = 4;
-            obj.TimeAboveMaxLabel.Layout.Column = 3;
+            sessionDataHeaderLabel = uilabel("Parent", obj.DataOverviewLayout, ...
+                "Text", "Recording Stats", ...
+                "FontWeight", "bold");
+            sessionDataHeaderLabel.Layout.Row = 1;
+            sessionDataHeaderLabel.Layout.Column = 3;
 
-            obj.SmallestAngleLabel = uilabel( "Parent", obj.GridLayout, ...
-                "Text", "Smallest angle:");
-            obj.SmallestAngleLabel.Layout.Row = 5;
-            obj.SmallestAngleLabel.Layout.Column = 3;
+            sessionTimeRowLabel = uilabel("Parent", obj.DataOverviewLayout, ...
+                "Text", "Time streaming");
+            sessionTimeRowLabel.Layout.Row = 2;
+            sessionTimeRowLabel.Layout.Column = 1;
 
-            obj.LargestAngleLabel = uilabel( "Parent", obj.GridLayout, ...
-                "Text", "Largest angle:");
-            obj.LargestAngleLabel.Layout.Row = 6;
-            obj.LargestAngleLabel.Layout.Column = 3;
+            thresholdTimeRowLabel = uilabel("Parent", obj.DataOverviewLayout, ...
+                "Text", "Time above threshold");
+            thresholdTimeRowLabel.Layout.Row = 3;
+            thresholdTimeRowLabel.Layout.Column = 1;
 
-            %Session control
-            obj.SessionStartButton = uibutton( "Parent", obj.GridLayout, ...
-                "Text", "Start Session", ...
+            smallestAngleRowLabel = uilabel("Parent", obj.DataOverviewLayout, ...
+                "Text", "Smallest angle");
+            smallestAngleRowLabel.Layout.Row = 4;
+            smallestAngleRowLabel.Layout.Column = 1;
+
+            largestAngleRowLabel = uilabel("Parent", obj.DataOverviewLayout, ...
+                "Text", "Largest angle");
+            largestAngleRowLabel.Layout.Row = 5;
+            largestAngleRowLabel.Layout.Column = 1;
+
+            %Session data
+            obj.StreamingTimeLabel = uilabel("Parent", obj.DataOverviewLayout, ...
+                "Text", "0s");
+            obj.StreamingTimeLabel.Layout.Row = 2;
+            obj.StreamingTimeLabel.Layout.Column = 2;
+
+            obj.StreamingTimeAboveThresholdLabel = uilabel("Parent", obj.DataOverviewLayout, ...
+                "Text", "0s");
+            obj.StreamingTimeAboveThresholdLabel.Layout.Row = 3;
+            obj.StreamingTimeAboveThresholdLabel.Layout.Column = 2;
+
+            obj.StreamingSmallestAngleLabel = uilabel("Parent", obj.DataOverviewLayout, ...
+                "Text", "No data");
+            obj.StreamingSmallestAngleLabel.Layout.Row = 4;
+            obj.StreamingSmallestAngleLabel.Layout.Column = 2;
+
+            obj.StreamingLargestAngleLabel = uilabel("Parent", obj.DataOverviewLayout, ...
+                "Text", "No data");
+            obj.StreamingLargestAngleLabel.Layout.Row = 5;
+            obj.StreamingLargestAngleLabel.Layout.Column = 2;
+
+            %Data recorded to file
+            obj.RecordingTimeLabel = uilabel("Parent", obj.DataOverviewLayout, ...
+                "Text", "0s");
+            obj.RecordingTimeLabel.Layout.Row = 2;
+            obj.RecordingTimeLabel.Layout.Column = 3;
+
+            obj.RecordedTimeAboveThresholdLabel = uilabel("Parent", obj.DataOverviewLayout, ...
+                "Text", "0s");
+            obj.RecordedTimeAboveThresholdLabel.Layout.Row = 3;
+            obj.RecordedTimeAboveThresholdLabel.Layout.Column = 3;
+
+            obj.RecordedSmallestAngleLabel = uilabel("Parent", obj.DataOverviewLayout, ...
+                "Text", "No data");
+            obj.RecordedSmallestAngleLabel.Layout.Row = 4;
+            obj.RecordedSmallestAngleLabel.Layout.Column = 3;
+
+            obj.RecordedLargestAngleLabel = uilabel("Parent", obj.DataOverviewLayout, ...
+                "Text", "No data");
+            obj.RecordedLargestAngleLabel.Layout.Row = 5;
+            obj.RecordedLargestAngleLabel.Layout.Column = 3;
+
+            %Streaming control
+            streamingLabel = uilabel("Parent", obj.GridLayout, ...
+                "Text", "Streaming", ...
+                "FontWeight", "bold");
+            streamingLabel.Layout.Row = 3;
+            streamingLabel.Layout.Column = 2;
+
+            streamingButtonGrid = uigridlayout( ...
+                "Parent", obj.GridLayout, ...
+                "RowHeight", {30}, ...
+                "ColumnWidth", {"1x", "1x"}, ...
+                "Padding", 0, ...
+                "ColumnSpacing", 10);
+            streamingButtonGrid.Layout.Row = 4;
+            streamingButtonGrid.Layout.Column = 2;
+
+            obj.StartStreamingButton = uibutton("Parent", streamingButtonGrid, ...
+                "Text", "Start Streaming", ...
                 "Enable", "off", ...
-                "ButtonPushedFcn", @obj.onSessionStartButtonPushed );
-            obj.SessionStartButton.Layout.Row = 4;
-            obj.SessionStartButton.Layout.Column = 2;
+                "ButtonPushedFcn", @obj.onStartStreamingButtonPushed);
+            obj.StartStreamingButton.Layout.Row = 1;
+            obj.StartStreamingButton.Layout.Column = 1;
 
-            obj.SessionStopButton = uibutton( "Parent", obj.GridLayout, ...
-                "Text", "Stop Session", ...
+            obj.StopStreamingButton = uibutton("Parent", streamingButtonGrid, ...
+                "Text", "Stop Streaming", ...
                 "Enable", "off", ...
-                "ButtonPushedFcn", @obj.onSessionStopButtonPushed );
-            obj.SessionStopButton.Layout.Row = 5;
-            obj.SessionStopButton.Layout.Column = 2;
+                "ButtonPushedFcn", @obj.onStopStreamingButtonPushed);
+            obj.StopStreamingButton.Layout.Row = 1;
+            obj.StopStreamingButton.Layout.Column = 2;
+
+            %Recording control
+            recordingLabel = uilabel("Parent", obj.GridLayout, ...
+                "Text", "Recording", ...
+                "FontWeight", "bold");
+            recordingLabel.Layout.Row = 5;
+            recordingLabel.Layout.Column = 2;
+
+            obj.RecordingButton = uibutton("Parent", obj.GridLayout, ...
+                "Text", "Start Recording", ...
+                "Enable", "off", ...
+                "ButtonPushedFcn", @obj.onRecordingButtonPushed);
+            obj.RecordingButton.Layout.Row = 6;
+            obj.RecordingButton.Layout.Column = 2;
+
+            %Camera
+            cameraLabel = uilabel("Parent", obj.GridLayout, ...
+                "Text", "Cameras", ...
+                "FontWeight", "bold");
+            cameraLabel.Layout.Row = 1;
+            cameraLabel.Layout.Column = 3;
+            
         end
 
-        function update( obj )
+        function update(obj)
+
             if (~obj.FontSet)
-                set(findall(obj.GridLayout,'-property','FontSize'),'FontSize', obj.FontSize);
+                set(findall(obj.GridLayout, '-property', 'FontSize'), 'FontSize', obj.FontSize);
                 obj.FontSet = true;
             end
+
         end
 
     end
 
-    methods ( Access = private )
-        function onThresholdSliderValueChanged( obj, ~, ~ )
-            notify( obj, "ThresholdSliderValueChanged" )
+    methods (Access = private)
+
+        function onThresholdSliderValueChanged(obj, ~, ~)
+            notify(obj, "ThresholdSliderValueChanged")
         end
 
-        function onSessionStartButtonPushed( obj, ~, ~ )
-            notify( obj, "SessionStartButtonPushed" )
+        function onStartStreamingButtonPushed(obj, ~, ~)
+            notify(obj, "StartStreamingButtonPushed")
         end
 
-        function onSessionStopButtonPushed( obj, ~, ~ )
-            notify( obj, "SessionStopButtonPushed" )
+        function onStopStreamingButtonPushed(obj, ~, ~)
+            notify(obj, "StopStreamingButtonPushed")
         end
 
-        function onBeepToggled( obj, ~, ~ )
-            notify( obj, "BeepToggled")
+        function onRecordingButtonPushed(obj, ~, ~)
+            notify(obj, "RecordingButtonPushed")
         end
 
-        function onBeepRateChanged( obj, ~, ~ )
-            notify( obj, "BeepRateChanged")
+        function onBeepToggled(obj, ~, ~)
+            notify(obj, "BeepToggled")
+        end
+
+        function onBeepRateChanged(obj, ~, ~)
+            notify(obj, "BeepRateChanged")
         end
 
     end

@@ -34,3 +34,6 @@ codegen/
 
 # Cloud based storage dotfile
 .MATLABDriveTag
+
+# Data export folder
+data/
