@@ -17,12 +17,13 @@ classdef SessionTabView < matlab.ui.componentcontainer.ComponentContainer
 
         %Components
         GridLayout matlab.ui.container.GridLayout
-
+        DataOverviewLayout matlab.ui.container.GridLayout
         GraphLayout matlab.ui.container.GridLayout
+
         LumbarAngleGraph matlab.ui.control.UIAxes
         IndicatorGraph matlab.ui.control.UIAxes
 
-        TimeAboveMaxLabel matlab.ui.control.Label
+        TimeAboveThresholdLabel matlab.ui.control.Label
         SmallestAngleLabel matlab.ui.control.Label
         LargestAngleLabel matlab.ui.control.Label
         SessionTimeLabel matlab.ui.control.Label
@@ -141,6 +142,15 @@ classdef SessionTabView < matlab.ui.componentcontainer.ComponentContainer
             obj.GraphLayout.Layout.Row = [1 2];
             obj.GraphLayout.Layout.Column = [1 2];
 
+            obj.DataOverviewLayout = uigridlayout( ...
+                "Parent", obj.GridLayout, ...
+                "RowHeight", {"1x"}, ...
+                "ColumnWidth", {"1.5x", "1x", "1x"}, ...
+                "Padding", 0, ...
+                "ColumnSpacing", 10);
+            obj.DataOverviewLayout.Layout.Row = [3 7];
+            obj.DataOverviewLayout.Layout.Column = 3;
+
             %Create view components.
 
             %Graphs
@@ -193,32 +203,59 @@ classdef SessionTabView < matlab.ui.componentcontainer.ComponentContainer
             obj.WarningBeepField.Layout.Row = 6;
             obj.WarningBeepField.Layout.Column = 1;
 
-            %Session data
-            dataHeaderLabel = uilabel("Parent", obj.GridLayout, ...
-                "Text", "Session Data Overview", ...
+            %Session data headings and rows
+            sessionDataHeaderLabel = uilabel("Parent", obj.DataOverviewLayout, ...
+                "Text", "Session Stats", ...
                 "FontWeight", "bold");
-            dataHeaderLabel.Layout.Row = 3;
-            dataHeaderLabel.Layout.Column = 3;
+            sessionDataHeaderLabel.Layout.Row = 1;
+            sessionDataHeaderLabel.Layout.Column = 2;
 
-            obj.SessionTimeLabel = uilabel("Parent", obj.GridLayout, ...
-                "Text", "Time streaming: 0s");
-            obj.SessionTimeLabel.Layout.Row = 4;
-            obj.SessionTimeLabel.Layout.Column = 3;
+            sessionDataHeaderLabel = uilabel("Parent", obj.DataOverviewLayout, ...
+                "Text", "Recorded Stats", ...
+                "FontWeight", "bold");
+            sessionDataHeaderLabel.Layout.Row = 1;
+            sessionDataHeaderLabel.Layout.Column = 3;
 
-            obj.TimeAboveMaxLabel = uilabel("Parent", obj.GridLayout, ...
-                "Text", "Time above threshold: 0s");
-            obj.TimeAboveMaxLabel.Layout.Row = 5;
-            obj.TimeAboveMaxLabel.Layout.Column = 3;
+            sessionTimeRowLabel = uilabel("Parent", obj.DataOverviewLayout, ...
+                "Text", "Time streaming");
+            sessionTimeRowLabel.Layout.Row = 2;
+            sessionTimeRowLabel.Layout.Column = 1;
 
-            obj.SmallestAngleLabel = uilabel("Parent", obj.GridLayout, ...
-                "Text", "Smallest angle: No data");
-            obj.SmallestAngleLabel.Layout.Row = 6;
-            obj.SmallestAngleLabel.Layout.Column = 3;
+            thresholdTimeRowLabel = uilabel("Parent", obj.DataOverviewLayout, ...
+                "Text", "Time above threshold");
+            thresholdTimeRowLabel.Layout.Row = 3;
+            thresholdTimeRowLabel.Layout.Column = 1;
 
-            obj.LargestAngleLabel = uilabel("Parent", obj.GridLayout, ...
-                "Text", "Largest angle: No data");
-            obj.LargestAngleLabel.Layout.Row = 7;
-            obj.LargestAngleLabel.Layout.Column = 3;
+            smallestAngleRowLabel = uilabel("Parent", obj.DataOverviewLayout, ...
+                "Text", "Smallest angle");
+            smallestAngleRowLabel.Layout.Row = 4;
+            smallestAngleRowLabel.Layout.Column = 1;
+
+            largestAngleRowLabel = uilabel("Parent", obj.DataOverviewLayout, ...
+                "Text", "Largest angle");
+            largestAngleRowLabel.Layout.Row = 5;
+            largestAngleRowLabel.Layout.Column = 1;
+
+            %Session data
+            obj.SessionTimeLabel = uilabel("Parent", obj.DataOverviewLayout, ...
+                "Text", "0s");
+            obj.SessionTimeLabel.Layout.Row = 2;
+            obj.SessionTimeLabel.Layout.Column = 2;
+
+            obj.TimeAboveThresholdLabel = uilabel("Parent", obj.DataOverviewLayout, ...
+                "Text", "0s");
+            obj.TimeAboveThresholdLabel.Layout.Row = 3;
+            obj.TimeAboveThresholdLabel.Layout.Column = 2;
+
+            obj.SmallestAngleLabel = uilabel("Parent", obj.DataOverviewLayout, ...
+                "Text", "No data");
+            obj.SmallestAngleLabel.Layout.Row = 4;
+            obj.SmallestAngleLabel.Layout.Column = 2;
+
+            obj.LargestAngleLabel = uilabel("Parent", obj.DataOverviewLayout, ...
+                "Text", "No data");
+            obj.LargestAngleLabel.Layout.Row = 5;
+            obj.LargestAngleLabel.Layout.Column = 2;
 
             %Streaming control
             streamingLabel = uilabel("Parent", obj.GridLayout, ...
