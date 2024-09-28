@@ -31,14 +31,14 @@ classdef SessionTabController < handle
 
             % Listen for changes to the view.
             obj.Listener(end + 1) = listener(obj.SessionTabView, ...
-                "ThresholdSliderValueChanged", @obj.onThresholdSliderValueChanged);
+                "StartStreamingButtonPushed", @obj.onStartStreamingButtonPushed);
             obj.Listener(end + 1) = listener(obj.SessionTabView, ...
-                "StreamingButtonPushed", @obj.onStreamingButtonPushed);
-            obj.Listener(end + 1) = listener(obj.SessionTabView, ...
-                "RecordingButtonPushed", @obj.onRecordingButtonPushed);
+                "StopStreamingButtonPushed", @obj.onStopStreamingButtonPushed);
 
             obj.Listener(end + 1) = listener(obj.SessionTabView, ...
-                "StopButtonPushed", @obj.onStopButtonPushed);
+                "ThresholdSliderValueChanged", @obj.onThresholdSliderValueChanged);
+            obj.Listener(end + 1) = listener(obj.SessionTabView, ...
+                "RecordingButtonPushed", @obj.onRecordingButtonPushed);
 
             obj.Listener(end + 1) = listener(obj.SessionTabView, ...
                 "BeepToggled", @obj.onBeepToggled);
@@ -75,15 +75,15 @@ classdef SessionTabController < handle
     methods (Access = private)
 
         function onDevicesConnectedChanged(obj, ~, ~)
-            updateSessionControls(obj);
+            updateSessionEnabled(obj);
         end
 
         function onStandingOffsetAngleCalibrated(obj, ~, ~)
-            updateSessionControls(obj);
+            updateSessionEnabled(obj);
         end
 
         function onFullFlexionAngleCalibrated(obj, ~, ~)
-            updateSessionControls(obj);
+            updateSessionEnabled(obj);
             updateThresholdData(obj)
         end
 
@@ -104,25 +104,23 @@ classdef SessionTabController < handle
             obj.SessionTabView.setThresholdLabelPercentage(wholePercentageValue);
         end
 
-        function updateSessionControls(obj)
+        function updateSessionEnabled(obj)
             %Enable session control buttons depending on
             %angle calibration
 
-            obj.SessionTabView.StreamingButton.Enable = "off";
-
-            if (obj.Model.bothIMUDevicesConnected && obj.Model.calibrationCompleted())
-                obj.SessionTabView.StreamingButton.Enable = "on";
+            if (obj.Model.bothIMUDevicesConnected() && obj.Model.calibrationCompleted())
+                obj.SessionTabView.StartStreamingButton.Enable = "on";
             else
                 stopStreaming(obj);
             end
 
         end
 
-        function onStopButtonPushed(obj ,~, ~)
+        function onStopStreamingButtonPushed(obj ,~, ~)
             stopStreaming(obj);
         end
 
-        function onStreamingButtonPushed(obj, ~, ~)
+        function onStartStreamingButtonPushed(obj, ~, ~)
             %Start or stop IMU streaming
 
             if (~obj.Model.StreamingInProgress)
@@ -137,17 +135,17 @@ classdef SessionTabController < handle
             resetSessionData(obj);
 
             if (obj.Model.startSessionStreaming())
-                obj.SessionTabView.StreamingButton.Text = "Stop IMU Streaming";
+                obj.SessionTabView.StopStreamingButton.Enable = "on";
                 obj.SessionTabView.RecordingButton.Enable = "on";
 
                 doSessionStreaming(obj);
             end
-
         end
 
         function stopStreaming(obj)
             obj.Model.stopSessionStreaming()
-            obj.SessionTabView.StreamingButton.Text = "Start IMU Streaming";
+            obj.SessionTabView.StartStreamingButton.Enable = "off";
+            obj.SessionTabView.StopStreamingButton.Enable = "off";
 
             obj.SessionTabView.RecordingButton.Enable = "off";
             obj.SessionTabView.RecordingButton.Text = "Start Recording";

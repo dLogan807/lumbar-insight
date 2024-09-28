@@ -31,10 +31,9 @@ classdef SessionTabView < matlab.ui.componentcontainer.ComponentContainer
 
         WarningBeepField BeepConfigField
 
-        StreamingButton matlab.ui.control.Button
+        StartStreamingButton matlab.ui.control.Button
         StopStreamingButton matlab.ui.control.Button
         RecordingButton matlab.ui.control.Button
-        % StopRecordingButton matlab.ui.control.Button
     end
 
     events (NotifyAccess = private)
@@ -42,8 +41,8 @@ classdef SessionTabView < matlab.ui.componentcontainer.ComponentContainer
         BeepRateChanged
         BeepToggled
         ThresholdSliderValueChanged
-        StreamingButtonPushed
-        StopButtonPushed
+        StartStreamingButtonPushed
+        StopStreamingButtonPushed
         RecordingButtonPushed
 
     end % events ( NotifyAccess = private )
@@ -231,17 +230,17 @@ classdef SessionTabView < matlab.ui.componentcontainer.ComponentContainer
             streamingButtonGrid.Layout.Row = 4;
             streamingButtonGrid.Layout.Column = 2;
 
-            obj.StreamingButton = uibutton("Parent", streamingButtonGrid, ...
+            obj.StartStreamingButton = uibutton("Parent", streamingButtonGrid, ...
                 "Text", "Start Streaming", ...
                 "Enable", "off", ...
-                "ButtonPushedFcn", @obj.onStreamingButtonPushed);
-            obj.StreamingButton.Layout.Row = 1;
-            obj.StreamingButton.Layout.Column = 1;
+                "ButtonPushedFcn", @obj.onStartStreamingButtonPushed);
+            obj.StartStreamingButton.Layout.Row = 1;
+            obj.StartStreamingButton.Layout.Column = 1;
 
             obj.StopStreamingButton = uibutton("Parent", streamingButtonGrid, ...
                 "Text", "Stop Streaming", ...
-                "Enable", "on", ...
-                "ButtonPushedFcn", @obj.onStopButtonPushed);
+                "Enable", "off", ...
+                "ButtonPushedFcn", @obj.onStopStreamingButtonPushed);
             obj.StopStreamingButton.Layout.Row = 1;
             obj.StopStreamingButton.Layout.Column = 2;
 
@@ -285,12 +284,12 @@ classdef SessionTabView < matlab.ui.componentcontainer.ComponentContainer
             notify(obj, "ThresholdSliderValueChanged")
         end
 
-        function onStreamingButtonPushed(obj, ~, ~)
-            notify(obj, "StreamingButtonPushed")
+        function onStartStreamingButtonPushed(obj, ~, ~)
+            notify(obj, "StartStreamingButtonPushed")
         end
 
-        function onStopButtonPushed(obj, ~, ~)
-            notify(obj, "StopButtonPushed")
+        function onStopStreamingButtonPushed(obj, ~, ~)
+            notify(obj, "StopStreamingButtonPushed")
         end
 
         function onRecordingButtonPushed(obj, ~, ~)
