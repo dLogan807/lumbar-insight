@@ -162,6 +162,7 @@ classdef SessionTabController < handle
 
             if (~obj.Model.RecordingInProgress)
                 obj.Model.startRecording();
+                resetRecordingData(obj);
                 obj.SessionTabView.RecordingButton.Text = "Stop Recording";
             else
                 obj.Model.stopRecording();
@@ -235,7 +236,7 @@ classdef SessionTabController < handle
 
                 obj.Model.addTimeStreaming(timeLastLoop);
 
-                updateTimeLabel(obj);
+                updateTimeLabels(obj);
 
                 beepTimer = beepTimer + timeLastLoop;
                 elapsedTime = elapsedTime + timeLastLoop;
@@ -301,16 +302,13 @@ classdef SessionTabController < handle
 
             obj.Model.updateCeilingAngles(latestAngle);
 
-            smallestAngleText = "Smallest Angle: " + round(obj.Model.SmallestStreamedAngle, 2) + "°";
-            largestAngleText = "Largest Angle: " + round(obj.Model.LargestStreamedAngle, 2) + "°";
+            obj.SessionTabView.StreamingSmallestAngleLabel.Text = round(obj.Model.SmallestStreamedAngle, 2) + "°";
+            obj.SessionTabView.StreamingLargestAngleLabel.Text = round(obj.Model.LargestStreamedAngle, 2) + "°";
 
             if (obj.Model.RecordingInProgress)
-                smallestAngleText = smallestAngleText + " (" + round(obj.Model.SmallestRecordedAngle, 2) + "° while recording)";
-                largestAngleText = largestAngleText + " (" + round(obj.Model.LargestRecordedAngle, 2) + "° while recording)";
+                obj.SessionTabView.RecordedSmallestAngleLabel.Text = round(obj.Model.SmallestRecordedAngle, 2) + "°";
+                obj.SessionTabView.RecordedLargestAngleLabel.Text = round(obj.Model.LargestRecordedAngle, 2) + "°";
             end
-
-            obj.SessionTabView.SmallestAngleLabel.Text = smallestAngleText;
-            obj.SessionTabView.LargestAngleLabel.Text = largestAngleText;
 
         end
 
@@ -327,11 +325,10 @@ classdef SessionTabController < handle
             if (latestAngle > obj.Model.ThresholdAngle)
                 obj.Model.addTimeAboveThreshold(timeLastLoop);
 
-                timeAboveText = "Time above threshold: " + round(obj.Model.TimeAboveThreshold, 2) + "s";
+                obj.SessionTabView.StreamingTimeAboveThresholdLabel.Text = round(obj.Model.TimeAboveThreshold, 2) + "s";
                 if (obj.Model.RecordingInProgress)
-                    timeAboveText = timeAboveText + " (" + round(obj.Model.RecordedTimeAboveThreshold, 2) + "s while recording)";
+                    obj.SessionTabView.RecordedTimeAboveThresholdLabel.Text = round(obj.Model.RecordedTimeAboveThreshold, 2) + "s";
                 end
-                obj.SessionTabView.TimeAboveMaxLabel.Text = timeAboveText;
 
                 if (beepTimer > obj.Model.BeepRate && obj.Model.BeepEnabled)
                     obj.Model.playWarningBeep();
@@ -340,12 +337,11 @@ classdef SessionTabController < handle
             end
         end
 
-        function updateTimeLabel(obj)
-            sessionTimeText = "Time streaming: " + round(obj.Model.TimeStreaming, 2) + "s";
+        function updateTimeLabels(obj)
+            obj.SessionTabView.StreamingTimeLabel.Text = round(obj.Model.TimeStreaming, 2) + "s";
             if (obj.Model.RecordingInProgress)
-                sessionTimeText = sessionTimeText + " (" + round(obj.Model.TimeRecording, 2) + "s while recording)";
+                obj.SessionTabView.RecordingTimeLabel.Text = round(obj.Model.TimeRecording, 2) + "s";
             end
-            obj.SessionTabView.SessionTimeLabel.Text = sessionTimeText;
         end
 
         function resetSessionData(obj)
@@ -357,10 +353,19 @@ classdef SessionTabController < handle
             obj.SessionTabView.updateTrafficLightGraph(obj.Model.FullFlexionAngle, obj.Model.DecimalThresholdPercentage);
 
             %Reset displayed measurements
-            obj.SessionTabView.SessionTimeLabel.Text = "Time streaming: 0s";
-            obj.SessionTabView.SmallestAngleLabel.Text = "Smallest angle: No data";
-            obj.SessionTabView.LargestAngleLabel.Text = "Largest angle: No data";
-            obj.SessionTabView.TimeAboveMaxLabel.Text = "Time above threshold: 0s";
+            obj.SessionTabView.StreamingTimeAboveThresholdLabel.Text = "0s";
+            obj.SessionTabView.StreamingSmallestAngleLabel.Text = "No data";
+            obj.SessionTabView.StreamingLargestAngleLabel.Text = "No data";
+            obj.SessionTabView.StreamingTimeLabel.Text = "0s";
+
+            resetRecordingData(obj);
+        end
+
+        function resetRecordingData(obj)
+            obj.SessionTabView.RecordedTimeAboveThresholdLabel.Text = "0s";
+            obj.SessionTabView.RecordedSmallestAngleLabel.Text = "No data";
+            obj.SessionTabView.RecordedLargestAngleLabel.Text = "No data";
+            obj.SessionTabView.RecordingTimeLabel.Text = "0s";
         end
 
         %Beep configuration events
