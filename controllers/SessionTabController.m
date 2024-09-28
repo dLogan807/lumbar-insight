@@ -220,18 +220,7 @@ classdef SessionTabController < handle
 
                 if (~angleRetrievalFailed)
                     drawGraphs(obj, latestAngle, elapsedTime);
-                end
-
-                overThresholdAngle = (latestAngle > obj.Model.ThresholdAngle);
-                if (overThresholdAngle)
-                    obj.Model.addTimeAboveThreshold(timeLastLoop);
-                    obj.SessionTabView.TimeAboveMaxLabel.Text = "Time above threshold: " + round(obj.Model.TimeAboveThreshold, 2) + "s";
-
-                    if (beepTimer > obj.Model.BeepRate && obj.Model.BeepEnabled)
-                        obj.Model.playWarningBeep();
-                        beepTimer = 0;
-                    end
-
+                    beepTimer = doThresholdFunctionality(latestAngle, beepTimer);
                 end
 
                 beepTimer = beepTimer + timeLastLoop;
@@ -321,6 +310,26 @@ classdef SessionTabController < handle
             obj.SessionTabView.SmallestAngleLabel.Text = smallestAngleText;
             obj.SessionTabView.LargestAngleLabel.Text = largestAngleText;
 
+        end
+
+        function beepTimer = doThresholdFunctionality(obj, latestAngle, beepTimer)
+            %Update threshold time and play beep
+
+            overThresholdAngle = (latestAngle > obj.Model.ThresholdAngle);
+            if (overThresholdAngle)
+                obj.Model.addTimeAboveThreshold(timeLastLoop);
+
+                timeAboveText = "Time above threshold: " + round(obj.Model.TimeAboveThreshold, 2) + "s";
+                if (obj.Model.RecordingInProgress)
+                    timeAboveText = timeAboveText + " (" + round(obj.Model.RecordedTimeAboveThreshold, 2) + "s while recording)";
+                end
+                obj.SessionTabView.TimeAboveMaxLabel.Text = timeAboveText;
+
+                if (beepTimer > obj.Model.BeepRate && obj.Model.BeepEnabled)
+                    obj.Model.playWarningBeep();
+                    beepTimer = 0;
+                end
+            end
         end
 
         function resetSessionData(obj)
