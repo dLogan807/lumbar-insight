@@ -224,7 +224,7 @@ classdef SessionTabController < handle
 
                 overThresholdAngle = (latestAngle > obj.Model.ThresholdAngle);
                 if (overThresholdAngle)
-                    obj.Model.addTimeAboveThreshold(timeLastLoop)
+                    obj.Model.addTimeAboveThreshold(timeLastLoop);
                     obj.SessionTabView.TimeAboveMaxLabel.Text = "Time above threshold: " + round(obj.Model.TimeAboveThreshold, 2) + "s";
 
                     if (beepTimer > obj.Model.BeepRate && obj.Model.BeepEnabled)
@@ -310,8 +310,16 @@ classdef SessionTabController < handle
 
             obj.Model.updateCeilingAngles(latestAngle);
 
-            obj.SessionTabView.SmallestAngleLabel.Text = "Smallest Angle: " + round(obj.Model.SmallestStreamedAngle, 2) + "°";
-            obj.SessionTabView.LargestAngleLabel.Text = "Largest Angle: " + round(obj.Model.LargestStreamedAngle, 2) + "°";
+            smallestAngleText = "Smallest Angle: " + round(obj.Model.SmallestStreamedAngle, 2) + "°";
+            largestAngleText = "Largest Angle: " + round(obj.Model.LargestStreamedAngle, 2) + "°";
+
+            if (obj.Model.RecordingInProgress)
+                smallestAngleText = smallestAngleText + " (" + round(obj.Model.SmallestRecordedAngle, 2) + "° while recording)";
+                largestAngleText = largestAngleText + " (" + round(obj.Model.LargestRecordedAngle, 2) + "° while recording)";
+            end
+
+            obj.SessionTabView.SmallestAngleLabel.Text = smallestAngleText;
+            obj.SessionTabView.LargestAngleLabel.Text = largestAngleText;
 
         end
 
