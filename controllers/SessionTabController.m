@@ -220,23 +220,25 @@ classdef SessionTabController < handle
 
                 if (~angleRetrievalFailed)
                     drawGraphs(obj, latestAngle, elapsedTime);
-                    beepTimer = doThresholdFunctionality(latestAngle, beepTimer);
+                    beepTimer = doThresholdFunctionality(obj, latestAngle, beepTimer, timeLastLoop);
                 end
-
-                beepTimer = beepTimer + timeLastLoop;
-                elapsedTime = elapsedTime + timeLastLoop;
 
                 %Data recording
                 if (obj.Model.RecordingInProgress)
-                    
                     angleToWrite = latestAngle;
                     if(angleRetrievalFailed)
                         angleToWrite = "?";
                     end
                     
-                    obj.Model.FileExportManager.writeAngleData([string(datetime("now")), angleToWrite, obj.Model.ThresholdAngle, overThresholdAngle]);
+                    obj.Model.FileExportManager.writeAngleData([string(datetime("now")), angleToWrite, obj.Model.ThresholdAngle, (latestAngle > obj.Model.ThresholdAngle)]);
                 end
 
+                obj.Model.addTimeStreaming(timeLastLoop);
+
+                updateTimeLabel(obj);
+
+                beepTimer = beepTimer + timeLastLoop;
+                elapsedTime = elapsedTime + timeLastLoop;
                 timeLastLoop = toc;
             end
 
@@ -248,7 +250,7 @@ classdef SessionTabController < handle
             arguments
                 obj
                 latestAngle double
-                elapsedTime double
+                elapsedTime double {mustBeNonnegative}
             end
 
             %Update and draw angle and gradient graphs 
@@ -312,11 +314,17 @@ classdef SessionTabController < handle
 
         end
 
-        function beepTimer = doThresholdFunctionality(obj, latestAngle, beepTimer)
+        function beepTimer = doThresholdFunctionality(obj, latestAngle, beepTimer, timeLastLoop)
             %Update threshold time and play beep
 
-            overThresholdAngle = (latestAngle > obj.Model.ThresholdAngle);
-            if (overThresholdAngle)
+            arguments
+                obj 
+                latestAngle double {mustBeNonempty}
+                beepTimer double {mustBeNonnegative, mustBeNonempty}
+                timeLastLoop double {mustBeNonnegative, mustBeNonempty}
+            end
+
+            if (latestAngle > obj.Model.ThresholdAngle)
                 obj.Model.addTimeAboveThreshold(timeLastLoop);
 
                 timeAboveText = "Time above threshold: " + round(obj.Model.TimeAboveThreshold, 2) + "s";
@@ -332,6 +340,14 @@ classdef SessionTabController < handle
             end
         end
 
+        function updateTimeLabel(obj)
+            sessionTimeText = "Time streaming: " + round(obj.Model.TimeStreaming, 2) + "s";
+            if (obj.Model.RecordingInProgress)
+                sessionTimeText = sessionTimeText + " (" + round(obj.Model.TimeRecording, 2) + "s while recording)";
+            end
+            obj.SessionTabView.SessionTimeLabel.Text = sessionTimeText;
+        end
+
         function resetSessionData(obj)
             %Reset graph
             cla(obj.SessionTabView.LumbarAngleGraph);
@@ -341,9 +357,10 @@ classdef SessionTabController < handle
             obj.SessionTabView.updateTrafficLightGraph(obj.Model.FullFlexionAngle, obj.Model.DecimalThresholdPercentage);
 
             %Reset displayed measurements
+            obj.SessionTabView.SessionTimeLabel.Text = "Time streaming: 0s";
             obj.SessionTabView.SmallestAngleLabel.Text = "Smallest angle: No data";
             obj.SessionTabView.LargestAngleLabel.Text = "Largest angle: No data";
-            obj.SessionTabView.TimeAboveMaxLabel.Text = "Time above threshold angle: 0s";
+            obj.SessionTabView.TimeAboveMaxLabel.Text = "Time above threshold: 0s";
         end
 
         %Beep configuration events

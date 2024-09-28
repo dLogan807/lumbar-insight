@@ -25,6 +25,7 @@ classdef SessionTabView < matlab.ui.componentcontainer.ComponentContainer
         TimeAboveMaxLabel matlab.ui.control.Label
         SmallestAngleLabel matlab.ui.control.Label
         LargestAngleLabel matlab.ui.control.Label
+        SessionTimeLabel matlab.ui.control.Label
 
         AngleThresholdLabel matlab.ui.control.Label
         AngleThresholdSlider matlab.ui.control.Slider
@@ -199,19 +200,24 @@ classdef SessionTabView < matlab.ui.componentcontainer.ComponentContainer
             dataHeaderLabel.Layout.Row = 3;
             dataHeaderLabel.Layout.Column = 3;
 
+            obj.SessionTimeLabel = uilabel("Parent", obj.GridLayout, ...
+                "Text", "Time streaming: 0s");
+            obj.SessionTimeLabel.Layout.Row = 4;
+            obj.SessionTimeLabel.Layout.Column = 3;
+
             obj.TimeAboveMaxLabel = uilabel("Parent", obj.GridLayout, ...
                 "Text", "Time above threshold: 0s");
-            obj.TimeAboveMaxLabel.Layout.Row = 4;
+            obj.TimeAboveMaxLabel.Layout.Row = 5;
             obj.TimeAboveMaxLabel.Layout.Column = 3;
 
             obj.SmallestAngleLabel = uilabel("Parent", obj.GridLayout, ...
                 "Text", "Smallest angle: No data");
-            obj.SmallestAngleLabel.Layout.Row = 5;
+            obj.SmallestAngleLabel.Layout.Row = 6;
             obj.SmallestAngleLabel.Layout.Column = 3;
 
             obj.LargestAngleLabel = uilabel("Parent", obj.GridLayout, ...
                 "Text", "Largest angle: No data");
-            obj.LargestAngleLabel.Layout.Row = 6;
+            obj.LargestAngleLabel.Layout.Row = 7;
             obj.LargestAngleLabel.Layout.Column = 3;
 
             %Streaming control

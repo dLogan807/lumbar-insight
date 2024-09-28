@@ -28,12 +28,13 @@ classdef Model < handle
         DecimalThresholdPercentage double {mustBePositive}
         ThresholdAngle double = []
         
-        SmallestStreamedAngle double = [];
-        LargestStreamedAngle double = [];
+        SmallestStreamedAngle double = []
+        LargestStreamedAngle double = []
         TimeAboveThreshold double = 0
+        TimeStreaming double = 0
 
-        SmallestRecordedAngle double = [];
-        LargestRecordedAngle double = [];
+        SmallestRecordedAngle double = []
+        LargestRecordedAngle double = []
         RecordedTimeAboveThreshold double = 0
         TimeRecording double = 0
     end
@@ -106,7 +107,7 @@ classdef Model < handle
 
             arguments
                 obj 
-                seconds double {mustBeNonempty}
+                seconds double {mustBePositive, mustBeNonempty}
             end
 
             if (obj.StreamingInProgress)
@@ -114,6 +115,23 @@ classdef Model < handle
 
                 if (obj.RecordingInProgress)
                     obj.RecordedTimeAboveThreshold = obj.RecordedTimeAboveThreshold + seconds;
+                end
+            end
+        end
+
+        function addTimeStreaming(obj, seconds)
+            %Add to total time streaming
+
+            arguments
+                obj 
+                seconds double {mustBeNonnegative, mustBeNonempty}
+            end
+
+            if (obj.StreamingInProgress)
+                obj.TimeStreaming = obj.TimeStreaming + seconds;
+
+                if (obj.RecordingInProgress)
+                    obj.TimeRecording = obj.TimeRecording + seconds;
                 end
             end
         end
@@ -380,6 +398,7 @@ classdef Model < handle
                 obj.SmallestStreamedAngle = [];
                 obj.LargestStreamedAngle = [];
                 obj.TimeAboveThreshold = 0;
+                obj.TimeStreaming = 0;
 
                 obj.StreamingInProgress = true;
             end
