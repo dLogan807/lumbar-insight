@@ -116,7 +116,7 @@ classdef SessionTabController < handle
 
         end
 
-        function onStopStreamingButtonPushed(obj ,~, ~)
+        function onStopStreamingButtonPushed(obj, ~, ~)
             stopStreaming(obj);
         end
 
@@ -135,6 +135,7 @@ classdef SessionTabController < handle
             resetSessionData(obj);
 
             if (obj.Model.startSessionStreaming())
+                obj.SessionTabView.StartStreamingButton.Enable = "off";
                 obj.SessionTabView.StopStreamingButton.Enable = "on";
                 obj.SessionTabView.RecordingButton.Enable = "on";
 
@@ -144,8 +145,13 @@ classdef SessionTabController < handle
 
         function stopStreaming(obj)
             obj.Model.stopSessionStreaming()
-            obj.SessionTabView.StartStreamingButton.Enable = "off";
+
             obj.SessionTabView.StopStreamingButton.Enable = "off";
+            if (obj.Model.bothIMUDevicesConnected() && obj.Model.calibrationCompleted())
+                obj.SessionTabView.StartStreamingButton.Enable = "on";
+            else
+                obj.SessionTabView.StartStreamingButton.Enable = "off";
+            end
 
             obj.SessionTabView.RecordingButton.Enable = "off";
             obj.SessionTabView.RecordingButton.Text = "Start Recording";
@@ -245,7 +251,7 @@ classdef SessionTabController < handle
                 timeLastLoop = toc;
             end
 
-            disp("Failure rate: " + failurePercentage + "% (" + failures + " failures out of " + totalAttempts + " read attempts)");
+            disp("Failure rate: " + failurePercentage + "% (" + failures + " failures out of " + totalAttempts + " attempts to read data)");
         end
 
         function drawGraphs(obj, latestAngle, elapsedTime)

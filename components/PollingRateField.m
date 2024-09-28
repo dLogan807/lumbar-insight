@@ -4,7 +4,7 @@ classdef PollingRateField < matlab.ui.componentcontainer.ComponentContainer
     properties
         FontSize double = 12
 
-        PollingRate double = 60
+        PollingRate double = 20
     end
 
     properties (Access = private, Transient, NonCopyable)
@@ -42,7 +42,7 @@ classdef PollingRateField < matlab.ui.componentcontainer.ComponentContainer
                 "numeric", ...
                 "ValueDisplayFormat", "%.0f Hz", ...
                 "Limits", [1 inf], ...
-                "Value", 20, ...
+                "Value", obj.PollingRate, ...
                 "ValueChangedFcn", @obj.pollingRateChanged);
         end
 

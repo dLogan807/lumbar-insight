@@ -83,8 +83,7 @@ classdef IMUTabController < handle
     methods (Access = protected)
 
         function setup(~)
-            %Initialize the controller.
-
+           
         end % setup
 
         function update(~)
