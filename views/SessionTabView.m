@@ -23,10 +23,15 @@ classdef SessionTabView < matlab.ui.componentcontainer.ComponentContainer
         LumbarAngleGraph matlab.ui.control.UIAxes
         IndicatorGraph matlab.ui.control.UIAxes
 
-        TimeAboveThresholdLabel matlab.ui.control.Label
-        SmallestAngleLabel matlab.ui.control.Label
-        LargestAngleLabel matlab.ui.control.Label
-        SessionTimeLabel matlab.ui.control.Label
+        StreamingTimeAboveThresholdLabel matlab.ui.control.Label
+        StreamingSmallestAngleLabel matlab.ui.control.Label
+        StreamingLargestAngleLabel matlab.ui.control.Label
+        StreamingTimeLabel matlab.ui.control.Label
+
+        RecordedTimeAboveThresholdLabel matlab.ui.control.Label
+        RecordedSmallestAngleLabel matlab.ui.control.Label
+        RecordedLargestAngleLabel matlab.ui.control.Label
+        RecordingTimeLabel matlab.ui.control.Label
 
         AngleThresholdLabel matlab.ui.control.Label
         AngleThresholdSlider matlab.ui.control.Slider
@@ -237,25 +242,46 @@ classdef SessionTabView < matlab.ui.componentcontainer.ComponentContainer
             largestAngleRowLabel.Layout.Column = 1;
 
             %Session data
-            obj.SessionTimeLabel = uilabel("Parent", obj.DataOverviewLayout, ...
+            obj.StreamingTimeLabel = uilabel("Parent", obj.DataOverviewLayout, ...
                 "Text", "0s");
-            obj.SessionTimeLabel.Layout.Row = 2;
-            obj.SessionTimeLabel.Layout.Column = 2;
+            obj.StreamingTimeLabel.Layout.Row = 2;
+            obj.StreamingTimeLabel.Layout.Column = 2;
 
-            obj.TimeAboveThresholdLabel = uilabel("Parent", obj.DataOverviewLayout, ...
+            obj.StreamingTimeAboveThresholdLabel = uilabel("Parent", obj.DataOverviewLayout, ...
                 "Text", "0s");
-            obj.TimeAboveThresholdLabel.Layout.Row = 3;
-            obj.TimeAboveThresholdLabel.Layout.Column = 2;
+            obj.StreamingTimeAboveThresholdLabel.Layout.Row = 3;
+            obj.StreamingTimeAboveThresholdLabel.Layout.Column = 2;
 
-            obj.SmallestAngleLabel = uilabel("Parent", obj.DataOverviewLayout, ...
+            obj.StreamingSmallestAngleLabel = uilabel("Parent", obj.DataOverviewLayout, ...
                 "Text", "No data");
-            obj.SmallestAngleLabel.Layout.Row = 4;
-            obj.SmallestAngleLabel.Layout.Column = 2;
+            obj.StreamingSmallestAngleLabel.Layout.Row = 4;
+            obj.StreamingSmallestAngleLabel.Layout.Column = 2;
 
-            obj.LargestAngleLabel = uilabel("Parent", obj.DataOverviewLayout, ...
+            obj.StreamingLargestAngleLabel = uilabel("Parent", obj.DataOverviewLayout, ...
                 "Text", "No data");
-            obj.LargestAngleLabel.Layout.Row = 5;
-            obj.LargestAngleLabel.Layout.Column = 2;
+            obj.StreamingLargestAngleLabel.Layout.Row = 5;
+            obj.StreamingLargestAngleLabel.Layout.Column = 2;
+
+            %Data recorded to file
+            obj.RecordingTimeLabel = uilabel("Parent", obj.DataOverviewLayout, ...
+                "Text", "0s");
+            obj.RecordingTimeLabel.Layout.Row = 2;
+            obj.RecordingTimeLabel.Layout.Column = 3;
+
+            obj.RecordedTimeAboveThresholdLabel = uilabel("Parent", obj.DataOverviewLayout, ...
+                "Text", "0s");
+            obj.RecordedTimeAboveThresholdLabel.Layout.Row = 3;
+            obj.RecordedTimeAboveThresholdLabel.Layout.Column = 3;
+
+            obj.RecordedSmallestAngleLabel = uilabel("Parent", obj.DataOverviewLayout, ...
+                "Text", "No data");
+            obj.RecordedSmallestAngleLabel.Layout.Row = 4;
+            obj.RecordedSmallestAngleLabel.Layout.Column = 3;
+
+            obj.RecordedLargestAngleLabel = uilabel("Parent", obj.DataOverviewLayout, ...
+                "Text", "No data");
+            obj.RecordedLargestAngleLabel.Layout.Row = 5;
+            obj.RecordedLargestAngleLabel.Layout.Column = 3;
 
             %Streaming control
             streamingLabel = uilabel("Parent", obj.GridLayout, ...
