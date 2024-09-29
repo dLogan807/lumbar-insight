@@ -19,7 +19,7 @@ classdef ModelTest < matlab.unittest.TestCase
     
     methods(Test)
         % Test methods
-        function dataFolderCreated(testCase)
+        function dataFolderCreatedTest(testCase)
             actual = exist("data", "dir");
             expected = 7;
             testCase.verifyEqual(actual,expected)

@@ -5,10 +5,11 @@ classdef FileWriter < handle
         ParentExportDir string {mustBeTextScalar} = ""
         FullExportDir string {mustBeTextScalar} = ""
         FileInUse string {mustBeTextScalar} = ""
+        FileInitialised logical {mustBeNonempty} = false;
     end
 
     properties (Access = private)
-        prohibitWriteFlag logical {mustBeNonempty} = true;
+        ProhibitWriteFlag logical {mustBeNonempty} = true;
     end
 
     methods
@@ -30,6 +31,11 @@ classdef FileWriter < handle
         function initialiseNewFile(obj)
             %Create a new file with headers
 
+            if (obj.FileInitialised)
+                error("initialiseNewFile:FileAlreadyInitialised", "Close the file before creating a new one.")
+            end
+
+            obj.FileInitialised = true;
             csvHeaders = ["Date and Time", "Angle", "Threshold Angle", "Exceeded Threshold?"];
 
             obj.FileInUse = generateFileName(obj);
@@ -40,7 +46,7 @@ classdef FileWriter < handle
 
             writematrix(csvHeaders, fullPath);
 
-            obj.prohibitWriteFlag = false;
+            obj.ProhibitWriteFlag = false;
         end
         
         function writeAngleData(obj, dataArray)
@@ -51,7 +57,9 @@ classdef FileWriter < handle
                 dataArray (1, 4) {mustBeNonempty}
             end
 
-            if (obj.prohibitWriteFlag)
+            if (obj.ProhibitWriteFlag)
+                error("writeAngleData:FileNotInitialised", "Initialise writing data.")
+            elseif (~obj.FileInitialised)
                 return
             end
 
@@ -66,15 +74,20 @@ classdef FileWriter < handle
                 dataArray (1, 4) double {mustBeNonempty}
             end
 
+            if (~obj.FileInitialised)
+                error("closeFile:FileNotInitialised", "Initialise the file before closing.")
+            end
+
             headers = ["Smallest Angle", "Largest Angle", "Time Above Threshold Angle", "Recording duration"];
             
             %Prevent further writes while adding closing data
-            obj.prohibitWriteFlag = true;
+            obj.ProhibitWriteFlag = true;
 
             writeToFile(obj, headers);
             writeToFile(obj, round(dataArray, 2));
                 
             obj.FileInUse = "";
+            obj.FileInitialised = false;
         end
 
     end
