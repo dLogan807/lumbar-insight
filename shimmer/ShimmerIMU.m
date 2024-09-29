@@ -103,8 +103,12 @@ classdef ShimmerIMU < IMUInterface
             %Retrieve the most recent quaternion from the
             %Shimmer Bluetooth data buffer
 
+            if (~obj.IsConnected)
+                error("LatestQuaternion:DeviceNotConnected", (obj.name + " is not connected."));
+            end
+
             wasStreaming = obj.IsStreaming;
-            ME = [];
+            errorMessage = [];
 
             if (~wasStreaming)
                 obj.startStreaming;
@@ -121,11 +125,11 @@ classdef ShimmerIMU < IMUInterface
 
                     latestQuaternion = shimmerData(end, shimmerQuaternionChannels);
                 else
-                    ME = MException("LatestQuaternion", "Data could not be retrieved from %s" + obj.Name);
+                    errorMessage = "Data could not be retrieved from " + obj.Name;
                 end
 
-            catch exception
-                ME = exception;
+            catch
+                errorMessage = "An error occured retrieving data from " + obj.name;
             end
 
             if (~wasStreaming)
@@ -133,8 +137,8 @@ classdef ShimmerIMU < IMUInterface
             end
 
             %Rethrow if exception occured
-            if (~isempty(ME))
-                rethrow(ME);
+            if (~isempty(errorMessage))
+                error("LatestQuaternion:DataNotRetrieved", errorMessage);
             end
 
         end

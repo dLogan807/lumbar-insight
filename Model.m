@@ -4,8 +4,8 @@ classdef Model < handle
     properties
         %Application data.
 
-        PollingRateOverride double = 20
-        PollingOverrideEnabled logical = false
+        PollingRateOverride double {mustBeNonempty, mustBePositive} = 20
+        PollingOverrideEnabled logical {mustBeNonempty} = false
 
         BeepEnabled logical = true
         BeepRate double = 1
@@ -69,8 +69,12 @@ classdef Model < handle
             %Update and store the latest angle between the
             %IMUs
 
-            quat3dDifference = getQuat3dDifference(obj);
-            latestAngle = calculateAngle(obj, quat3dDifference);
+            if (obj.IMUDevices(1).IsConnected && obj.IMUDevices(2).IsConnected)
+                quat3dDifference = getQuat3dDifference(obj);
+                latestAngle = calculateAngle(obj, quat3dDifference);
+            else
+                error("LatestAngle:IMUNotConnected", "At least one IMU is not connected.");
+            end
         end
 
         function latestCalibratedAngle = get.LatestCalibratedAngle(obj)
@@ -78,8 +82,7 @@ classdef Model < handle
             %subject's standing position.
 
             if (isempty(obj.StandingOffsetAngle))
-                ME = MException("LatestCalibratedAngle: Standing offset angle not calibrated!");
-                throw(ME)
+                error("LatestCalibratedAngle:NotCalibrated", "Standing offset angle not calibrated.");
             end
 
             latestCalibratedAngle = obj.LatestAngle + obj.StandingOffsetAngle;
