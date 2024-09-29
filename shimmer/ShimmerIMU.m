@@ -104,7 +104,7 @@ classdef ShimmerIMU < IMUInterface
             %Shimmer Bluetooth data buffer
 
             if (~obj.IsConnected)
-                error("LatestQuaternion:DeviceNotConnected", (obj.name + " is not connected."));
+                error("LatestQuaternion:DeviceNotConnected", (obj.Name + " is not connected."));
             end
 
             wasStreaming = obj.IsStreaming;
@@ -129,7 +129,7 @@ classdef ShimmerIMU < IMUInterface
                 end
 
             catch
-                errorMessage = "An error occured retrieving data from " + obj.name;
+                errorMessage = "An error occured retrieving data from " + obj.Name;
             end
 
             if (~wasStreaming)
@@ -179,6 +179,10 @@ classdef ShimmerIMU < IMUInterface
                 samplingRate double {mustBePositive}
             end
 
+            if (~obj.IsConnected)
+                error("configure:DeviceNotConnected", ("Cannot configure " + obj.Name + " as it is not connected."));
+            end
+
             SensorMacros = ShimmerEnabledSensorsMacrosClass; % assign user friendly macros for setenabledsensors
 
             try
@@ -216,6 +220,10 @@ classdef ShimmerIMU < IMUInterface
                 samplingRate double {mustBePositive}
             end
 
+            if (~obj.IsConnected)
+                error("setSamplingRate:DeviceNotConnected", ("Cannot set sampling rate of " + obj.Name + " as it is not connected."));
+            end
+
             if (ismember(samplingRate, obj.SamplingRates))
                 isNumber = ~strcmp(obj.Driver.setsamplingrate(samplingRate), 'Nan');
 
@@ -238,7 +246,6 @@ classdef ShimmerIMU < IMUInterface
             if (obj.IsStreaming)
                 started = true;
             else
-
                 try
                     started = obj.Driver.start;
                 catch
@@ -253,11 +260,10 @@ classdef ShimmerIMU < IMUInterface
         function stopped = stopStreaming(obj)
             %STOPSTREAMING Stop streaming data
             if (obj.IsStreaming)
-
                 try
                     stopped = obj.Driver.stop;
                 catch
-                    warning("Error encountered stopping streaming of " + obj.name);
+                    warning("Error encountered stopping streaming of " + obj.Name);
                     stopped = ~obj.IsStreaming;
                 end
 
