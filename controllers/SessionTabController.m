@@ -214,7 +214,7 @@ classdef SessionTabController < handle
                     successPercentage = round((successes * 100) / numOfAttempts, 2);
 
                     if (successPercentage < successThresholdPercent)
-                        disp("Warning: Aborting session due to high rate of lost packets! (" + successPercentage + "% successful of last " + numOfAttempts + "attempts to read data)");
+                        disp("Warning: Aborting session due to high rate of lost packets! (" + successPercentage + "% attempts successful of last " + numOfAttempts + " to read data.)");
                         stopStreaming(obj)
                     end
                 end
