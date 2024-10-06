@@ -110,7 +110,7 @@ classdef Model < handle
 
             arguments
                 obj 
-                seconds double {mustBePositive, mustBeNonempty}
+                seconds double {mustBeNonnegative, mustBeNonempty}
             end
 
             if (obj.StreamingInProgress)

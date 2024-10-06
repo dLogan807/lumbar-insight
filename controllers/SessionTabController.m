@@ -176,10 +176,10 @@ classdef SessionTabController < handle
 
             delay = calculateDelay(obj);
 
-            failures = 0;
-            totalAttempts = 0;
-            failureThresholdPercent = 40.0;
-            failurePercentage = 0.0;
+            successThresholdPercent = 50.0;
+            numOfAttempts = obj.Model.getPollingRate();
+            attempts = ones(numOfAttempts, 1);
+            index = 1;
 
             timeLastLoop = 0;
             elapsedTime = 0;
@@ -194,7 +194,6 @@ classdef SessionTabController < handle
                 tic; %Start timer
 
                 pause(delay);
-                totalAttempts = totalAttempts + 1;
                 angleRetrievalFailed = false;
 
                 % Stop session if device not streaming
@@ -203,23 +202,25 @@ classdef SessionTabController < handle
                     break
                 end
 
-                % Retrieve latest angle, recording failure
+                % Retrieve latest angle, noting failure
                 try
                     latestAngle = obj.Model.LatestCalibratedAngle;
                 catch
-                    failures = failures + 1;
+                    angleRetrievalFailed = true;
+                    attempts(index) = 0;
 
-                    failurePercentage = round((failures * 100) / totalAttempts, 2);
+                    successes = sum(attempts,'all');
 
-                    if (failurePercentage > failureThresholdPercent)
-                        disp("Warning: Aborting session due to high rate of lost packets!")
+                    successPercentage = round((successes * 100) / numOfAttempts, 2);
+
+                    if (successPercentage < successThresholdPercent)
+                        disp("Warning: Aborting session due to high rate of lost packets! (" + successPercentage + "% successful of last " + numOfAttempts + "attempts to read data)");
                         stopStreaming(obj)
                     end
-
-                    angleRetrievalFailed = true;
                 end
 
                 if (~angleRetrievalFailed)
+                    attempts(index) = 1;
                     drawGraphs(obj, latestAngle, elapsedTime);
                     beepTimer = doThresholdFunctionality(obj, latestAngle, beepTimer, timeLastLoop);
                 end
@@ -241,9 +242,13 @@ classdef SessionTabController < handle
                 beepTimer = beepTimer + timeLastLoop;
                 elapsedTime = elapsedTime + timeLastLoop;
                 timeLastLoop = toc;
-            end
 
-            disp("Failure rate: " + failurePercentage + "% (" + failures + " failures out of " + totalAttempts + " attempts to read data)");
+                if (index > numOfAttempts)
+                    index = 1;
+                else
+                    index = index + 1;
+                end
+            end
         end
 
         function drawGraphs(obj, latestAngle, elapsedTime)
