@@ -177,7 +177,7 @@ classdef SessionTabController < handle
             delay = calculateDelay(obj);
 
             successThresholdPercent = 50.0;
-            numOfAttempts = obj.Model.getPollingRate();
+            numOfAttempts = obj.Model.getPollingRate() * 3;
             attempts = ones(numOfAttempts, 1);
             index = 1;
 

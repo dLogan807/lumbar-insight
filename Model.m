@@ -85,7 +85,7 @@ classdef Model < handle
                 error("LatestCalibratedAngle:NotCalibrated", "Standing offset angle not calibrated.");
             end
 
-            latestCalibratedAngle = obj.LatestAngle + obj.StandingOffsetAngle;
+            latestCalibratedAngle = obj.LatestAngle - obj.StandingOffsetAngle;
         end
 
         function updateCeilingAngles(obj, angle)
@@ -324,13 +324,11 @@ classdef Model < handle
             calibrated = true;
 
             try
-
                 if (strcmp(angleType, "s"))
-                    angle = 0 - obj.LatestAngle;
+                    angle = obj.LatestAngle;
                 else
                     angle = obj.LatestCalibratedAngle;
                 end
-
             catch
                 calibrated = false;
                 warning("Failed to retrieve angle. Could not calibrate.");
@@ -497,8 +495,8 @@ classdef Model < handle
         function quat3dDifference = getQuat3dDifference(obj)
             %Find the difference between IMU quaternions.
 
-            quaternion1 = obj.IMUDevices(2).LatestQuaternion;
-            quaternion2 = obj.IMUDevices(1).LatestQuaternion;
+            quaternion1 = obj.IMUDevices(1).LatestQuaternion;
+            quaternion2 = obj.IMUDevices(2).LatestQuaternion;
 
             quat3dDifference = quatmultiply(quatconj(quaternion1), quaternion2);
         end
@@ -509,7 +507,7 @@ classdef Model < handle
 
             eulerZYX = quat2eul(quat3dDifference);
 
-            angle = rad2deg(eulerZYX(3));
+            angle = 0 - rad2deg(eulerZYX(3));
         end
 
     end

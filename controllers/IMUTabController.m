@@ -381,7 +381,7 @@ classdef IMUTabController < handle
         end
 
         function onFullFlexionAngleCalibrated(obj, ~, ~)
-            obj.IMUTabView.CalibrateFullFlexionButton.StatusText = "Full flexion angle: " + obj.Model.FullFlexionAngle + "° (" + (obj.Model.FullFlexionAngle - obj.Model.StandingOffsetAngle) + " + " + obj.Model.StandingOffsetAngle + ")";
+            obj.IMUTabView.CalibrateFullFlexionButton.StatusText = "Full flexion angle: " + obj.Model.FullFlexionAngle + "° (" + (obj.Model.FullFlexionAngle + obj.Model.StandingOffsetAngle) + " - " + obj.Model.StandingOffsetAngle + ")";
         end
 
     end % methods ( Access = private )
