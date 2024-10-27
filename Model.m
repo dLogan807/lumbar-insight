@@ -13,7 +13,7 @@ classdef Model < handle
 
     properties (SetAccess = private, GetAccess = public)
         IMUDevices (1, 2) IMUInterface = [ShimmerIMU("placeholder1"), ShimmerIMU("placeholder2")]
-        Cameras (:, 2) Camera
+        WebCam (1,1) WebCamera = WebCamera()
 
         FileExportManager FileWriter
         StreamingInProgress logical = false
@@ -55,6 +55,8 @@ classdef Model < handle
         StandingOffsetAngleCalibrated
         FullFlexionAngleCalibrated
 
+        WebCamConnected
+
     end % events ( NotifyAccess = private )
 
     methods
@@ -63,6 +65,7 @@ classdef Model < handle
             %Constructor. Initialises beep warning sound and data exporting
             [obj.BeepSoundData, obj.BeepSoundSampleRate] = audioread('warningbeep.mp3');
             obj.FileExportManager = FileWriter("data");
+                
         end
 
         function latestAngle = get.LatestAngle(obj)
@@ -164,6 +167,10 @@ classdef Model < handle
                 deviceType DeviceTypes
                 deviceIndex int8 {mustBeInRange(deviceIndex, 1, 2)}
             end
+
+            obj.WebCam.disconnect();
+            obj.WebCam.connect("USB2.0 HD UVC WebCam")
+            notify(obj, "WebCamConnected")
 
             connected = false;
 

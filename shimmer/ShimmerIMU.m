@@ -165,6 +165,7 @@ classdef ShimmerIMU < IMUInterface
 
             try
                 disconnected = obj.Driver.disconnect;
+                clear obj.Driver;
             catch
                 disconnected = ~obj.IsConnected;
             end

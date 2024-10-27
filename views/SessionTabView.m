@@ -41,6 +41,9 @@ classdef SessionTabView < matlab.ui.componentcontainer.ComponentContainer
         StartStreamingButton matlab.ui.control.Button
         StopStreamingButton matlab.ui.control.Button
         RecordingButton matlab.ui.control.Button
+
+        WebCamAxes matlab.ui.control.UIAxes
+        IPCamAxes matlab.ui.control.UIAxes
     end
 
     events (NotifyAccess = private)
@@ -327,12 +330,34 @@ classdef SessionTabView < matlab.ui.componentcontainer.ComponentContainer
             obj.RecordingButton.Layout.Row = 6;
             obj.RecordingButton.Layout.Column = 2;
 
-            %Camera
+            %Cameras
             cameraLabel = uilabel("Parent", obj.GridLayout, ...
                 "Text", "Cameras", ...
                 "FontWeight", "bold");
             cameraLabel.Layout.Row = 1;
             cameraLabel.Layout.Column = 3;
+
+            cameraGrid = uigridlayout( ...
+                "Parent", obj.GridLayout, ...
+                "RowHeight", {"1x", "1x"}, ...
+                "ColumnWidth", {"1x"}, ...
+                "Padding", 20 );
+            cameraGrid.Layout.Row = 2;
+            cameraGrid.Layout.Column = 3;
+
+            obj.WebCamAxes = uiaxes("Parent", cameraGrid, ...
+                "XTick", [], ...
+                "YTick", [], ...
+                "Visible", "off");
+            axis(obj.WebCamAxes, 'image');
+            obj.WebCamAxes.Layout.Row = 1;   
+
+            obj.IPCamAxes = uiaxes("Parent", cameraGrid, ...
+                "XTick", [], ...
+                "YTick", [], ...
+                "Visible", "off");
+            axis(obj.IPCamAxes, 'image');
+            obj.IPCamAxes.Layout.Row = 2;  
             
         end
 

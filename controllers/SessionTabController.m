@@ -52,6 +52,8 @@ classdef SessionTabController < handle
                 "StandingOffsetAngleCalibrated", @obj.onStandingOffsetAngleCalibrated);
             obj.Listener(end + 1) = listener(obj.Model, ...
                 "FullFlexionAngleCalibrated", @obj.onFullFlexionAngleCalibrated);
+            obj.Listener(end + 1) = listener(obj.Model, ...
+                "WebCamConnected", @obj.onWebCamConnected);
 
         end % constructor
 
@@ -91,6 +93,15 @@ classdef SessionTabController < handle
             if (obj.Model.calibrationCompleted())
                 updateThresholdData(obj);
             end
+        end
+
+        function onWebCamConnected(obj, ~, ~)
+            camImage = image(obj.SessionTabView.WebCamAxes, zeros(size(obj.Model.WebCam.Frame),'uint8'));
+
+            obj.Model.WebCam.preview(camImage);
+
+            obj.SessionTabView.WebCamAxes.Visible = "on";
+            disp("displaying")
         end
 
         function updateThresholdData(obj)
