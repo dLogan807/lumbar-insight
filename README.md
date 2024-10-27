@@ -8,7 +8,11 @@ The aim of this project is to develop a UI to display, record, configure, and no
 
 Developed for use with [MATLAB 2024b](https://mathworks.com/downloads/).
 
-Requires the [Aerospace Toolbox](https://mathworks.com/products/aerospace-toolbox.html) Add-On. This can be installed from within MATLAB.
+Requires the following MATLAB add-ons:
+
+- [Aerospace Toolbox](https://mathworks.com/products/aerospace-toolbox.html)
+- [MATLAB Support Package for USB Webcams](https://au.mathworks.com/matlabcentral/fileexchange/45182-matlab-support-package-for-usb-webcams)
+- [MATLAB Support Package for IP Cameras](https://au.mathworks.com/matlabcentral/fileexchange/49824-matlab-support-package-for-ip-cameras)
 
 ## Launching
 
