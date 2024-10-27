@@ -16,12 +16,30 @@ Requires the following MATLAB add-ons:
 
 ## Launching
 
-1. Open the project with MATLAB
-2. Run `launchLumbarInsight.m`
+1. Open the project folder with MATLAB
+2. Add the following folders to MATLAB's path (if not done so automatically):
+   - `audio`
+   - `components`
+   - `controllers`
+   - `quaternion`
+   - `shimmer`
+   - `views`
+3. Run `launchLumbarInsight.m`
 
 If the application does not launch, it is already open in another window. To override this behaviour, set `allowMultipleAppInstances` in `launchLumbarInsight.m` to true.
 
-## Configuration
+## Connecting to IMUs
+
+### Shimmers
+
+1. Pair with the Shimmers through Bluetooth.
+
+   If on Windows 11, set `Bluetooth devices discovery` to `Advanced`.
+   The passcode is `1234`.
+
+2. Enter the name inside LumbarInsight and connect. This is the same name as the paired device name (e.g. `Shimmer3-3287`).
+
+## Application Modification
 
 ### Supported IMU Devices
 
