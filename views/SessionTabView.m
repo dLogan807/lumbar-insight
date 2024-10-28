@@ -42,7 +42,12 @@ classdef SessionTabView < matlab.ui.componentcontainer.ComponentContainer
         StopStreamingButton matlab.ui.control.Button
         RecordingButton matlab.ui.control.Button
 
-        WebCamAxes matlab.ui.control.UIAxes
+        WebcamStatusLabel matlab.ui.control.Label
+        WebcamRecordCheckbox matlab.ui.control.CheckBox
+        WebcamAxes matlab.ui.control.UIAxes
+
+        IPCamStatusLabel matlab.ui.control.Label
+        IPCamRecordCheckbox matlab.ui.control.CheckBox
         IPCamAxes matlab.ui.control.UIAxes
     end
 
@@ -134,6 +139,7 @@ classdef SessionTabView < matlab.ui.componentcontainer.ComponentContainer
         function setup(obj)
             %Initialize the view.
 
+            %Setup layout
             obj.GridLayout = uigridlayout( ...
                 "Parent", obj, ...
                 "RowHeight", {22, "1x", 22, 30, 40, 30, 30}, ...
@@ -158,6 +164,14 @@ classdef SessionTabView < matlab.ui.componentcontainer.ComponentContainer
                 "ColumnSpacing", 10);
             obj.DataOverviewLayout.Layout.Row = [3 7];
             obj.DataOverviewLayout.Layout.Column = 3;
+
+            cameraGrid = uigridlayout( ...
+                "Parent", obj.GridLayout, ...
+                "RowHeight", {22, 22, 22, "1x", 22, 22, 22, "1x"}, ...
+                "ColumnWidth", {"1x"}, ...
+                "Padding", 20 );
+            cameraGrid.Layout.Row = [1 2];
+            cameraGrid.Layout.Column = 3;
 
             %Create view components.
 
@@ -330,34 +344,50 @@ classdef SessionTabView < matlab.ui.componentcontainer.ComponentContainer
             obj.RecordingButton.Layout.Row = 6;
             obj.RecordingButton.Layout.Column = 2;
 
-            %Cameras
-            cameraLabel = uilabel("Parent", obj.GridLayout, ...
-                "Text", "Cameras", ...
+            %Webcam
+            webcamTitleLabel = uilabel("Parent", cameraGrid, ...
+                "Text", "Wired Webcam", ...
                 "FontWeight", "bold");
-            cameraLabel.Layout.Row = 1;
-            cameraLabel.Layout.Column = 3;
+            webcamTitleLabel.Layout.Row = 1;
 
-            cameraGrid = uigridlayout( ...
-                "Parent", obj.GridLayout, ...
-                "RowHeight", {"1x", "1x"}, ...
-                "ColumnWidth", {"1x"}, ...
-                "Padding", 20 );
-            cameraGrid.Layout.Row = 2;
-            cameraGrid.Layout.Column = 3;
+            obj.WebcamStatusLabel = uilabel("Parent", cameraGrid, ...
+                "Text", "No webcam connected.");
+            obj.WebcamStatusLabel.Layout.Row = 2;
 
-            obj.WebCamAxes = uiaxes("Parent", cameraGrid, ...
+            obj.WebcamRecordCheckbox = uicheckbox("Parent", cameraGrid, ...
+                "Text", "Record video", ...
+                "Enable", "off");
+            obj.WebcamRecordCheckbox.Layout.Row = 3;
+
+            obj.WebcamAxes = uiaxes("Parent", cameraGrid, ...
                 "XTick", [], ...
                 "YTick", [], ...
                 "Visible", "off");
-            axis(obj.WebCamAxes, 'image');
-            obj.WebCamAxes.Layout.Row = 1;   
+            axis(obj.WebcamAxes, 'image');
+            obj.WebcamAxes.Layout.Row = 4;
+
+
+            %IP Cam
+            ipCamTitleLabel = uilabel("Parent", cameraGrid, ...
+                "Text", "Wireless IP Camera", ...
+                "FontWeight", "bold");
+            ipCamTitleLabel.Layout.Row = 5;
+
+            obj.WebcamStatusLabel = uilabel("Parent", cameraGrid, ...
+                "Text", "No IP Camera connected.");
+            obj.WebcamStatusLabel.Layout.Row = 6;
+
+            obj.IPCamRecordCheckbox = uicheckbox("Parent", cameraGrid, ...
+                "Text", "Record video", ...
+                "Enable", "off");
+            obj.IPCamRecordCheckbox.Layout.Row = 7;
 
             obj.IPCamAxes = uiaxes("Parent", cameraGrid, ...
                 "XTick", [], ...
                 "YTick", [], ...
                 "Visible", "off");
             axis(obj.IPCamAxes, 'image');
-            obj.IPCamAxes.Layout.Row = 2;  
+            obj.IPCamAxes.Layout.Row = 8;  
             
         end
 
