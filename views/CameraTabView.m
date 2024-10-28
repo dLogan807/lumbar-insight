@@ -6,10 +6,6 @@ classdef CameraTabView < matlab.ui.componentcontainer.ComponentContainer
         Listener(:, 1) event.listener
 
         FontSet logical = false
-
-        YAxisMinimum = -50
-        YAxisMaximum = 90
-        YAxisTickInterval = 10
     end
 
     properties
@@ -17,11 +13,16 @@ classdef CameraTabView < matlab.ui.componentcontainer.ComponentContainer
 
         %Components
         GridLayout matlab.ui.container.GridLayout
+
+        WebcamDropDown matlab.ui.control.DropDown
+        WebcamStatusLabel matlab.ui.control.Label
+        WebcamRefreshButton matlab.ui.control.Button
+        WebcamConnectButton matlab.ui.control.Button
     end
 
     events (NotifyAccess = private)
         %Event broadcast when view is interacted with
-
+        
 
     end % events ( NotifyAccess = private )
 
@@ -59,12 +60,43 @@ classdef CameraTabView < matlab.ui.componentcontainer.ComponentContainer
 
             obj.GridLayout = uigridlayout( ...
                 "Parent", obj, ...
-                "RowHeight", {22, "1x", 22, 30, 40, 30, 30}, ...
-                "ColumnWidth", {"2x", ".5x", "1x"}, ...
+                "RowHeight", {22, 22, 30, 30, 30, 22}, ...
+                "ColumnWidth", {"1x"}, ...
                 "Padding", 20, ...
                 "ColumnSpacing", 40);
 
-            
+            %Wired webcam
+            webcamLabel = uilabel("Parent", obj.GridLayout, ...
+                "Text", "Wired Webcam", ...
+                "FontWeight", "bold");
+            webcamLabel.Layout.Row = 1;
+
+            obj.WebcamStatusLabel = uilabel("Parent", obj.GridLayout, ...
+                 "Text", "Status: Not connected.");
+            obj.WebcamStatusLabel.Layout.Row = 2;
+
+            obj.WebcamRefreshButton = uibutton("Parent", obj.GridLayout, ...
+                "Text", "Refresh available webcams");
+            obj.WebcamRefreshButton.Layout.Row = 3;
+
+            initalWebcams = webcamlist;
+            obj.WebcamDropDown = uidropdown("Parent", obj.GridLayout, ...
+                "Items", initalWebcams, ...
+                "Placeholder", "No webcams available");
+            if (isempty(initalWebcams))
+                obj.WebcamDropDown.Enable = "off";
+            end
+            obj.WebcamDropDown.Layout.Row = 4;
+
+            obj.WebcamConnectButton = uibutton("Parent", obj.GridLayout, ...
+                "Text", "Connect");
+            obj.WebcamConnectButton.Layout.Row = 5;
+
+            %Wireless IP camera
+            webcamLabel = uilabel("Parent", obj.GridLayout, ...
+                "Text", "Wireless IP Camera", ...
+                "FontWeight", "bold");
+            webcamLabel.Layout.Row = 6;
             
         end
 

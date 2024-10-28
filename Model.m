@@ -13,7 +13,8 @@ classdef Model < handle
 
     properties (SetAccess = private, GetAccess = public)
         IMUDevices (1, 2) IMUInterface = [ShimmerIMU("placeholder1"), ShimmerIMU("placeholder2")]
-        WebCam (1,1) WebCamera = WebCamera()
+        Webcam (1,1) WebCamera = WebCamera()
+        AvailableWebCams string
 
         FileExportManager FileWriter
         StreamingInProgress logical = false
@@ -169,8 +170,8 @@ classdef Model < handle
             end
 
             disp("Trying to connect to camera...")
-            obj.WebCam.disconnect();
-            obj.WebCam.connect("USB2.0 HD UVC WebCam");
+            obj.Webcam.disconnect();
+            obj.Webcam.connect("USB2.0 HD UVC WebCam");
             notify(obj, "WebCamConnected")
 
             connected = false;
@@ -453,6 +454,10 @@ classdef Model < handle
 
         function playWarningBeep(obj)
             sound(obj.BeepSoundData, obj.BeepSoundSampleRate);
+        end
+
+        function updateAvailableWebcams(obj)
+            %camTable = listwe
         end
 
     end % methods

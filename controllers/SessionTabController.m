@@ -97,12 +97,11 @@ classdef SessionTabController < handle
 
         function onWebCamConnected(obj, ~, ~)
             %Get image size of camera and preview
-            camImage = image(obj.SessionTabView.WebCamAxes, zeros(size(obj.Model.WebCam.Frame),'uint8'));
+            camImage = image(obj.SessionTabView.WebCamAxes, zeros(size(obj.Model.Webcam.Frame),'uint8'));
 
-            obj.Model.WebCam.preview(camImage);
+            obj.Model.Webcam.preview(camImage);
 
             obj.SessionTabView.WebCamAxes.Visible = "on";
-            disp("Displaying camera!");
         end
 
         function onWebCamDisconnected(obj, ~, ~)
