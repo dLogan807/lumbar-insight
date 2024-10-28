@@ -1,4 +1,4 @@
-classdef NonSingletonLumbarInsight < handle
+classdef LumbarInsightMultiple < handle
     %Singleton class to launch the application
 
     properties % Public Access
@@ -8,13 +8,14 @@ classdef NonSingletonLumbarInsight < handle
             "WindowState", "maximized");
 
         AppIMUTabController
+        AppCameraController
         AppSessionTabController
         AppModel
     end
 
     methods
 
-        function newObj = NonSingletonLumbarInsight()
+        function newObj = LumbarInsightMultiple()
 
             if (~isvalid(newObj.Figure))
                 createFigure(newObj);
@@ -42,7 +43,7 @@ classdef NonSingletonLumbarInsight < handle
                 "Units", "normalized", ...
                 "Position", [0 0 1 1]);
             imuTab = uitab(tabgroup, "Title", "IMU Configuration");
-            % cameraTab = uitab(tabgroup,"Title","Camera Configuration");
+            cameraTab = uitab(tabgroup,"Title","Camera Configuration");
             sessionTab = uitab(tabgroup, "Title", "Session");
             % managementTab = uitab(tabgroup,"Title","Session Management");
 
@@ -54,11 +55,14 @@ classdef NonSingletonLumbarInsight < handle
 
             imuTabView = IMUTabView("Parent", imuTab, ...
                 "FontSize", fontSize);
+            cameraTabView = CameraTabView("Parent", cameraTab, ...
+                "FontSize", fontSize);
             sessionTabView = SessionTabView("Parent", sessionTab, ...
                 "FontSize", fontSize);
 
             %Create the controllers
             obj.AppIMUTabController = IMUTabController(obj.AppModel, imuTabView);
+            obj.AppCameraController = CameraTabController(obj.AppModel, cameraTabView);
             obj.AppSessionTabController = SessionTabController(obj.AppModel, sessionTabView);
         end
 

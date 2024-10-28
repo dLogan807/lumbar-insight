@@ -19,7 +19,10 @@ classdef WebCamera < handle
         end
 
         function disconnect(obj)
-            closePreview(obj.Camera)
+            if (~isempty(obj.Camera))
+                closePreview(obj.Camera)
+            end
+            
             obj.IsPreviewing = false;
             clear obj.Camera;
             clear obj.Frame;

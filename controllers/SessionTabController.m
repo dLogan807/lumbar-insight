@@ -4,7 +4,7 @@ classdef SessionTabController < handle
     properties (Access = private)
         % Application data model.
         Model(1, 1) Model
-        % IMU View
+        % Session View
         SessionTabView SessionTabView
         % Listener object used to respond dynamically to view events.
         Listener(:, 1) event.listener
@@ -96,12 +96,18 @@ classdef SessionTabController < handle
         end
 
         function onWebCamConnected(obj, ~, ~)
+            %Get image size of camera and preview
             camImage = image(obj.SessionTabView.WebCamAxes, zeros(size(obj.Model.WebCam.Frame),'uint8'));
 
             obj.Model.WebCam.preview(camImage);
 
             obj.SessionTabView.WebCamAxes.Visible = "on";
-            disp("displaying")
+            disp("Displaying camera!");
+        end
+
+        function onWebCamDisconnected(obj, ~, ~)
+            %Disable image preview axes component on disconnect
+            obj.SessionTabView.WebCamAxes.Visible = "off";
         end
 
         function updateThresholdData(obj)

@@ -168,8 +168,9 @@ classdef Model < handle
                 deviceIndex int8 {mustBeInRange(deviceIndex, 1, 2)}
             end
 
+            disp("Trying to connect to camera...")
             obj.WebCam.disconnect();
-            obj.WebCam.connect("USB2.0 HD UVC WebCam")
+            obj.WebCam.connect("USB2.0 HD UVC WebCam");
             notify(obj, "WebCamConnected")
 
             connected = false;
