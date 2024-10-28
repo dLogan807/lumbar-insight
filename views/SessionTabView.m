@@ -192,6 +192,8 @@ classdef SessionTabView < matlab.ui.componentcontainer.ComponentContainer
                 "YAxisLocation", "right", ...
                 "Layer", "top", ...
                 "Colormap", CustomColourMaps.TrafficLight);
+            obj.IndicatorGraph.Toolbar.Visible = "off";
+            disableDefaultInteractivity(obj.IndicatorGraph);
             obj.LumbarAngleGraph.XLabel.String = '';
             obj.IndicatorGraph.Layout.Column = 2;
 
