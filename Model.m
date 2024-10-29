@@ -56,7 +56,8 @@ classdef Model < handle
         StandingOffsetAngleCalibrated
         FullFlexionAngleCalibrated
 
-        WebCamConnected
+        WebcamConnected
+        WebcamDisconnected
 
     end % events ( NotifyAccess = private )
 
@@ -451,8 +452,18 @@ classdef Model < handle
             sound(obj.BeepSoundData, obj.BeepSoundSampleRate);
         end
 
-        function updateAvailableWebcams(obj)
-            %camTable = listwe
+        function connectWebcam(obj, cameraName)
+            if (obj.Webcam.connect(cameraName))
+                notify(obj, "WebcamConnected")
+            else
+                warning("Could not connect the webcam " + cameraName);
+            end
+        end
+
+        function disconnectWebcam(obj)
+            obj.Webcam.disconnect();
+
+            notify(obj, "WebcamDisconnected")
         end
 
     end % methods

@@ -26,10 +26,16 @@ classdef CameraTabController < handle
             obj.CameraTabView = cameraTabView;
 
             % Listen for changes to the view.
+            obj.Listener(end + 1) = listener(obj.CameraTabView, ...
+                "RefreshWebcamsPushed", @obj.refreshAvailableWebcams);
+            obj.Listener(end + 1) = listener(obj.CameraTabView, ...
+                "ConnectWebcamPushed", @obj.connectWebcamPushed);
 
-
-            % Listen for changes to the model data.
-
+            % Listen for changes to the model.
+            obj.Listener(end + 1) = listener(obj.Model, ...
+                "WebcamConnected", @obj.webcamConnected);
+            obj.Listener(end + 1) = listener(obj.Model, ...
+                "WebcamDisconnected", @obj.webcamDisconnected);
 
         end % constructor
 
@@ -51,7 +57,49 @@ classdef CameraTabController < handle
     end % methods ( Access = protected )
 
     methods (Access = private)
+        function refreshAvailableWebcams(obj, ~, ~)
+            %Update the available connected webcams
+            webcams = webcamlist();
+            obj.CameraTabView.WebcamDropDown.Items = webcams;
 
+            if (isempty(webcams))
+                obj.CameraTabView.WebcamDropDown.Enable = "off";
+                obj.CameraTabView.WebcamConnectButton.Enable = "off";
+                obj.Model.disconnectWebcam();
+            else
+                obj.CameraTabView.WebcamDropDown.Enable = "on";
+                obj.CameraTabView.WebcamConnectButton.Enable = "on";
+            end
+        end
+
+        function connectWebcamPushed(obj, ~, ~)
+            %Connect or disconnect from a webcam
+
+            if (obj.Model.Webcam.IsConnected)
+                obj.Model.disconnectWebcam();
+            else
+                webcamName = obj.CameraTabView.WebcamDropDown.Value;
+                obj.Model.connectWebcam(webcamName);
+            end
+        end
+
+        function webcamConnected(obj, ~, ~)
+            %Update UI after webcam connected
+
+            obj.CameraTabView.WebcamDropDown.Enable = "off";
+            obj.CameraTabView.WebcamRefreshButton.Enable = "off";
+            obj.CameraTabView.WebcamConnectButton.Text = "Disconnect";
+            obj.CameraTabView.WebcamStatusLabel.Text = "Connected to " + obj.Model.Webcam.Name;
+        end
+
+        function webcamDisconnected(obj, ~, ~)
+            %Update UI after webcam disconnected
+
+            obj.CameraTabView.WebcamRefreshButton.Enable = "on";
+            obj.CameraTabView.WebcamConnectButton.Text = "Connect";
+            obj.CameraTabView.WebcamStatusLabel.Text = "Not connected.";
+            refreshAvailableWebcams(obj);
+        end
         
     end % methods ( Access = private )
 

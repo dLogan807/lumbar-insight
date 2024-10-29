@@ -3,6 +3,8 @@ classdef WebCamera < handle
     properties (SetAccess = private)
         Camera webcam
         Frame
+        Name string = []
+        IsConnected logical {mustBeNonempty} = false
         IsPreviewing logical {mustBeNonempty} = false
     end
     
@@ -11,6 +13,8 @@ classdef WebCamera < handle
             try
                 obj.Camera = webcam(cameraName);
                 obj.Frame = snapshot(obj.Camera);
+                obj.Name = cameraName;
+                obj.IsConnected = true;
                 connected = true;
             catch
                 disp("Could not connect to " + cameraName);
@@ -21,11 +25,13 @@ classdef WebCamera < handle
         function disconnect(obj)
             if (~isempty(obj.Camera))
                 closePreview(obj.Camera)
+                clear obj.Camera;
+                clear obj.Frame;
+                obj.Name = [];
+                obj.IsConnected = false;
             end
             
             obj.IsPreviewing = false;
-            clear obj.Camera;
-            clear obj.Frame;
         end
 
         function preview(obj, camImage)

@@ -22,7 +22,8 @@ classdef CameraTabView < matlab.ui.componentcontainer.ComponentContainer
 
     events (NotifyAccess = private)
         %Event broadcast when view is interacted with
-        
+        RefreshWebcamsPushed
+        ConnectWebcamPushed
 
     end % events ( NotifyAccess = private )
 
@@ -71,21 +72,21 @@ classdef CameraTabView < matlab.ui.componentcontainer.ComponentContainer
                 "FontWeight", "bold");
 
             obj.WebcamStatusLabel = uilabel("Parent", obj.GridLayout, ...
-                 "Text", "Status: Not connected.");
+                 "Text", "Not connected.");
 
             obj.WebcamRefreshButton = uibutton("Parent", obj.GridLayout, ...
-                "Text", "Refresh available webcams");
+                "Text", "Refresh available webcams", ...
+                "ButtonPushedFcn", @obj.refreshWebcamsPushed);
 
-            initalWebcams = webcamlist;
             obj.WebcamDropDown = uidropdown("Parent", obj.GridLayout, ...
-                "Items", initalWebcams, ...
-                "Placeholder", "No webcams available");
-            if (isempty(initalWebcams))
-                obj.WebcamDropDown.Enable = "off";
-            end
+                "Placeholder", "No webcams available", ...
+                "Items", "", ...
+                "Enable", "off");
 
             obj.WebcamConnectButton = uibutton("Parent", obj.GridLayout, ...
-                "Text", "Connect");
+                "Text", "Connect", ...
+                "Enable", "off", ...
+                "ButtonPushedFcn", @obj.connectWebcamPushed);
 
             %Wireless IP camera
             uilabel("Parent", obj.GridLayout, ...
@@ -106,7 +107,13 @@ classdef CameraTabView < matlab.ui.componentcontainer.ComponentContainer
     end
 
     methods (Access = private)
+        function refreshWebcamsPushed(obj, ~, ~)
+            notify(obj, "RefreshWebcamsPushed")
+        end
 
+        function connectWebcamPushed(obj, ~, ~)
+            notify(obj, "ConnectWebcamPushed")
+        end
     end
 
 end

@@ -53,7 +53,7 @@ classdef SessionTabController < handle
             obj.Listener(end + 1) = listener(obj.Model, ...
                 "FullFlexionAngleCalibrated", @obj.onFullFlexionAngleCalibrated);
             obj.Listener(end + 1) = listener(obj.Model, ...
-                "WebCamConnected", @obj.onWebCamConnected);
+                "WebcamConnected", @obj.onWebCamConnected);
 
         end % constructor
 
@@ -97,11 +97,11 @@ classdef SessionTabController < handle
 
         function onWebCamConnected(obj, ~, ~)
             %Get image size of camera and preview
-            camImage = image(obj.SessionTabView.WebCamAxes, zeros(size(obj.Model.Webcam.Frame),'uint8'));
+            camImage = image(obj.SessionTabView.WebcamAxes, zeros(size(obj.Model.Webcam.Frame),'uint8'));
 
             obj.Model.Webcam.preview(camImage);
 
-            obj.SessionTabView.WebCamAxes.Visible = "on";
+            obj.SessionTabView.WebcamAxes.Visible = "on";
         end
 
         function onWebCamDisconnected(obj, ~, ~)
