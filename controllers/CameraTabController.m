@@ -108,11 +108,11 @@ classdef CameraTabController < handle
 
                 ipCamConnectingUI(obj);
                 
+                url = obj.CameraTabView.IPCamURLEditField.Value;
                 username = obj.CameraTabView.IPCamUsernameEditField.Value;
                 password = obj.CameraTabView.IPCamPasswordEditField.Value;
-                url = obj.CameraTabView.IPCamURLEditField.Value;
 
-                obj.Model.connectIPCam(username, password, url);
+                obj.Model.connectIPCam(url, username, password);
             end
         end
 

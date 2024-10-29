@@ -8,8 +8,8 @@ classdef IPCamera < CameraInterface
     end
     
     methods
-        function connected = connect(obj, username, password, url)
-            try
+        function connected = connect(obj, url, username, password)
+            try 
                 obj.Camera = ipcam(url, username, password);
                 obj.Frame = snapshot(obj.Camera);
                 obj.IsConnected = true;
@@ -25,6 +25,8 @@ classdef IPCamera < CameraInterface
                     obj.Feedback = "Incorrect Username or Password.";
                 elseif (strcmp(exception.identifier, "MATLAB:ipcamera:ipcam:cannotConnect"))
                     obj.Feedback = "Incorrect URL or authentication needed.";
+                else
+                    obj.Feedback = "An error occured.";
                 end
 
                 connected = false;
