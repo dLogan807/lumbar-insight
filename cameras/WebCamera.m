@@ -1,11 +1,10 @@
-classdef WebCamera < handle
+classdef WebCamera < CameraInterface
     
     properties (SetAccess = private)
-        Camera webcam
+        Camera
         Frame
-        Name string = []
-        IsConnected logical {mustBeNonempty} = false
-        IsPreviewing logical {mustBeNonempty} = false
+        Name = []
+        IsConnected = false
     end
     
     methods
@@ -30,27 +29,23 @@ classdef WebCamera < handle
                 obj.Name = [];
                 obj.IsConnected = false;
             end
-            
-            obj.IsPreviewing = false;
         end
 
         function preview(obj, camImage)
 
-            if (isempty(obj.Camera) || obj.IsPreviewing)
+            if (isempty(obj.Camera))
                 return
             end
 
             preview(obj.Camera, camImage);
-            obj.IsPreviewing = true;
         end
 
         function stopPreview(obj)
-            if (isempty(obj.Camera) || ~obj.IsPreviewing)
+            if (isempty(obj.Camera))
                 return
             end
 
             closePreview(obj.Camera);
-            obj.IsPreviewing = false;
         end
     end
 end

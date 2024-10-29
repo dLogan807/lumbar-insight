@@ -31,6 +31,9 @@ classdef CameraTabController < handle
             obj.Listener(end + 1) = listener(obj.CameraTabView, ...
                 "ConnectWebcamPushed", @obj.connectWebcamPushed);
 
+            obj.Listener(end + 1) = listener(obj.CameraTabView, ...
+                "ConnectIPCamPushed", @obj.connectIPCamPushed);
+
             % Listen for changes to the model.
             obj.Listener(end + 1) = listener(obj.Model, ...
                 "WebcamConnected", @obj.webcamConnected);
@@ -81,6 +84,12 @@ classdef CameraTabController < handle
                 webcamName = obj.CameraTabView.WebcamDropDown.Value;
                 obj.Model.connectWebcam(webcamName);
             end
+        end
+
+        function connectIPCamPushed(obj, ~, ~)
+            %Connect or disconnect from an IP Camera
+            
+
         end
 
         function webcamConnected(obj, ~, ~)

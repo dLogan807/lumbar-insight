@@ -14,16 +14,24 @@ classdef CameraTabView < matlab.ui.componentcontainer.ComponentContainer
         %Components
         GridLayout matlab.ui.container.GridLayout
 
-        WebcamDropDown matlab.ui.control.DropDown
         WebcamStatusLabel matlab.ui.control.Label
+        WebcamDropDown matlab.ui.control.DropDown
         WebcamRefreshButton matlab.ui.control.Button
         WebcamConnectButton matlab.ui.control.Button
+
+        IPCamStatusLabel matlab.ui.control.Label
+        IPCamURLEditField matlab.ui.control.EditField
+        IPCamUsernameEditField matlab.ui.control.EditField
+        IPCamPasswordEditField matlab.ui.control.EditField
+        IPCamConnectButton matlab.ui.control.Button
     end
 
     events (NotifyAccess = private)
         %Event broadcast when view is interacted with
         RefreshWebcamsPushed
         ConnectWebcamPushed
+
+        ConnectIPCamPushed
 
     end % events ( NotifyAccess = private )
 
@@ -61,8 +69,8 @@ classdef CameraTabView < matlab.ui.componentcontainer.ComponentContainer
 
             obj.GridLayout = uigridlayout( ...
                 "Parent", obj, ...
-                "RowHeight", {22, 22, 30, 30, 30, 22}, ...
-                "ColumnWidth", {"1x"}, ...
+                "RowHeight", {22, 22, 30, 30, 30, 100, 22, 30, 30, 30, 30}, ...
+                "ColumnWidth", { 500 }, ...
                 "Padding", 20, ...
                 "ColumnSpacing", 40);
 
@@ -91,8 +99,25 @@ classdef CameraTabView < matlab.ui.componentcontainer.ComponentContainer
             %Wireless IP camera
             uilabel("Parent", obj.GridLayout, ...
                 "Text", "Wireless IP Camera", ...
-                "FontWeight", "bold");
+                "FontWeight", "bold", ...
+                "VerticalAlignment", "bottom");
+
+            obj.IPCamStatusLabel = uilabel("Parent", obj.GridLayout, ...
+                 "Text", "Not connected.");
+
+            obj.IPCamUsernameEditField = uieditfield("Parent", obj.GridLayout, ...
+                "Placeholder", "Username");
+
+            obj.IPCamPasswordEditField = uieditfield("Parent", obj.GridLayout, ...
+                "Placeholder", "Password");
+
+            obj.IPCamURLEditField = uieditfield("Parent", obj.GridLayout, ...
+                "Placeholder", "URL");
             
+            obj.IPCamConnectButton = uibutton("Parent", obj.GridLayout, ...
+                "Text", "Connect", ...
+                "Enable", "off", ...
+                "ButtonPushedFcn", @obj.connectIPCamPushed);
         end
 
         function update(obj)
@@ -113,6 +138,10 @@ classdef CameraTabView < matlab.ui.componentcontainer.ComponentContainer
 
         function connectWebcamPushed(obj, ~, ~)
             notify(obj, "ConnectWebcamPushed")
+        end
+
+        function connectIPCamPushed(obj, ~, ~)
+            notify(obj, "ConnectIPCamPushed")
         end
     end
 

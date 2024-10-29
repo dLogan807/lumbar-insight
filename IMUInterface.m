@@ -16,7 +16,7 @@ classdef IMUInterface < handle
     end
 
     methods (Abstract)
-        connect(obj)
+        connected = connect(obj)
         % Connect to a device using its name
 
         disconnect(obj)
