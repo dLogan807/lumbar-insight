@@ -24,6 +24,7 @@ classdef CameraTabView < matlab.ui.componentcontainer.ComponentContainer
         IPCamUsernameEditField matlab.ui.control.EditField
         IPCamPasswordEditField matlab.ui.control.EditField
         IPCamConnectButton matlab.ui.control.Button
+        IPCamFeedbackLabel matlab.ui.control.Label
     end
 
     events (NotifyAccess = private)
@@ -69,7 +70,7 @@ classdef CameraTabView < matlab.ui.componentcontainer.ComponentContainer
 
             obj.GridLayout = uigridlayout( ...
                 "Parent", obj, ...
-                "RowHeight", {22, 22, 30, 30, 30, 50, 22, 30, 30, 30, 30, 30}, ...
+                "RowHeight", {22, 22, 30, 30, 30, 50, 22, 30, 30, 30, 30, 50}, ...
                 "ColumnWidth", { 500 }, ...
                 "Padding", 20 );
 
@@ -102,7 +103,7 @@ classdef CameraTabView < matlab.ui.componentcontainer.ComponentContainer
                 "VerticalAlignment", "bottom");
 
             obj.IPCamStatusLabel = uilabel("Parent", obj.GridLayout, ...
-                 "Text", "Not connected. All fields are required.");
+                 "Text", "Not connected.");
 
             obj.IPCamUsernameEditField = uieditfield("Parent", obj.GridLayout, ...
                 "Placeholder", "Username");
@@ -117,6 +118,10 @@ classdef CameraTabView < matlab.ui.componentcontainer.ComponentContainer
             obj.IPCamConnectButton = uibutton("Parent", obj.GridLayout, ...
                 "Text", "Connect", ...
                 "ButtonPushedFcn", @obj.connectIPCamPushed);
+
+            obj.IPCamFeedbackLabel = uilabel("Parent", obj.GridLayout, ...
+                 "Text", "", ...
+                 "VerticalAlignment", "top");
         end
 
         function update(obj)

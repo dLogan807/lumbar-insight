@@ -3,7 +3,7 @@ classdef IPCamera < CameraInterface
     properties (SetAccess = private)
         Camera
         Frame
-        ErrorMessage
+        Feedback string = ""
         IsConnected = false
     end
     
@@ -17,7 +17,16 @@ classdef IPCamera < CameraInterface
             catch exception
                 disp("Could not connect to IP Camera: " + exception.message);
 
-                disp(exception.identifier);
+                if (strcmp(exception.identifier, 'MATLAB:validators:mustBeNonzeroLengthText'))
+                    obj.Feedback = "Please fill out all fields.";
+                elseif (strcmp(exception.identifier, "MATLAB:ipcamera:ipcam:needHTTPorRTSPStreamURL"))
+                    obj.Feedback = "URL input needs to be a MJPEG HTTP/RTSP or H.264 RTSP URL.";
+                elseif (strcmp(exception.identifier, "MATLAB:ipcamera:ipcam:incorrectCredentials"))
+                    obj.Feedback = "Incorrect Username or Password.";
+                elseif (strcmp(exception.identifier, "MATLAB:ipcamera:ipcam:cannotConnect"))
+                    obj.Feedback = "Incorrect URL or authentication needed.";
+                end
+
                 connected = false;
             end
         end

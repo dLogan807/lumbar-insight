@@ -43,6 +43,8 @@ classdef CameraTabController < handle
             obj.Listener(end + 1) = listener(obj.Model, ...
                 "IPCamConnected", @obj.ipCamConnected);
             obj.Listener(end + 1) = listener(obj.Model, ...
+                "IPCamConnectFailed", @obj.ipCamConnectFailed);
+            obj.Listener(end + 1) = listener(obj.Model, ...
                 "IPCamDisconnected", @obj.ipCamDisconnected);
 
         end % constructor
@@ -92,17 +94,50 @@ classdef CameraTabController < handle
         end
 
         function connectIPCamPushed(obj, ~, ~)
-            %Connect or disconnect from an IP Camera
+            %Connect or disconnect from an IP Camera, update UI
 
             if (obj.Model.IPCam.IsConnected)
                 obj.Model.disconnectIPCam();
             else
+                if (strlength(obj.CameraTabView.IPCamURLEditField.Value) <= 0)
+                    obj.CameraTabView.IPCamFeedbackLabel.Text = "Please provide a RTSP URL.";
+                    return
+                else
+                    obj.CameraTabView.IPCamFeedbackLabel.Text = "";
+                end
+
+                ipCamConnectingUI(obj);
+                
                 username = obj.CameraTabView.IPCamUsernameEditField.Value;
                 password = obj.CameraTabView.IPCamPasswordEditField.Value;
                 url = obj.CameraTabView.IPCamURLEditField.Value;
 
                 obj.Model.connectIPCam(username, password, url);
             end
+        end
+
+        function ipCamConnectingUI(obj)
+            %Disable fields while connecting to IP Camera
+            obj.CameraTabView.IPCamUsernameEditField.Enable = "off";
+            obj.CameraTabView.IPCamPasswordEditField.Enable = "off";
+            obj.CameraTabView.IPCamURLEditField.Enable = "off";
+            obj.CameraTabView.IPCamConnectButton.Enable = "off";
+            obj.CameraTabView.IPCamConnectButton.Text = "Connecting";
+
+            drawnow
+        end
+
+        function ipCamConnectUI(obj)
+            %Show connection UI for IP Cam
+
+            obj.CameraTabView.IPCamUsernameEditField.Enable = "on";
+            obj.CameraTabView.IPCamPasswordEditField.Enable = "on";
+            obj.CameraTabView.IPCamURLEditField.Enable = "on";
+
+            obj.CameraTabView.IPCamConnectButton.Text = "Connect";
+            obj.CameraTabView.IPCamConnectButton.Enable = "on";
+
+            drawnow
         end
 
         function webcamConnected(obj, ~, ~)
@@ -126,22 +161,22 @@ classdef CameraTabController < handle
         function ipCamConnected(obj, ~, ~)
             %Update UI after IP Camera connected
 
-            obj.CameraTabView.IPCamUsernameEditField.Enable = "off";
-            obj.CameraTabView.IPCamPasswordEditField.Enable = "off";
-            obj.CameraTabView.IPCamURLEditField.Enable = "off";
-
+            obj.CameraTabView.IPCamConnectButton.Enable = "on";
             obj.CameraTabView.IPCamConnectButton.Text = "Disconnect";
             obj.CameraTabView.IPCamStatusLabel.Text = "Connected to IP Camera.";
+        end
+
+        function ipCamConnectFailed(obj, ~, ~)
+            %Show feedback after failing to connect to IP Cam
+
+            ipCamConnectUI(obj);
+            obj.CameraTabView.IPCamFeedbackLabel.Text = obj.Model.IPCam.Feedback;
         end
 
         function ipCamDisconnected(obj, ~, ~)
             %Update UI after IP Camera disconnected
 
-            obj.CameraTabView.IPCamUsernameEditField.Enable = "on";
-            obj.CameraTabView.IPCamPasswordEditField.Enable = "on";
-            obj.CameraTabView.IPCamURLEditField.Enable = "on";
-
-            obj.CameraTabView.IPCamConnectButton.Text = "Connect";
+            ipCamConnectUI(obj);
             obj.CameraTabView.IPCamStatusLabel.Text = "Not connected. All fields are required.";
         end
         

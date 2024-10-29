@@ -60,6 +60,7 @@ classdef Model < handle
         WebcamDisconnected
 
         IPCamConnected
+        IPCamConnectFailed
         IPCamDisconnected
 
     end % events ( NotifyAccess = private )
@@ -472,6 +473,8 @@ classdef Model < handle
         function connectIPCam(obj, username, password, url)
             if (obj.IPCam.connect(username, password, url))
                 notify(obj, "IPCamConnected")
+            else
+                notify(obj, "IPCamConnectFailed")
             end
         end
 
