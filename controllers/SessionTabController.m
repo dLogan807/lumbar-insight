@@ -52,10 +52,16 @@ classdef SessionTabController < handle
                 "StandingOffsetAngleCalibrated", @obj.onStandingOffsetAngleCalibrated);
             obj.Listener(end + 1) = listener(obj.Model, ...
                 "FullFlexionAngleCalibrated", @obj.onFullFlexionAngleCalibrated);
+            
             obj.Listener(end + 1) = listener(obj.Model, ...
                 "WebcamConnected", @obj.onWebcamConnected);
             obj.Listener(end + 1) = listener(obj.Model, ...
                 "WebcamDisconnected", @obj.onWebcamDisconnected);
+
+            obj.Listener(end + 1) = listener(obj.Model, ...
+                "IPCamConnected", @obj.onIPCamConnected);
+            obj.Listener(end + 1) = listener(obj.Model, ...
+                "IPCamDisconnected", @obj.onIPCamDisconnected);
 
         end % constructor
 
@@ -105,7 +111,7 @@ classdef SessionTabController < handle
 
             obj.SessionTabView.WebcamAxes.Visible = "on";
             obj.SessionTabView.WebcamRecordCheckbox.Enable = "on";
-            obj.SessionTabView.WebcamStatusLabel.Text = "Showing " + obj.Model.Webcam.Name;
+            obj.SessionTabView.WebcamStatusLabel.Text = "Displaying " + obj.Model.Webcam.Name;
         end
 
         function onWebcamDisconnected(obj, ~, ~)
@@ -114,6 +120,25 @@ classdef SessionTabController < handle
             obj.SessionTabView.WebcamAxes.Visible = "off";
             obj.SessionTabView.WebcamRecordCheckbox.Enable = "off";
             obj.SessionTabView.WebcamStatusLabel.Text = "No webcam connected.";
+        end
+
+        function onIPCamConnected(obj, ~, ~)
+            %Get image size of camera and preview, update UI
+            camImage = image(obj.SessionTabView.IPCamAxes, zeros(size(obj.Model.IPCam.Frame),'uint8'));
+
+            obj.Model.IPCam.preview(camImage);
+
+            obj.SessionTabView.IPCamAxes.Visible = "on";
+            obj.SessionTabView.IPCamRecordCheckbox.Enable = "on";
+            obj.SessionTabView.IPCamStatusLabel.Text = "Displaying IP Camera";
+        end
+
+        function onIPCamDisconnected(obj, ~, ~)
+            %Disable image preview axes component on disconnect, update UI
+
+            obj.SessionTabView.IPCamAxes.Visible = "off";
+            obj.SessionTabView.IPCamRecordCheckbox.Enable = "off";
+            obj.SessionTabView.IPCamStatusLabel.Text = "No IP Camera connected.";
         end
 
         function updateThresholdData(obj)

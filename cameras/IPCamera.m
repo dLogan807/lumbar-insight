@@ -1,22 +1,23 @@
-classdef WebCamera < CameraInterface
+classdef IPCamera < CameraInterface
     
     properties (SetAccess = private)
         Camera
         Frame
-        Name string = []
+        ErrorMessage
         IsConnected = false
     end
     
     methods
-        function connected = connect(obj, cameraName)
+        function connected = connect(obj, username, password, url)
             try
-                obj.Camera = webcam(cameraName);
+                obj.Camera = ipcam(url, username, password);
                 obj.Frame = snapshot(obj.Camera);
-                obj.Name = cameraName;
                 obj.IsConnected = true;
                 connected = true;
-            catch
-                disp("Could not connect to " + cameraName);
+            catch exception
+                disp("Could not connect to IP Camera: " + exception.message);
+
+                disp(exception.identifier);
                 connected = false;
             end
         end
@@ -26,7 +27,6 @@ classdef WebCamera < CameraInterface
                 closePreview(obj.Camera)
                 clear obj.Camera;
                 clear obj.Frame;
-                obj.Name = [];
                 obj.IsConnected = false;
             end
         end

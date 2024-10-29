@@ -14,7 +14,7 @@ classdef Model < handle
     properties (SetAccess = private, GetAccess = public)
         IMUDevices (1, 2) IMUInterface = [ShimmerIMU("placeholder1"), ShimmerIMU("placeholder2")]
         Webcam (1,1) WebCamera = WebCamera()
-        AvailableWebCams string
+        IPCam (1,1) IPCamera = IPCamera()
 
         FileExportManager FileWriter
         StreamingInProgress logical = false
@@ -58,6 +58,9 @@ classdef Model < handle
 
         WebcamConnected
         WebcamDisconnected
+
+        IPCamConnected
+        IPCamDisconnected
 
     end % events ( NotifyAccess = private )
 
@@ -464,6 +467,18 @@ classdef Model < handle
             obj.Webcam.disconnect();
 
             notify(obj, "WebcamDisconnected")
+        end
+
+        function connectIPCam(obj, username, password, url)
+            if (obj.IPCam.connect(username, password, url))
+                notify(obj, "IPCamConnected")
+            end
+        end
+
+        function disconnectIPCam(obj)
+            obj.IPCam.disconnect();
+
+            notify(obj, "IPCamDisconnected")
         end
 
     end % methods

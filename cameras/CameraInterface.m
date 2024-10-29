@@ -1,14 +1,13 @@
 classdef CameraInterface < handle
     
     properties (Abstract, SetAccess = private)
-        Camera webcam
+        Camera
         Frame
-        Name string
         IsConnected logical {mustBeNonempty}
     end
     
     methods (Abstract)
-        connected = connect(obj, cameraName)
+        connected = connect(obj)
 
         disconnect(obj)
 

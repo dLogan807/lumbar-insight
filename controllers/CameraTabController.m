@@ -40,6 +40,11 @@ classdef CameraTabController < handle
             obj.Listener(end + 1) = listener(obj.Model, ...
                 "WebcamDisconnected", @obj.webcamDisconnected);
 
+            obj.Listener(end + 1) = listener(obj.Model, ...
+                "IPCamConnected", @obj.ipCamConnected);
+            obj.Listener(end + 1) = listener(obj.Model, ...
+                "IPCamDisconnected", @obj.ipCamDisconnected);
+
         end % constructor
 
     end % methods
@@ -88,8 +93,16 @@ classdef CameraTabController < handle
 
         function connectIPCamPushed(obj, ~, ~)
             %Connect or disconnect from an IP Camera
-            
 
+            if (obj.Model.IPCam.IsConnected)
+                obj.Model.disconnectIPCam();
+            else
+                username = obj.CameraTabView.IPCamUsernameEditField.Value;
+                password = obj.CameraTabView.IPCamPasswordEditField.Value;
+                url = obj.CameraTabView.IPCamURLEditField.Value;
+
+                obj.Model.connectIPCam(username, password, url);
+            end
         end
 
         function webcamConnected(obj, ~, ~)
@@ -108,6 +121,28 @@ classdef CameraTabController < handle
             obj.CameraTabView.WebcamConnectButton.Text = "Connect";
             obj.CameraTabView.WebcamStatusLabel.Text = "Not connected.";
             refreshAvailableWebcams(obj);
+        end
+
+        function ipCamConnected(obj, ~, ~)
+            %Update UI after IP Camera connected
+
+            obj.CameraTabView.IPCamUsernameEditField.Enable = "off";
+            obj.CameraTabView.IPCamPasswordEditField.Enable = "off";
+            obj.CameraTabView.IPCamURLEditField.Enable = "off";
+
+            obj.CameraTabView.IPCamConnectButton.Text = "Disconnect";
+            obj.CameraTabView.IPCamStatusLabel.Text = "Connected to IP Camera.";
+        end
+
+        function ipCamDisconnected(obj, ~, ~)
+            %Update UI after IP Camera disconnected
+
+            obj.CameraTabView.IPCamUsernameEditField.Enable = "on";
+            obj.CameraTabView.IPCamPasswordEditField.Enable = "on";
+            obj.CameraTabView.IPCamURLEditField.Enable = "on";
+
+            obj.CameraTabView.IPCamConnectButton.Text = "Connect";
+            obj.CameraTabView.IPCamStatusLabel.Text = "Not connected. All fields are required.";
         end
         
     end % methods ( Access = private )
