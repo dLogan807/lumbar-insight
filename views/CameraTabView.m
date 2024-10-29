@@ -66,18 +66,15 @@ classdef CameraTabView < matlab.ui.componentcontainer.ComponentContainer
                 "ColumnSpacing", 40);
 
             %Wired webcam
-            webcamLabel = uilabel("Parent", obj.GridLayout, ...
+            uilabel("Parent", obj.GridLayout, ...
                 "Text", "Wired Webcam", ...
                 "FontWeight", "bold");
-            webcamLabel.Layout.Row = 1;
 
             obj.WebcamStatusLabel = uilabel("Parent", obj.GridLayout, ...
                  "Text", "Status: Not connected.");
-            obj.WebcamStatusLabel.Layout.Row = 2;
 
             obj.WebcamRefreshButton = uibutton("Parent", obj.GridLayout, ...
                 "Text", "Refresh available webcams");
-            obj.WebcamRefreshButton.Layout.Row = 3;
 
             initalWebcams = webcamlist;
             obj.WebcamDropDown = uidropdown("Parent", obj.GridLayout, ...
@@ -86,17 +83,14 @@ classdef CameraTabView < matlab.ui.componentcontainer.ComponentContainer
             if (isempty(initalWebcams))
                 obj.WebcamDropDown.Enable = "off";
             end
-            obj.WebcamDropDown.Layout.Row = 4;
 
             obj.WebcamConnectButton = uibutton("Parent", obj.GridLayout, ...
                 "Text", "Connect");
-            obj.WebcamConnectButton.Layout.Row = 5;
 
             %Wireless IP camera
-            webcamLabel = uilabel("Parent", obj.GridLayout, ...
+            uilabel("Parent", obj.GridLayout, ...
                 "Text", "Wireless IP Camera", ...
                 "FontWeight", "bold");
-            webcamLabel.Layout.Row = 6;
             
         end
 
