@@ -63,7 +63,7 @@ classdef FileWriter < handle
                 cameraName string {mustBeTextScalar, mustBeNonempty} 
             end
 
-            if (iskey(obj.VideoDictionary, cameraName))
+            if (isKey(obj.VideoDictionary, cameraName))
                 warning("Camera already exists in dictionay. Video recording will not proceed.");
             end
 
@@ -104,7 +104,7 @@ classdef FileWriter < handle
                 imageFrame 
             end
 
-            if (~iskey(obj.VideoDictionary, cameraName))
+            if (~isKey(obj.VideoDictionary, cameraName))
                 warning("Cannot write video: Camera not found in dictionary.")
                 return
             end
