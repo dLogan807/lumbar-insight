@@ -9,6 +9,7 @@ classdef Model < handle
 
         BeepEnabled logical = true
         BeepRate double = 1
+        VideoFPS int8 = 24;
     end
 
     properties (SetAccess = private, GetAccess = public)
@@ -433,10 +434,36 @@ classdef Model < handle
                 obj.LargestRecordedAngle = [];
                 obj.RecordedTimeAboveThreshold = 0;
 
-                obj.FileExportManager.initialiseNewFile();
+                obj.FileExportManager.initialiseNewCSV();
+
+                if (obj.Webcam.IsConnected)
+                    obj.FileExportManager.initialiseNewVideoFile("Webcam");
+                end
+                if (obj.IPCam.IsConnected)
+                    obj.FileExportManager.initialiseNewVideoFile("IPCam");
+                end
+
                 obj.RecordingInProgress = true;
             end
 
+        end
+
+        function tryWriteVideo(obj, camera, cameraName)
+            %Write to the video file. Abort if an error occurs
+
+            arguments
+                obj 
+                camera CameraInterface {mustBeNonempty}
+                cameraName string {mustBeTextScalar, mustBeNonempty} 
+            end
+
+            try
+                imageFrame = snapshot(camera.Camera);
+                obj.FileExportManager.writeToVideo(cameraName, imageFrame);
+            catch
+                warning("Could not write to camera. Aborting video recording.")
+                camera.disconnect()
+            end
         end
 
         function stopRecording(obj)
@@ -449,6 +476,7 @@ classdef Model < handle
                 csvData = [obj.SmallestRecordedAngle, obj.LargestRecordedAngle, obj.RecordedTimeAboveThreshold, obj.TimeRecording];
 
                 obj.FileExportManager.closeFile(csvData);
+                obj.FileExportManager.closeVideoFiles();
             end
         end
 

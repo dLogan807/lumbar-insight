@@ -4,8 +4,9 @@ classdef FileWriter < handle
     properties (SetAccess = private)
         ParentExportDir string {mustBeTextScalar} = ""
         FullExportDir string {mustBeTextScalar} = ""
-        FileInUse string {mustBeTextScalar} = ""
-        FileInitialised logical {mustBeNonempty} = false;
+        CSVInUse string {mustBeTextScalar} = ""
+        VideoDictionary dictionary = configureDictionary("string","VideoWriter")
+        CSVInitialised logical {mustBeNonempty} = false;
     end
 
     properties (Access = private)
@@ -28,25 +29,55 @@ classdef FileWriter < handle
             obj.FullExportDir = exportParentDir + "\" + string(currentTime.Day + "-" + currentTime.Month + "-" + currentTime.Year);
         end
 
-        function initialiseNewFile(obj)
-            %Create a new file with headers
+        function initialiseNewCSV(obj)
+            %Create a new csv file with headers
 
-            if (obj.FileInitialised)
+            if (obj.CSVInitialised)
                 error("initialiseNewFile:FileAlreadyInitialised", "Close the file before creating a new one.")
             end
 
-            obj.FileInitialised = true;
-            csvHeaders = ["Date and Time", "Angle", "Threshold Angle", "Exceeded Threshold?"];
+            try
+                csvFileName = generateFileName(obj, "", ".csv");
+            catch
+                warning("Could not generate csv file name. CSV recording will not proceed.")
+                return
+            end
 
-            obj.FileInUse = generateFileName(obj);
+            obj.CSVInUse = csvFileName;
+            csvHeaders = ["Date and Time", "Angle", "Threshold Angle", "Exceeded Threshold?"];
 
             createDirIfNotExist(obj, obj.FullExportDir);
 
-            fullPath = obj.FullExportDir + "\" + obj.FileInUse;
+            fullPath = obj.FullExportDir + "\" + obj.CSVInUse;
 
             writematrix(csvHeaders, fullPath);
 
+            obj.CSVInitialised = true;
             obj.ProhibitWriteFlag = false;
+        end
+
+        function initialiseNewVideoFile(obj, cameraName)
+            %Add new camera to the dictionary and open its VideoWriter
+
+            arguments
+                obj 
+                cameraName string {mustBeTextScalar, mustBeNonempty} 
+            end
+
+            if (~isempty(lookup(obj.VideoDictionary, cameraName)))
+                warning("Camera already exists in dictionay. Video recording will not proceed.");
+            end
+
+            try 
+                videoFileName = generateFileName(obj, cameraName, ".mp4");
+            catch
+                warning("Could not generate video file name. Video recording will not proceed.")
+                return
+            end
+        
+            videoWriter = VideoWriter(videoFileName);
+            open(videoWriter);
+            insert(obj.VideoDictionary, cameraName, videoWriter);
         end
         
         function writeAngleData(obj, dataArray)
@@ -59,23 +90,40 @@ classdef FileWriter < handle
 
             if (obj.ProhibitWriteFlag)
                 error("writeAngleData:FileNotInitialised", "Initialise writing data.")
-            elseif (~obj.FileInitialised)
+            elseif (~obj.CSVInitialised)
                 return
             end
 
-            writeToFile(obj, dataArray);
+            writeToCSV(obj, dataArray);
         end
 
-        function closeFile(obj, dataArray)
-            %Write closing data to file and delete file name reference
+        function writeToVideo(obj, cameraName, imageFrame)
+            arguments
+                obj 
+                cameraName string {mustBeNonempty, mustBeTextScalar} 
+                imageFrame 
+            end
+
+            try 
+                videoWriter = lookup(obj.VideoDictionary, cameraName);
+            catch
+                warning("Cannot write video: Camera not found in dictionary.")
+                return
+            end
+
+            writeVideo(videoWriter, imageFrame);
+        end
+
+        function closeCSVFile(obj, dataArray)
+            %Write closing data to file and delete file name references
 
             arguments
                 obj
                 dataArray (1, 4) double {mustBeNonempty}
             end
 
-            if (~obj.FileInitialised)
-                error("closeFile:FileNotInitialised", "Initialise the file before closing.")
+            if (~obj.CSVInitialised)
+                error("closeCSV:FileNotInitialised", "Initialise the file before closing.")
             end
 
             headers = ["Smallest Angle", "Largest Angle", "Time Above Threshold Angle", "Recording duration"];
@@ -83,11 +131,23 @@ classdef FileWriter < handle
             %Prevent further writes while adding closing data
             obj.ProhibitWriteFlag = true;
 
-            writeToFile(obj, headers);
-            writeToFile(obj, round(dataArray, 2));
+            writeToCSV(obj, headers);
+            writeToCSV(obj, round(dataArray, 2));
                 
-            obj.FileInUse = "";
-            obj.FileInitialised = false;
+            obj.CSVInUse = "";
+            obj.CSVInitialised = false;
+        end
+
+        function closeVideoFiles(obj)
+            %Close all open video files in the dictionary
+
+            cameras = keys(obj.VideoDictionary);
+
+            for cameraName = cameras
+                close(lookup(obj.VideoDictionary, cameraName));
+                remove(obj.VideoDictionary, cameraName);
+            end
+
         end
 
     end
@@ -108,11 +168,43 @@ classdef FileWriter < handle
 
         end
 
-        function fileName = generateFileName(obj)
-            %Generated a formatted file name for this recording
+        function fileName = generateFileName(obj, prefix, extension)
+            %Generated a formatted file name
+
+            arguments
+                obj 
+                prefix string {mustBeTextScalar}
+                extension string {mustBeNonempty, mustBeTextScalar} 
+            end
+
+            if (~isValidExtension(obj, extension))
+                error("generateFileName:InvalidExtension", "An invalid file extension was provided.")
+            end
+
             currentTime = datetime('now');
 
-            fileName = currentTime.Day + "-" + currentTime.Month + "-" + currentTime.Year + "--" + formatTime(obj, currentTime.Hour) + "-" + formatTime(obj, currentTime.Minute) + "-" + formatTime(obj, currentTime.Second) + ".csv";
+            fileName = currentTime.Day + "-" + currentTime.Month + "-" + currentTime.Year + "--" + formatTime(obj, currentTime.Hour) + "-" + formatTime(obj, currentTime.Minute) + "-" + formatTime(obj, currentTime.Second + extension);
+
+            if (~isempty(prefix) && strlength(prefix) > 0)
+                fileName = prefix + "-" + fileName;
+            end
+        end
+
+        function isValid = isValidExtension(~, extension)
+            %Check if the provided extension is valid
+
+            arguments
+                ~ 
+                extension string {mustBeTextScalar}
+            end
+
+            validExtensions = [".csv",".mp4",".avi"];
+
+            if (any(matches(extension, validExtensions)))
+                isValid = true;
+            else
+                isValid = false;
+            end
         end
 
         function formattedText = formatTime(~, time)
@@ -138,7 +230,7 @@ classdef FileWriter < handle
 
         end
 
-        function writeToFile(obj, dataArray)
+        function writeToCSV(obj, dataArray)
             %Write data of any format to the file
 
             arguments
@@ -146,12 +238,12 @@ classdef FileWriter < handle
                 dataArray (1, :) {mustBeNonempty}
             end
 
-            if (strcmp(obj.FileInUse, ""))
+            if (strcmp(obj.CSVInUse, ""))
                 warning("FileWriter.writeToFile: file not initialised. Data not recorded.")
                 return
             end
 
-            fullPath = obj.FullExportDir + "\" + obj.FileInUse;
+            fullPath = obj.FullExportDir + "\" + obj.CSVInUse;
 
             writematrix(dataArray, fullPath, ...
                 "WriteMode", "append");
