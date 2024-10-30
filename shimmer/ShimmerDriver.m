@@ -533,7 +533,7 @@ classdef ShimmerDriver < handle % Inherit from super class 'handle'
 
         EXTERNAL_BOARDS_AVAILABLE = [cellstr('None'); cellstr('ExpBoard'); cellstr('External'); cellstr('Heart Rate')]; % Cell array of string constants containing names of valid external daughter boards
 
-        DEFAULT_TIMEOUT = 8; % Default timeout for Wait for Acknowledgement response
+        DEFAULT_TIMEOUT = 3; % Default timeout for Wait for Acknowledgement response
 
         GET_ACCEL_CALIBRATION_PARAMETERS_COMMAND = char(19); % Command to get accelerometer calibration parameters from the shimmer device
         GET_GYRO_CALIBRATION_PARAMETERS_COMMAND = char(22); % Command to get gyroscope calibration parameters from the shimmer device

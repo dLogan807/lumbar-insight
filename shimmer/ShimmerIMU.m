@@ -40,7 +40,7 @@ classdef ShimmerIMU < IMUInterface
 
             isConnected = false;
 
-            state = obj.Driver.State;
+            state = obj.Driver.getstate();
 
             if (~strcmp(state, 'Disconnected'))
                 isConnected = true;
@@ -53,7 +53,7 @@ classdef ShimmerIMU < IMUInterface
 
             isStreaming = false;
 
-            state = obj.Driver.State;
+            state = obj.Driver.getstate();
 
             if (strcmp(state, 'Streaming'))
                 isStreaming = true;
@@ -64,7 +64,7 @@ classdef ShimmerIMU < IMUInterface
         function batteryInfo = get.BatteryInfo(obj)
             %Return a string describing the IMU's battery state
 
-            state = obj.Driver.State;
+            state = obj.Driver.getstate();
 
             wasStreaming = strcmp(state, 'Streaming');
 
@@ -73,7 +73,7 @@ classdef ShimmerIMU < IMUInterface
                 pause(0.5);
             end
 
-            state = obj.Driver.State;
+            state = obj.Driver.getstate();
 
             if (strcmp(state, "Connected"))
                 batteryVoltage = obj.Driver.getbatteryvoltage;
