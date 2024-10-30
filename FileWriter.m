@@ -37,13 +37,12 @@ classdef FileWriter < handle
             end
 
             try
-                csvFileName = generateFileName(obj, "", ".csv");
+                obj.CSVInUse = generateFileName(obj, "", ".csv");
             catch
                 warning("Could not generate csv file name. CSV recording will not proceed.")
                 return
             end
 
-            obj.CSVInUse = csvFileName;
             csvHeaders = ["Date and Time", "Angle", "Threshold Angle", "Exceeded Threshold?"];
 
             createDirIfNotExist(obj, obj.FullExportDir);
@@ -64,7 +63,7 @@ classdef FileWriter < handle
                 cameraName string {mustBeTextScalar, mustBeNonempty} 
             end
 
-            if (~isempty(lookup(obj.VideoDictionary, cameraName)))
+            if (iskey(obj.VideoDictionary, cameraName))
                 warning("Camera already exists in dictionay. Video recording will not proceed.");
             end
 
@@ -75,7 +74,8 @@ classdef FileWriter < handle
                 return
             end
         
-            videoWriter = VideoWriter(videoFileName);
+            fullPath = obj.FullExportDir + "\" + videoFileName;
+            videoWriter = VideoWriter(fullPath);
             open(videoWriter);
             insert(obj.VideoDictionary, cameraName, videoWriter);
         end
@@ -104,13 +104,12 @@ classdef FileWriter < handle
                 imageFrame 
             end
 
-            try 
-                videoWriter = lookup(obj.VideoDictionary, cameraName);
-            catch
+            if (~iskey(obj.VideoDictionary, cameraName))
                 warning("Cannot write video: Camera not found in dictionary.")
                 return
             end
 
+            videoWriter = lookup(obj.VideoDictionary, cameraName);
             writeVideo(videoWriter, imageFrame);
         end
 
@@ -183,7 +182,7 @@ classdef FileWriter < handle
 
             currentTime = datetime('now');
 
-            fileName = currentTime.Day + "-" + currentTime.Month + "-" + currentTime.Year + "--" + formatTime(obj, currentTime.Hour) + "-" + formatTime(obj, currentTime.Minute) + "-" + formatTime(obj, currentTime.Second + extension);
+            fileName = currentTime.Day + "-" + currentTime.Month + "-" + currentTime.Year + "--" + formatTime(obj, currentTime.Hour) + "-" + formatTime(obj, currentTime.Minute) + "-" + formatTime(obj, currentTime.Second) + extension;
 
             if (~isempty(prefix) && strlength(prefix) > 0)
                 fileName = prefix + "-" + fileName;
