@@ -185,6 +185,7 @@ classdef Model < handle
             operationStarted(obj);
 
             if (deviceType == DeviceTypes.Shimmer)
+                clear obj.IMUDevices(deviceIndex)
                 obj.IMUDevices(deviceIndex) = ShimmerIMU(deviceName);
                 connected = obj.IMUDevices(deviceIndex).connect;
             else

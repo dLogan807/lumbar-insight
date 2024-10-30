@@ -244,7 +244,7 @@ classdef SessionTabController < handle
             delay = calculateDelay(obj);
 
             successThresholdPercent = 50.0;
-            numOfAttempts = obj.Model.getPollingRate() * 3;
+            numOfAttempts = 60 + obj.Model.getPollingRate() * 3;
             attempts = ones(numOfAttempts, 1);
             index = 1;
             videoHz = 1 / obj.Model.VideoFPS;

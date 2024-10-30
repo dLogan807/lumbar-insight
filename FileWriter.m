@@ -73,9 +73,12 @@ classdef FileWriter < handle
                 warning("Could not generate video file name. Video recording will not proceed.")
                 return
             end
+
+            disp("Video file name: " + videoFileName);
         
             fullPath = obj.FullExportDir + "\" + videoFileName;
-            videoWriter = VideoWriter(fullPath);
+            disp("Full video path: " + fullPath);
+            videoWriter = VideoWriter(fullPath, "MPEG-4");
             open(videoWriter);
             insert(obj.VideoDictionary, cameraName, videoWriter);
         end

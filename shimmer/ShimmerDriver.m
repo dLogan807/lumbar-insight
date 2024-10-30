@@ -5249,8 +5249,8 @@ classdef ShimmerDriver < handle % Inherit from super class 'handle'
                 if (isOpen)
                     thisShimmer.State = 'Connected'; % Set Shimmer state to Connected
                     thisShimmer.bluetoothConn.Timeout = 1;
-                    readshimmerversion(thisShimmer); % Requests the Shimmer version from the Shimmer and stores the response in thisShimmer.ShimmerVersion
-                    readfirmwareversion(thisShimmer);
+                    versionIsRead = readshimmerversion(thisShimmer); % Requests the Shimmer version from the Shimmer and stores the response in thisShimmer.ShimmerVersion
+                    firmwareIsRead = readfirmwareversion(thisShimmer);
 
                     if (thisShimmer.ShimmerVersion == thisShimmer.SHIMMER_3 && thisShimmer.FirmwareCompatibilityCode >= 5)
                         determinehwcompcode(thisShimmer); % Check Expansion Board ID and set 'HardwareCompatibilityCode' accordingly
@@ -5262,6 +5262,9 @@ classdef ShimmerDriver < handle % Inherit from super class 'handle'
 
                     if (~isConnected) % the inquiry failed
                         disp(strcat('Warning: connect - Failed to receive response from Shimmer inquiry for COM', thisShimmer.name, '. Disconnecting Shimmer.'));
+                        disconnect(thisShimmer);
+                    elseif (~versionIsRead || ~firmwareIsRead)
+                        disp(strcat('Warning: connect - Failed to read Shimmer firmware or version of ', thisShimmer.name, '. Disconnecting Shimmer.'));
                         disconnect(thisShimmer);
                     else
 
@@ -10084,6 +10087,7 @@ classdef ShimmerDriver < handle % Inherit from super class 'handle'
 
                     if (~isempty(shimmerResponse) && (shimmerResponse(1) == thisShimmer.SHIMMER_VERSION_RESPONSE))
                         thisShimmer.ShimmerVersion = shimmerResponse(2);
+                        isRead = true;
                     else
                         thisShimmer.ShimmerVersion = 'NaN';
                         disp(strcat('Warning: readshimmerversion - Shimmer version command response expected but not returned for Shimmer COM', thisShimmer.name, '.'));

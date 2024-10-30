@@ -130,11 +130,7 @@ classdef ShimmerIMU < IMUInterface
             obj.IsConfigured = false;
             obj.SamplingRate = -1;
 
-            try
-                connected = obj.Driver.connect;
-            catch
-                connected = obj.IsConnected;
-            end
+            connected = obj.Driver.connect();
 
         end
 
