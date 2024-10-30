@@ -330,31 +330,26 @@ classdef Model < handle
 
             operationStarted(obj);
 
-            startStreamingBoth(obj);
-            calibrated = true;
-
-            try
-                if (strcmp(angleType, "s"))
-                    angle = obj.LatestAngle;
-                else
-                    angle = obj.LatestCalibratedAngle;
+            started = startStreamingBoth(obj);
+            if (started)
+                try
+                    if (strcmp(angleType, "s"))
+                        angle = obj.LatestAngle;
+                        obj.StandingOffsetAngle = angle;
+                        obj.FullFlexionAngle = [];
+                        notify(obj, "StandingOffsetAngleCalibrated")
+                    else
+                        angle = obj.LatestCalibratedAngle;
+                        obj.FullFlexionAngle = angle;
+                        notify(obj, "FullFlexionAngleCalibrated")
+                    end
+                    calibrated = true;
+                catch
+                    calibrated = false;
+                    disp("Warning: calibrateAngle - Failed to retrieve angle. Could not calibrate.");
                 end
-            catch
+            else
                 calibrated = false;
-                warning("Failed to retrieve angle. Could not calibrate.");
-            end
-
-            if (calibrated)
-
-                if (strcmp(angleType, "s"))
-                    obj.StandingOffsetAngle = angle;
-                    obj.FullFlexionAngle = [];
-                    notify(obj, "StandingOffsetAngleCalibrated")
-                else
-                    obj.FullFlexionAngle = angle;
-                    notify(obj, "FullFlexionAngleCalibrated")
-                end
-
             end
 
             operationCompleted(obj);
@@ -378,9 +373,9 @@ classdef Model < handle
 
             if (device1.IsStreaming && device2.IsStreaming)
                 startedBoth = true;
-                pause(2); %Wait for data
             else
                 startedBoth = false;
+                disp("Warning: startStreamingBoth - Failed to start streaming.");
             end
 
         end
@@ -475,7 +470,7 @@ classdef Model < handle
 
                 csvData = [obj.SmallestRecordedAngle, obj.LargestRecordedAngle, obj.RecordedTimeAboveThreshold, obj.TimeRecording];
 
-                obj.FileExportManager.closeFile(csvData);
+                obj.FileExportManager.closeCSVFile(csvData);
                 obj.FileExportManager.closeVideoFiles();
             end
         end

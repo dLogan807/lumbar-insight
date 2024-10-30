@@ -64,14 +64,7 @@ classdef ShimmerIMU < IMUInterface
         function batteryInfo = get.BatteryInfo(obj)
             %Return a string describing the IMU's battery state
 
-            state = obj.Driver.getstate();
-
-            wasStreaming = strcmp(state, 'Streaming');
-
-            if (wasStreaming)
-                obj.stopStreaming;
-                pause(0.5);
-            end
+            obj.stopStreaming;
 
             state = obj.Driver.getstate();
 
@@ -92,11 +85,6 @@ classdef ShimmerIMU < IMUInterface
                 batteryInfo = "Not connected. No battery information.";
             end
 
-            if (wasStreaming)
-                obj.startStreaming;
-                pause(0.5);
-            end
-
         end
 
         function latestQuaternion = get.LatestQuaternion(obj)
@@ -107,12 +95,9 @@ classdef ShimmerIMU < IMUInterface
                 error("LatestQuaternion:DeviceNotConnected", (obj.Name + " is not connected."));
             end
 
-            wasStreaming = obj.IsStreaming;
             errorMessage = [];
 
-            if (~wasStreaming)
-                obj.startStreaming;
-            end
+            startStreaming(obj);
 
             try
                 [shimmerData, shimmerSignalNameArray, ~, ~] = obj.Driver.getdata('c');
@@ -130,10 +115,6 @@ classdef ShimmerIMU < IMUInterface
 
             catch
                 errorMessage = "An error occured retrieving data from " + obj.Name;
-            end
-
-            if (~wasStreaming)
-                obj.stopStreaming;
             end
 
             %Rethrow if exception occured
@@ -184,6 +165,8 @@ classdef ShimmerIMU < IMUInterface
                 error("configure:DeviceNotConnected", ("Cannot configure " + obj.Name + " as it is not connected."));
             end
 
+            stopStreaming(obj);
+
             SensorMacros = ShimmerEnabledSensorsMacrosClass; % assign user friendly macros for setenabledsensors
 
             try
@@ -200,12 +183,13 @@ classdef ShimmerIMU < IMUInterface
                     obj.IsConfigured = true;
                     configured = true;
                 else
+                    disp("Warning: configure - " + obj.Name + " failed to complete configuration.");
                     obj.IsConfigured = false;
                     configured = false;
                 end
 
             catch
-                warning("configure: " + obj.Name + " failed to complete configuration.")
+                disp("Warning: configure - " + obj.Name + " failed to complete configuration.");
                 obj.IsConfigured = false;
                 configured = false;
             end
@@ -237,7 +221,7 @@ classdef ShimmerIMU < IMUInterface
 
             else
                 rateSet = false;
-                warning("Invalid sampling rate specified for " + obj.Name);
+                disp("Invalid sampling rate specified for " + obj.Name);
             end
 
         end
@@ -249,8 +233,10 @@ classdef ShimmerIMU < IMUInterface
             else
                 try
                     started = obj.Driver.start;
-                catch
-                    warning("Error encountered starting streaming of " + obj.Name);
+                    pause(2); %Wait for data
+                catch exception
+                    disp("Error encountered starting streaming of " + obj.Name);
+                    disp(exception.message);
                     started = obj.IsStreaming;
                 end
 
@@ -259,19 +245,20 @@ classdef ShimmerIMU < IMUInterface
         end
 
         function stopped = stopStreaming(obj)
-            %STOPSTREAMING Stop streaming data
+            %Stop streaming data
             if (obj.IsStreaming)
                 try
                     stopped = obj.Driver.stop;
-                catch
-                    warning("Error encountered stopping streaming of " + obj.Name);
+                    pause(2); %Allow time to stop
+                catch exception
+                    disp("Error encountered stopping streaming of " + obj.Name);
+                    disp(exception.message);
                     stopped = ~obj.IsStreaming;
                 end
 
             else
                 stopped = true;
             end
-
         end
 
     end

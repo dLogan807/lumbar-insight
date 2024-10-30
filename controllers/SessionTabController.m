@@ -159,7 +159,7 @@ classdef SessionTabController < handle
             if (obj.Model.bothIMUDevicesConnected() && obj.Model.calibrationCompleted())
                 obj.SessionTabView.StartStreamingButton.Enable = "on";
             else
-                stopStreaming(obj);
+                obj.SessionTabView.StartStreamingButton.Enable = "off";
             end
 
         end
@@ -192,17 +192,17 @@ classdef SessionTabController < handle
         end
 
         function stopStreaming(obj)
+            obj.SessionTabView.StopStreamingButton.Enable = "off";
+            obj.SessionTabView.RecordingButton.Enable = "off";
+            obj.SessionTabView.RecordingButton.Text = "Start Recording";
+            
             obj.Model.stopSessionStreaming()
 
-            obj.SessionTabView.StopStreamingButton.Enable = "off";
             if (obj.Model.bothIMUDevicesConnected() && obj.Model.calibrationCompleted())
                 obj.SessionTabView.StartStreamingButton.Enable = "on";
             else
                 obj.SessionTabView.StartStreamingButton.Enable = "off";
             end
-
-            obj.SessionTabView.RecordingButton.Enable = "off";
-            obj.SessionTabView.RecordingButton.Text = "Start Recording";
 
             updateCameraRecCheckboxes(obj)
         end
