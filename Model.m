@@ -9,13 +9,14 @@ classdef Model < handle
 
         BeepEnabled logical = true
         BeepRate double = 1
-        VideoFPS int8 = 24;
     end
 
     properties (SetAccess = private, GetAccess = public)
         IMUDevices (1, 2) IMUInterface = [ShimmerIMU("placeholder1"), ShimmerIMU("placeholder2")]
+
         Webcam (1,1) WebCamera = WebCamera()
         IPCam (1,1) IPCamera = IPCamera()
+        VideoFPS int8 = 10
 
         FileExportManager FileWriter
         StreamingInProgress logical = false
@@ -202,10 +203,8 @@ classdef Model < handle
 
         end % connectDevice
 
-        function disconnected = disconnectDevice(obj, deviceIndex)
+        function disconnectDevice(obj, deviceIndex)
             %Disconnect a device
-
-            disconnected = false;
 
             if (obj.OperationInProgress)
                 return
@@ -213,8 +212,8 @@ classdef Model < handle
 
             operationStarted(obj);
 
-            disconnected = obj.IMUDevices(deviceIndex).disconnect;
-
+            obj.IMUDevices(deviceIndex).disconnect();
+            clear obj.IMUDevices(deviceIndex)
             obj.IMUDevices(deviceIndex) = ShimmerIMU("placeholder" + deviceIndex);
 
             operationCompleted(obj);
@@ -345,9 +344,10 @@ classdef Model < handle
                         notify(obj, "FullFlexionAngleCalibrated")
                     end
                     calibrated = true;
-                catch
+                catch exception
                     calibrated = false;
                     disp("Warning: calibrateAngle - Failed to retrieve angle. Could not calibrate.");
+                    disp(exception.message)
                 end
             else
                 calibrated = false;
@@ -433,10 +433,11 @@ classdef Model < handle
                 obj.FileExportManager.initialiseNewCSV();
 
                 if (obj.Webcam.IsConnected)
-                    obj.FileExportManager.initialiseNewVideoFile("Webcam");
+                    obj.FileExportManager.initialiseNewVideoFile("Webcam", obj.VideoFPS);
                 end
+
                 if (obj.IPCam.IsConnected)
-                    obj.FileExportManager.initialiseNewVideoFile("IPCam");
+                    obj.FileExportManager.initialiseNewVideoFile("IPCam", obj.VideoFPS);
                 end
 
                 obj.RecordingInProgress = true;
@@ -469,7 +470,17 @@ classdef Model < handle
             if (obj.RecordingInProgress)
                 obj.RecordingInProgress = false;
 
-                csvData = [obj.SmallestRecordedAngle, obj.LargestRecordedAngle, obj.RecordedTimeAboveThreshold, obj.TimeRecording];
+                smallestRecordedAngle = obj.SmallestRecordedAngle;
+                if (isempty(obj.SmallestRecordedAngle))
+                    smallestRecordedAngle = "?";
+                end
+
+                largestRecordedAngle = obj.LargestRecordedAngle;
+                if (isempty(obj.LargestRecordedAngle))
+                    largestRecordedAngle = "?";
+                end
+
+                csvData = [smallestRecordedAngle, largestRecordedAngle, obj.RecordedTimeAboveThreshold, obj.TimeRecording];
 
                 obj.FileExportManager.closeCSVFile(csvData);
                 obj.FileExportManager.closeVideoFiles();

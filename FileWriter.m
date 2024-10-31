@@ -5,7 +5,8 @@ classdef FileWriter < handle
         ParentExportDir string {mustBeTextScalar} = ""
         FullExportDir string {mustBeTextScalar} = ""
         CSVInUse string {mustBeTextScalar} = ""
-        VideoDictionary dictionary = configureDictionary("string","VideoWriter")
+        WebcamVideo = []
+        IPCamVideo = []
         CSVInitialised logical {mustBeNonempty} = false;
     end
 
@@ -55,16 +56,19 @@ classdef FileWriter < handle
             obj.ProhibitWriteFlag = false;
         end
 
-        function initialiseNewVideoFile(obj, cameraName)
+        function initialiseNewVideoFile(obj, cameraName, fps)
             %Add new camera to the dictionary and open its VideoWriter
 
             arguments
                 obj 
                 cameraName string {mustBeTextScalar, mustBeNonempty} 
+                fps double {mustBePositive, mustBeNonempty}
             end
 
-            if (isKey(obj.VideoDictionary, cameraName))
-                warning("Camera already exists in dictionay. Video recording will not proceed.");
+            if (strcmp(cameraName, "Webcam") && isempty(obj.WebcamVideo))
+                obj.closeVideoFile(obj.WebcamVideo);
+            elseif (strcmp(cameraName, "IPCam") && isempty(obj.IPCamVideo))
+                obj.closeVideoFile(obj.IPCamVideo);
             end
 
             try 
@@ -73,14 +77,17 @@ classdef FileWriter < handle
                 warning("Could not generate video file name. Video recording will not proceed.")
                 return
             end
-
-            disp("Video file name: " + videoFileName);
         
             fullPath = obj.FullExportDir + "\" + videoFileName;
-            disp("Full video path: " + fullPath);
             videoWriter = VideoWriter(fullPath, "MPEG-4");
+            videoWriter.FrameRate = fps;
             open(videoWriter);
-            insert(obj.VideoDictionary, cameraName, videoWriter);
+            
+            if (strcmp(cameraName, "Webcam"))
+                obj.WebcamVideo = videoWriter;
+            else
+                obj.IPCamVideo = videoWriter;
+            end
         end
         
         function writeAngleData(obj, dataArray)
@@ -107,13 +114,19 @@ classdef FileWriter < handle
                 imageFrame 
             end
 
-            if (~isKey(obj.VideoDictionary, cameraName))
-                warning("Cannot write video: Camera not found in dictionary.")
+            if (strcmp(cameraName, "Webcam") && isempty(obj.WebcamVideo))
+                warning("Cannot write video: Camera " +  cameraName + " not initialised.")
+                return
+            elseif (strcmp(cameraName, "IPCam") && isempty(obj.IPCamVideo))
+                warning("Cannot write video: Camera " +  cameraName + " not initialised.")
                 return
             end
-
-            videoWriter = lookup(obj.VideoDictionary, cameraName);
-            writeVideo(videoWriter, imageFrame);
+            
+            if (strcmp(cameraName, "Webcam"))
+                writeVideo(obj.WebcamVideo, imageFrame);
+            else
+                writeVideo(obj.IPCamVideo, imageFrame);
+            end
         end
 
         function closeCSVFile(obj, dataArray)
@@ -143,13 +156,21 @@ classdef FileWriter < handle
         function closeVideoFiles(obj)
             %Close all open video files in the dictionary
 
-            cameras = keys(obj.VideoDictionary);
+            closeVideoFile(obj, "Webcam");
+            closeVideoFile(obj, "IPCam");
 
-            for cameraName = cameras
-                close(lookup(obj.VideoDictionary, cameraName));
-                remove(obj.VideoDictionary, cameraName);
+        end
+
+        function closeVideoFile(obj, cameraName)
+            %Close a specific camera's video
+
+            if (strcmp(cameraName, "Webcam") && ~isempty(obj.WebcamVideo))
+                close(obj.WebcamVideo);
+                obj.WebcamVideo = [];
+            elseif (strcmp(cameraName, "IPCam") && ~isempty(obj.IPCamVideo))
+                close(obj.IPCamVideo);
+                obj.IPCamVideo = [];
             end
-
         end
 
     end

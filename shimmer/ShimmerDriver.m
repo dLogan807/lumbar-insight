@@ -5249,8 +5249,22 @@ classdef ShimmerDriver < handle % Inherit from super class 'handle'
                 if (isOpen)
                     thisShimmer.State = 'Connected'; % Set Shimmer state to Connected
                     thisShimmer.bluetoothConn.Timeout = 1;
+                    
                     versionIsRead = readshimmerversion(thisShimmer); % Requests the Shimmer version from the Shimmer and stores the response in thisShimmer.ShimmerVersion
+                    if (~versionIsRead)
+                        disp(strcat('Warning: connect - Failed to read Shimmer version of ', thisShimmer.name, '. Disconnecting Shimmer.'));
+                        disconnect(thisShimmer);
+                        isConnected = false;
+                        return
+                    end
+                    
                     firmwareIsRead = readfirmwareversion(thisShimmer);
+                    if (~firmwareIsRead)
+                        disp(strcat('Warning: connect - Failed to read firmware version of ', thisShimmer.name, '. Disconnecting Shimmer.'));
+                        disconnect(thisShimmer);
+                        isConnected = false;
+                        return
+                    end
 
                     if (thisShimmer.ShimmerVersion == thisShimmer.SHIMMER_3 && thisShimmer.FirmwareCompatibilityCode >= 5)
                         determinehwcompcode(thisShimmer); % Check Expansion Board ID and set 'HardwareCompatibilityCode' accordingly
@@ -5262,9 +5276,6 @@ classdef ShimmerDriver < handle % Inherit from super class 'handle'
 
                     if (~isConnected) % the inquiry failed
                         disp(strcat('Warning: connect - Failed to receive response from Shimmer inquiry for COM', thisShimmer.name, '. Disconnecting Shimmer.'));
-                        disconnect(thisShimmer);
-                    elseif (~versionIsRead || ~firmwareIsRead)
-                        disp(strcat('Warning: connect - Failed to read Shimmer firmware or version of ', thisShimmer.name, '. Disconnecting Shimmer.'));
                         disconnect(thisShimmer);
                     else
 
@@ -5299,6 +5310,8 @@ classdef ShimmerDriver < handle % Inherit from super class 'handle'
 
                         if (thisShimmer.FirmwareCompatibilityCode >= 6)
                             thisShimmer.getbatteryvoltage;
+                            % NEEDS REFACTORING TO USE NEW MATLAB TIME
+                            % FUNCTIONS
                             % if(thisShimmer.FirmwareIdentifier == 3)
                             %     thisShimmer.readrealtimeclock;
                             %     [year,month,day,~,~,~ ] = datevec(thisShimmer.getrealtimeclock);

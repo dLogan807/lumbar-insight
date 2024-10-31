@@ -16,7 +16,7 @@ classdef WebCamera < CameraInterface
                 obj.IsConnected = true;
                 connected = true;
             catch
-                disp("Could not connect to " + cameraName);
+                obj.IsConnected = false;
                 connected = false;
             end
         end
@@ -26,9 +26,9 @@ classdef WebCamera < CameraInterface
                 closePreview(obj.Camera)
                 clear obj.Camera;
                 clear obj.Frame;
-                obj.Name = [];
-                obj.IsConnected = false;
             end
+            obj.Name = [];
+            obj.IsConnected = false;
         end
 
         function preview(obj, camImage)

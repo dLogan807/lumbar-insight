@@ -247,12 +247,13 @@ classdef SessionTabController < handle
             numOfAttempts = 60 + obj.Model.getPollingRate() * 3;
             attempts = ones(numOfAttempts, 1);
             index = 1;
-            videoHz = 1 / obj.Model.VideoFPS;
 
             timeLastLoop = 0;
             elapsedTime = 0;
             beepTimer = 0;
-            videoTimer = 0;
+
+            recordWebcam = shouldCameraRecord(obj, obj.Model.Webcam, obj.SessionTabView.WebcamRecordCheckbox);
+            recordIPCam = shouldCameraRecord(obj, obj.Model.IPCam, obj.SessionTabView.IPCamRecordCheckbox);
 
             %Initialise graph lines
             obj.LumbarAngleLine = animatedline(obj.SessionTabView.LumbarAngleGraph);
@@ -303,7 +304,8 @@ classdef SessionTabController < handle
                     
                     obj.Model.FileExportManager.writeAngleData([string(datetime("now")), angleToWrite, obj.Model.ThresholdAngle, (latestAngle > obj.Model.ThresholdAngle)]);
 
-                    recordVideos(obj, videoHz, videoTimer);
+                    recordWebcam = recordVideo(obj, recordWebcam, obj.Model.Webcam, "Webcam");
+                    recordIPCam = recordVideo(obj, recordIPCam, obj.Model.IPCam, "IPCam");
                 end
 
                 obj.Model.addTimeStreaming(timeLastLoop);
@@ -311,9 +313,6 @@ classdef SessionTabController < handle
                 updateTimeLabels(obj);
 
                 beepTimer = beepTimer + timeLastLoop;
-                if (obj.Model.RecordingInProgress)
-                    videoTimer = videoTimer + timeLastLoop;
-                end
                 elapsedTime = elapsedTime + timeLastLoop;
                 timeLastLoop = toc;
 
@@ -325,22 +324,25 @@ classdef SessionTabController < handle
             end
         end
 
-        function videoTimer = recordVideos(obj, videoHz, videoTimer)
-            %Write to the vidoes at specified FPS
-
-            if (videoTimer > videoHz)
-                if (cameraShouldRecord(obj, obj.Model.Webcam, obj.SessionTabView.WebcamRecordCheckbox))
-                    obj.Model.tryWriteVideo(obj.Model.Webcam, "WebCam");
+        function shouldRecord = recordVideo(obj, shouldRecord, camera, cameraName)
+            %Write to the video
+            
+            if (shouldRecord)
+                if (camera.IsConnected)
+                    obj.Model.tryWriteVideo(camera, cameraName);
+                else
+                    obj.Model.FileExportManager.closeVideoFile(cameraName);
+                    if (strcmp(cameraName, "Webcam"))
+                        obj.Model.disconnectWebcam()
+                    else
+                        obj.Model.disconnectIPCam();
+                    end
+                    shouldRecord = false;
                 end
-    
-                if (cameraShouldRecord(obj, obj.Model.IPCam, obj.SessionTabView.IPCamRecordCheckbox))
-                    obj.Model.tryWriteVideo(obj.Model.IPCam, "IPCam");
-                end
-                videoTimer = 0;
             end
         end
 
-        function doRecording = cameraShouldRecord(~, camera, checkbox)
+        function doRecording = shouldCameraRecord(~, camera, checkbox)
             %Check if the camera is connected and set to record
 
             arguments
@@ -349,7 +351,7 @@ classdef SessionTabController < handle
                 checkbox matlab.ui.control.CheckBox {mustBeNonempty}
             end
 
-            if (camera.IsConnected && strcmp(checkbox.Value, "on") && checkbox.Value == 1)
+            if (camera.IsConnected && strcmp(checkbox.Enable, "on") && checkbox.Value == 1)
                 doRecording = true;
             else
                 doRecording = false;

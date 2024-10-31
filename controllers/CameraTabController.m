@@ -177,7 +177,7 @@ classdef CameraTabController < handle
             %Update UI after IP Camera disconnected
 
             ipCamConnectUI(obj);
-            obj.CameraTabView.IPCamStatusLabel.Text = "Not connected. All fields are required.";
+            obj.CameraTabView.IPCamStatusLabel.Text = "Not connected.";
         end
         
     end % methods ( Access = private )

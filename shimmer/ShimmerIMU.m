@@ -64,7 +64,7 @@ classdef ShimmerIMU < IMUInterface
         function batteryInfo = get.BatteryInfo(obj)
             %Return a string describing the IMU's battery state
 
-            obj.stopStreaming;
+            stopStreaming(obj);
 
             state = obj.Driver.getstate();
 
@@ -110,7 +110,7 @@ classdef ShimmerIMU < IMUInterface
 
                     latestQuaternion = shimmerData(end, shimmerQuaternionChannels);
                 else
-                    errorMessage = "Data could not be retrieved from " + obj.Name;
+                    errorMessage = "Data retrieved from " + obj.Name + " was empty.";
                 end
 
             catch
@@ -134,18 +134,14 @@ classdef ShimmerIMU < IMUInterface
 
         end
 
-        function disconnected = disconnect(obj)
+        function disconnect(obj)
             %Disconnect from the Shimmer
 
             obj.IsConfigured = false;
             obj.SamplingRate = -1;
 
-            try
-                disconnected = obj.Driver.disconnect;
-                clear obj.Driver;
-            catch
-                disconnected = ~obj.IsConnected;
-            end
+            obj.Driver.disconnect();
+            clear obj.Driver;
 
         end
 
@@ -244,8 +240,8 @@ classdef ShimmerIMU < IMUInterface
             %Stop streaming data
             if (obj.IsStreaming)
                 try
-                    stopped = obj.Driver.stop;
-                    pause(2); %Allow time to stop
+                    stopped = obj.Driver.stop();
+                    pause(1); %Allow time to stop
                 catch exception
                     disp("Error encountered stopping streaming of " + obj.Name);
                     disp(exception.message);
