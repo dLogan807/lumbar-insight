@@ -4,6 +4,24 @@
 
 The aim of this project is to develop a UI to display, record, configure, and notify of real-time feedback on a subject carrying out a lifting task. As such, it could be utilised as a preventative measure for lumbosacral injury and act as an enabler for ease of further research. If successful, similar techniques could also be deployed on a wider scale to assist in physiotherapy or manual lifting jobs.
 
+<details>
+
+<summary>Screenshots</summary>
+
+#### IMU Configuration
+
+![config_tab](https://github.com/user-attachments/assets/2fae066e-2180-491e-90a1-58542430874d)
+
+#### Camera Configuration
+
+![camera_tab](https://github.com/user-attachments/assets/096b2a8d-254b-4a25-901b-0c3bb1b85e00)
+
+#### Session
+
+![session_tab](https://github.com/user-attachments/assets/121ec315-b32a-43e3-b8cd-21e6931842a1)
+
+</details>
+
 ## Installation
 
 Developed for use with [MATLAB 2024b](https://mathworks.com/downloads/).
