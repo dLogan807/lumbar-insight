@@ -243,7 +243,7 @@ classdef SessionTabController < handle
 
             delay = calculateDelay(obj);
 
-            successThresholdPercent = 50.0;
+            successThresholdPercent = 30.0;
             numOfAttempts = 60 + obj.Model.getPollingRate() * 3;
             attempts = ones(numOfAttempts, 1);
             index = 1;
@@ -284,7 +284,7 @@ classdef SessionTabController < handle
                     successPercentage = round((successes * 100) / numOfAttempts, 2);
 
                     if (successPercentage < successThresholdPercent)
-                        disp("Warning: Aborting session due to high rate of lost packets! (" + successPercentage + "% attempts successful of last " + numOfAttempts + " to read data.)");
+                        disp("Warning: Aborting session due to high rate of lost packets! (" + (100 - successPercentage) + "% of last " + numOfAttempts + " attempts failed to read data.)");
                         stopStreaming(obj)
                     end
                 end
