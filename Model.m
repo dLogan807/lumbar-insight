@@ -14,8 +14,8 @@ classdef Model < handle
     properties (SetAccess = private, GetAccess = public)
         IMUDevices (1, 2) IMUInterface = [ShimmerIMU("placeholder1"), ShimmerIMU("placeholder2")]
 
-        Webcam (1,1) WebCamera = WebCamera()
-        IPCam (1,1) IPCamera = IPCamera()
+        Webcam WebCamera
+        IPCam IPCamera
         VideoFPS int8 = 10
 
         FileExportManager FileWriter
@@ -74,6 +74,8 @@ classdef Model < handle
             [obj.BeepSoundData, obj.BeepSoundSampleRate] = audioread('warningbeep.mp3');
             obj.FileExportManager = FileWriter("data");
                 
+            obj.Webcam = WebCamera();
+            obj.IPCam = IPCamera();
         end
 
         function latestAngle = get.LatestAngle(obj)

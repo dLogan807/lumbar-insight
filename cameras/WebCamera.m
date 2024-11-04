@@ -8,6 +8,7 @@ classdef WebCamera < CameraInterface
     end
     
     methods
+
         function connected = connect(obj, cameraName)
             try
                 obj.Camera = webcam(cameraName);

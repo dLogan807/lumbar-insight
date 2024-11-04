@@ -84,7 +84,6 @@ classdef CameraTabController < handle
 
         function connectWebcamPushed(obj, ~, ~)
             %Connect or disconnect from a webcam
-
             if (obj.Model.Webcam.IsConnected)
                 obj.Model.disconnectWebcam();
             else
