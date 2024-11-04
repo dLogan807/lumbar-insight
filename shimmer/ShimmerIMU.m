@@ -224,8 +224,10 @@ classdef ShimmerIMU < IMUInterface
                 started = true;
             else
                 try
+                    disp("Starting streaming of " + obj.Name);
                     started = obj.Driver.start;
-                    pause(2); %Wait for data
+                    disp("Successfully started " + obj.Name + "? " + started);
+                    pause(3); %Wait for data
                 catch exception
                     disp("Error encountered starting streaming of " + obj.Name);
                     disp(exception.message);
@@ -238,10 +240,13 @@ classdef ShimmerIMU < IMUInterface
 
         function stopped = stopStreaming(obj)
             %Stop streaming data
+            
             if (obj.IsStreaming)
                 try
+                    disp("Stopping streaming of " + obj.Name);
                     stopped = obj.Driver.stop();
-                    pause(1); %Allow time to stop
+                    disp("Successfully stopped " + obj.Name + "? " + stopped);
+                    pause(2); %Allow time to stop
                 catch exception
                     disp("Error encountered stopping streaming of " + obj.Name);
                     disp(exception.message);
