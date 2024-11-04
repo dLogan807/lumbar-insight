@@ -227,7 +227,7 @@ classdef ShimmerIMU < IMUInterface
                     disp("Starting streaming of " + obj.Name);
                     started = obj.Driver.start;
                     disp("Successfully started " + obj.Name + "? " + started);
-                    pause(3); %Wait for data
+                    pause(4); %Wait for data
                 catch exception
                     disp("Error encountered starting streaming of " + obj.Name);
                     disp(exception.message);
