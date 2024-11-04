@@ -245,7 +245,7 @@ classdef SessionTabController < handle
 
             successThresholdPercent = 30.0;
             numOfAttempts = 60 + obj.Model.getPollingRate() * 3;
-            attempts = ones(numOfAttempts, 1);
+            attempts = ones(1, round(numOfAttempts, 0));
             index = 1;
 
             timeLastLoop = 0;
@@ -275,7 +275,7 @@ classdef SessionTabController < handle
                 % Retrieve latest angle, noting failure
                 try
                     latestAngle = obj.Model.LatestCalibratedAngle;
-                catch
+                catch   
                     angleRetrievalFailed = true;
                     attempts(index) = 0;
 

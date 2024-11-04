@@ -11,7 +11,7 @@ classdef ShimmerIMU < IMUInterface
         Name
         IsConfigured = false
         BatteryInfo
-        SamplingRates = [60 120]
+        SamplingRates = [20 51.2 60 120]
         SamplingRate = -1
     end
 
