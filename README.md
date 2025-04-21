@@ -4,6 +4,8 @@
 
 The aim of this project is to develop a UI to display, record, configure, and notify of real-time feedback on a subject carrying out a lifting task. As such, it could be utilised as a preventative measure for lumbosacral injury and act as an enabler for ease of further research. If successful, similar techniques could also be deployed on a wider scale to assist in physiotherapy or manual lifting jobs.
 
+This was developed for [Professor Mark Boocock](https://academics.aut.ac.nz/mark.boocock) and supervised by [Dr Jeff Kilby](https://academics.aut.ac.nz/jeffrey.kilby) as a full year project at [Auckland University of Technology](https://www.aut.ac.nz/).
+
 <details>
 
 <summary>Screenshots</summary>
