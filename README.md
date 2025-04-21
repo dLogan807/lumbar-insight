@@ -6,9 +6,11 @@ The aim of this project is to develop a UI to display, record, configure, and no
 
 This was developed for [Professor Mark Boocock](https://academics.aut.ac.nz/mark.boocock) and supervised by [Dr Jeff Kilby](https://academics.aut.ac.nz/jeffrey.kilby) as a full year project at [Auckland University of Technology](https://www.aut.ac.nz/).
 
+I will not be supporting this unless requested by AUT. I am happy to offer guidance to future AUT students!
+
 <details>
 
-<summary>Screenshots</summary>
+<summary><b>Screenshots</b></summary>
 
 #### IMU Configuration
 
@@ -23,6 +25,25 @@ This was developed for [Professor Mark Boocock](https://academics.aut.ac.nz/mark
 ![session_tab](https://github.com/user-attachments/assets/121ec315-b32a-43e3-b8cd-21e6931842a1)
 
 </details>
+
+### Features
+
+These are best demonstrated through the above screenshots!
+
+- IMU connection:
+  - Currently supports Shimmer 2, 2r, 3 over Bluetooth
+  - Display battery voltage
+  - Set IMU's sampling rate
+  - Calibrate subject's standing offset and full flexion
+- Session streaming:
+  - Live graph
+  - Audible beeping when subject reaches maximum flexion
+  - Display of session's overall stats
+  - Preview of cameras
+- Session recording 
+  - Export data to a .csv with automatic date-based folder sorting
+  - Record each data point (including read failures)
+  - Record a session with a Wireless (IP) and/or Wired camera
 
 ## Installation
 
@@ -62,9 +83,6 @@ If the application does not launch, it is already open in another window. To ove
 ## Application Modification
 
 ### Supported IMU Devices
-
-- Shimmer 3
-- Shimmer 2/2r
 
 Support for further IMUs can be added by:
 
